@@ -10,7 +10,8 @@ namespace DailyForecaster.Models
 	/// </summary>
 	public class CFClassification
 	{
-		public string ID { get; set; }
+		public string Id { get; set; }
 		public string Name { get; set; }
+		public int Sign { get; set; }
 	}
 }

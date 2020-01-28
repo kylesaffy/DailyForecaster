@@ -41,6 +41,20 @@ namespace DailyForecaster.Data
 				context.CFTypes.Add(item);
 			}
 			context.SaveChanges();
+			if (context.CFClassifications.Any())
+			{
+				return;
+			}
+			var cfClass = new CFClassification[]
+			{
+				new CFClassification{Id = Guid.NewGuid().ToString(),Name = "Income", Sign = 1},
+				new CFClassification{Id = Guid.NewGuid().ToString(),Name = "Expense", Sign = -1},
+			};
+			foreach(CFClassification item in cfClass)
+			{
+				context.CFClassifications.Add(item);
+			}
+			context.SaveChanges();
 		}
 	}
 }

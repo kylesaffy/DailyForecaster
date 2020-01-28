@@ -11,11 +11,17 @@ namespace DailyForecaster.Models
 	/// </summary>
 	public class ManualCashFlow
 	{
-		[Key]
+		private readonly FinPlannerContext _context;
+		public ManualCashFlow(FinPlannerContext context)
+		{
+			_context = context;
+		}
 		[Required]
-		public string ID;
+		public string Id;
 		[Required]
-		public CashFlowItem CashFlowItem;
+		public CFType CFType;
+		[Required]
+		public CFClassification CFClassification;
 		[Required]
 		public double Amount;
 		[Required]
@@ -28,15 +34,17 @@ namespace DailyForecaster.Models
 		public bool Expected;
 		public string ExpenseLocation;
 		public string PhotoBlobLink;
-		public ManualCashFlow(CashFlowItem cf, double amount, DateTime dateBooked, string source)
+		public string UserId;
+		public ManualCashFlow(string cfId,string cfClass, double amount, DateTime dateBooked, string source, string userID)
 		{
-			CashFlowItem = cf;
+			CFType = _context.CFTypes.Find(cfId);
+			CFClassification = _context.CFClassifications.Find(cfClass);
 			Amount = amount;
 			DateBooked = dateBooked;
 			DateCaptured = DateTime.Now;
 			SourceOfExpense = source;
-			ID = Guid.NewGuid().ToString();
+			Id = Guid.NewGuid().ToString();
+			UserId = userID;
 		}
-		public ManualCashFlow() { }
 	}
 }

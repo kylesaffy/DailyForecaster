@@ -12,9 +12,6 @@ namespace DailyForecaster
 		[Key]
 		[Required]
 		public string ID;
-		[Required]
-		public CFType CFType;
-		[Required]
-		public CFClassification CFClassification;
+		
 	}
 }
