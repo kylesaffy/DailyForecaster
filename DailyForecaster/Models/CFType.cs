@@ -11,8 +11,11 @@ namespace DailyForecaster.Models
 	/// </summary>
 	public class CFType
 	{
+		[Required]
 		public string Id { get; set; }
+		[Required]
 		public bool Custom { get; set; }
+		[Required]
 		public string Name { get; set; }
 		public string ClientReference { get; set; }
 	}

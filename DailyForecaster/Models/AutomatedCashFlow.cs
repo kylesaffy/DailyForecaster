@@ -10,18 +10,19 @@ namespace DailyForecaster.Models
 	/// </summary>
 	public class AutomatedCashFlow
 	{
-		[Key]
 		[Required]
-		public string ID;
+		public string ID { get; set; }
 		[Required]
-		public CashFlowItem CashFlowItem;
+		public CFType CFType { get; set; }
 		[Required]
-		public double Amount;
-		public DateTime DateBooked;
+		public CFClassification CFClassification { get; set; }
 		[Required]
-		public DateTime DateCaptured;
+		public double Amount { get; set; }
+		public DateTime DateBooked { get; set; }
 		[Required]
-		public string SourceOfExpense;
-		public ManualCashFlow ManualCashFlow;
+		public DateTime DateCaptured { get; set; }
+		[Required]
+		public string SourceOfExpense { get; set; }
+		public ManualCashFlow ManualCashFlow { get; set; }
 	}
 }

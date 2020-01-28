@@ -9,9 +9,8 @@ namespace DailyForecaster
 	/// </summary>
 	public class CashFlowItem
 	{
-		[Key]
 		[Required]
-		public string ID;
+		public string Id;
 		
 	}
 }

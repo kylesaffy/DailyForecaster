@@ -8,8 +8,9 @@ namespace DailyForecaster.Models
         public FinPlannerContext(DbContextOptions<FinPlannerContext> options) : base(options){ }
         public DbSet<CFType> CFTypes { get; set; }
         public DbSet<CFClassification> CFClassifications { get; set; }
-        public DbSet<CashFlowItem> CashFlowItems { get; set; }
-        public DbSet<ManualCashFlow> CashFlows { get; set; }
+        //public DbSet<CashFlowItem> CashFlowItems { get; set; }
+        public DbSet<ManualCashFlow> ManualCashFlows { get; set; }
+        public DbSet<AutomatedCashFlow> AutomatedCashFlows { get; set; }
        
     }
 }

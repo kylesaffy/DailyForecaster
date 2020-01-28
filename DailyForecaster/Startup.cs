@@ -50,6 +50,7 @@ namespace DailyForecaster
 			{
 				endpoints.MapControllers();
 			});
+			
 		}
 	}
 }
