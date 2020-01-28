@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
-namespace TodoApi.Models
+namespace DailyForecaster.Models
 {
     public class FinPlannerContext : DbContext
     {
@@ -8,7 +9,11 @@ namespace TodoApi.Models
             : base(options)
         {
         }
+        public DbSet<CFType> CFTypes { get; set; }
 
-        public DbSet<FinPlannerContext> TodoItems { get; set; }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<CFType>().ToTable("CFType");
+        }
     }
 }

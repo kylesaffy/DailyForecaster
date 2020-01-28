@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace DailyForecaster
@@ -8,14 +9,19 @@ namespace DailyForecaster
 	/// </summary>
 	public class CFType
 	{
-		[Key]
 		[Required]
-		public string ID;
+		public string Id;
 		[Required]
 		public bool Custom;
 		[Required]
 		public string Name;
 		public string ClientReference;
+		public CFType()
+		{
+			Id = Guid.NewGuid().ToString();
+			Custom = true;
+			Name = "Undefined";
+		}
 	}
 	/// <summary>
 	/// Idetifies whether or not this is a Income or Expense
@@ -72,6 +78,7 @@ namespace DailyForecaster
 			SourceOfExpense = source;
 			ID = Guid.NewGuid().ToString();
 		}
+		public ManualCashFlow() { }
 	}
 	/// <summary>
 	/// Accounts for transactions that are captured from an automated source
