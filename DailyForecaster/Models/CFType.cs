@@ -1,0 +1,19 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace DailyForecaster.Models
+{
+	/// <summary>
+	/// This is the name of the cash flow type as well as whether or not this is a a custom or default
+	/// </summary>
+	public class CFType
+	{
+		public string Id { get; set; }
+		public bool Custom { get; set; }
+		public string Name { get; set; }
+		public string ClientReference { get; set; }
+	}
+}

@@ -16,7 +16,7 @@ namespace DailyForecaster
 	{
 		public static void Main(string[] args)
 		{
-			var host = CreateWebHostBuilder(args).Build().Run();
+			var host = CreateWebHostBuilder(args).Build();
 			using (var scope = host.Services.CreateScope())
 			{
 				var services = scope.ServiceProvider;
@@ -34,7 +34,7 @@ namespace DailyForecaster
 			host.Run();
 		}
 
-		public static IHostBuilder CreateHostBuilder(string[] args) =>
+		public static IHostBuilder CreateWebHostBuilder(string[] args) =>
 			Host.CreateDefaultBuilder(args)
 				.ConfigureWebHostDefaults(webBuilder =>
 				{

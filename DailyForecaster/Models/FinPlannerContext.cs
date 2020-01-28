@@ -5,15 +5,9 @@ namespace DailyForecaster.Models
 {
     public class FinPlannerContext : DbContext
     {
-        public FinPlannerContext(DbContextOptions<FinPlannerContext> options)
-            : base(options)
-        {
-        }
+        public FinPlannerContext(DbContextOptions<FinPlannerContext> options) : base(options){ }
         public DbSet<CFType> CFTypes { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<CFType>().ToTable("CFType");
-        }
+        public DbSet<CFClassification> CFClassifications { get; set; }
+       
     }
 }
