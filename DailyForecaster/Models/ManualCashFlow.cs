@@ -32,9 +32,11 @@ namespace DailyForecaster.Models
 		public string SourceOfExpense { get; set; } //Possibly make this a class - Account or Cash
 		[Required]
 		public bool Expected { get; set; }
+		public string Description {get;set;}
 		public string ExpenseLocation { get; set; }
 		public string PhotoBlobLink { get; set; }
 		public string UserId { get; set; }
+		public string AccountId {get;set;}
 		public bool isDeleted { get; set; }
 		public ManualCashFlow(string cfId,string cfClass, double amount, DateTime dateBooked, string source, string userID,bool exp,string el)
 		{
