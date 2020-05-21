@@ -36,6 +36,7 @@ namespace DailyForecaster.Models
 		public string ExpenseLocation { get; set; }
 		public string PhotoBlobLink { get; set; }
 		public string UserId { get; set; }
+		[Required]
 		public string AccountId {get;set;}
 		public bool isDeleted { get; set; }
 		public ManualCashFlow(string cfId,string cfClass, double amount, DateTime dateBooked, string source, string userID,bool exp,string el)
@@ -73,6 +74,14 @@ namespace DailyForecaster.Models
 		public ManualCashFlow(string id)
 		{
 			_context.ManualCashFlows.Find(id);
+		}
+		public List<ManualCashFlow> GetManualCashFlows(string AccId)
+		{
+			return _context.ManualCashFlows.Where(x => x.AccountId == AccId).ToList();
+		}
+		public ManualCashFlow()
+		{
+
 		}
 	}
 	public class tempManualCashFlow

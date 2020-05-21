@@ -10,6 +10,11 @@ namespace DailyForecaster.Models
 	/// </summary>
 	public class AutomatedCashFlow
 	{
+		private readonly FinPlannerContext _context;
+		public AutomatedCashFlow(FinPlannerContext context)
+		{
+			_context = context;
+		}
 		[Required]
 		public string ID { get; set; }
 		[Required]
@@ -24,5 +29,13 @@ namespace DailyForecaster.Models
 		[Required]
 		public string SourceOfExpense { get; set; }
 		public ManualCashFlow ManualCashFlow { get; set; }
+		[Required]
+		public string AccountId { get; set; }
+		public AutomatedCashFlow()
+		{ }
+		public List<AutomatedCashFlow> GetAutomatedCashFlows(string AccId)
+		{
+			return _context.AutomatedCashFlows.Where(x => x.AccountId == AccId).ToList();
+		}
 	}
 }
