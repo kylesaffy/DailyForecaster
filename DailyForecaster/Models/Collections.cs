@@ -15,7 +15,7 @@ namespace DailyForecaster.Models
 			_context = context;
 		}
 		[Required]
-		public string CollectionId { get; set; }
+		public string CollectionsId { get; set; }
 		[Required]
 		public string Name { get; set; }
 		public List<Account> Accounts { get; set; }
@@ -38,7 +38,7 @@ namespace DailyForecaster.Models
 		{
 			Collections collection = col;
 			AccountCollectionsMapping mapping = new AccountCollectionsMapping();
-			collection.Accounts = mapping.GetAccounts(col.CollectionId);
+			collection.Accounts = mapping.GetAccounts(col.CollectionsId);
 			collection.TotalAmount = collection.SumAmount();
 		}
 		public double SumAmount()

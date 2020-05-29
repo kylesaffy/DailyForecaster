@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DailyForecaster.Models
 {
-	class AccountCollectionsMapping
+	public class AccountCollectionsMapping
 	{
 		private readonly FinPlannerContext _context;
 		public AccountCollectionsMapping(FinPlannerContext context)

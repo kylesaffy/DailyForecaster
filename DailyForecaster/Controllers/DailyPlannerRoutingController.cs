@@ -16,9 +16,9 @@ namespace DailyForecaster.Controllers
         //[ResponseType(typeof(ManualCashFlow))]
         public IHttpActionResult Create()
         {
-            Collections collections = new Collections();
-            string blobString = collections.Account.Institution.BlobString;
-            double total = numbers
+            //Collections collections = new Collections();
+            //string blobString = collections.Account.Institution.BlobString;
+            //double total = numbers;
             return Ok(new { Name = "Success" });
         }
     }
