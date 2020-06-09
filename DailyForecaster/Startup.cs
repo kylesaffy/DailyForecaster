@@ -30,6 +30,13 @@ namespace DailyForecaster
 			services.AddDbContext<FinPlannerContext>(opt =>
 			opt.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 			services.AddControllers();
+			services.AddCors(options =>
+			{
+				options.AddPolicy("AllowOrigin",
+						 builder => builder.WithOrigins("https://localhost:44307")
+						 .AllowAnyHeader()
+						 .AllowAnyMethod());
+			});
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -43,6 +50,8 @@ namespace DailyForecaster
 			app.UseHttpsRedirection();
 
 			app.UseRouting();
+
+			app.UseCors("AllowOrigin");
 
 			app.UseAuthorization();
 

@@ -13,5 +13,14 @@ namespace DailyForecaster.Models
 		public string Id { get; set; }
 		public string Name { get; set; }
 		public int Sign { get; set; }
+
+		public virtual ICollection<BudgetTransaction> BudgetTransactions { get; set; }
+		public List<CFClassification> GetList()
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.CFClassifications.ToList();
+			}
+		}
 	}
 }

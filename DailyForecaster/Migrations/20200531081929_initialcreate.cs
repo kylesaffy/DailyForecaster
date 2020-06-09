@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace DailyForecaster.Migrations
 {
-    public partial class InitialCreate : Migration
+    public partial class initialcreate : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -20,19 +20,7 @@ namespace DailyForecaster.Migrations
                     table.PrimaryKey("PK_AccountCollectionsMapping", x => x.Id);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "Budget",
-                columns: table => new
-                {
-                    BudgetId = table.Column<string>(nullable: false),
-                    StartDate = table.Column<DateTime>(nullable: false),
-                    EndDFate = table.Column<DateTime>(nullable: false),
-                    CollectionId = table.Column<string>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Budget", x => x.BudgetId);
-                });
+            
 
             migrationBuilder.CreateTable(
                 name: "CFClassifications",
@@ -67,11 +55,27 @@ namespace DailyForecaster.Migrations
                 {
                     CollectionsId = table.Column<string>(nullable: false),
                     Name = table.Column<string>(nullable: false),
-                    TotalAmount = table.Column<double>(nullable: false)
+                    TotalAmount = table.Column<double>(nullable: false),
+                    DurationType = table.Column<string>(nullable: true),
+                    DateCreated = table.Column<DateTime>(nullable: false),
+                    UserCreated = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Collections", x => x.CollectionsId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CollectionSharing",
+                columns: table => new
+                {
+                    CollectionSharingId = table.Column<string>(nullable: false),
+                    CollectionId = table.Column<string>(nullable: true),
+                    count = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CollectionSharing", x => x.CollectionSharingId);
                 });
 
             migrationBuilder.CreateTable(
@@ -91,16 +95,30 @@ namespace DailyForecaster.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserCollectionMapping",
+                name: "BudgetTransactions",
                 columns: table => new
                 {
-                    Id = table.Column<string>(nullable: false),
-                    CollectionId = table.Column<string>(nullable: false),
-                    UserId = table.Column<string>(nullable: false)
+                    BudgetTransactionId = table.Column<string>(nullable: false),
+                    BudgetId = table.Column<string>(nullable: false),
+                    Amount = table.Column<double>(nullable: false),
+                    CFTypeId = table.Column<string>(nullable: false),
+                    CFClassificationId = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserCollectionMapping", x => x.Id);
+                    table.PrimaryKey("PK_BudgetTransactions", x => x.BudgetTransactionId);
+                    table.ForeignKey(
+                        name: "FK_BudgetTransactions_CFClassifications_CFClassificationId",
+                        column: x => x.CFClassificationId,
+                        principalTable: "CFClassifications",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BudgetTransactions_CFTypes_CFTypeId",
+                        column: x => x.CFTypeId,
+                        principalTable: "CFTypes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -135,6 +153,52 @@ namespace DailyForecaster.Migrations
                         name: "FK_ManualCashFlows_CFTypes_CFTypeId",
                         column: x => x.CFTypeId,
                         principalTable: "CFTypes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Budget",
+                columns: table => new
+                {
+                    BudgetId = table.Column<string>(nullable: false),
+                    StartDate = table.Column<DateTime>(nullable: false),
+                    EndDate = table.Column<DateTime>(nullable: false),
+                    CollectionId = table.Column<string>(nullable: false),
+                    CollectionsObjCollectionsId = table.Column<string>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Budget", x => x.BudgetId);
+                    table.ForeignKey(
+                        name: "FK_Budget_Collections_CollectionsObjCollectionsId",
+                        column: x => x.CollectionsObjCollectionsId,
+                        principalTable: "Collections",
+                        principalColumn: "CollectionsId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserCollectionMapping",
+                columns: table => new
+                {
+                    UserCollectionMappingId = table.Column<string>(nullable: false),
+                    CollectionsId = table.Column<string>(nullable: false),
+                    Id = table.Column<string>(maxLength: 128, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserCollectionMapping", x => x.UserCollectionMappingId);
+                    table.ForeignKey(
+                        name: "FK_UserCollectionMapping_Collections_CollectionsId",
+                        column: x => x.CollectionsId,
+                        principalTable: "Collections",
+                        principalColumn: "CollectionsId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserCollectionMapping_AspNetUsers_Id",
+                        column: x => x.Id,
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -231,6 +295,21 @@ namespace DailyForecaster.Migrations
                 column: "ManualCashFlowId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Budget_CollectionsObjCollectionsId",
+                table: "Budget",
+                column: "CollectionsObjCollectionsId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BudgetTransactions_CFClassificationId",
+                table: "BudgetTransactions",
+                column: "CFClassificationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BudgetTransactions_CFTypeId",
+                table: "BudgetTransactions",
+                column: "CFTypeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ManualCashFlows_CFClassificationId",
                 table: "ManualCashFlows",
                 column: "CFClassificationId");
@@ -239,6 +318,16 @@ namespace DailyForecaster.Migrations
                 name: "IX_ManualCashFlows_CFTypeId",
                 table: "ManualCashFlows",
                 column: "CFTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserCollectionMapping_CollectionsId",
+                table: "UserCollectionMapping",
+                column: "CollectionsId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserCollectionMapping_Id",
+                table: "UserCollectionMapping",
+                column: "Id");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -256,16 +345,25 @@ namespace DailyForecaster.Migrations
                 name: "Budget");
 
             migrationBuilder.DropTable(
-                name: "UserCollectionMapping");
+                name: "BudgetTransactions");
 
             migrationBuilder.DropTable(
-                name: "Collections");
+                name: "CollectionSharing");
+
+            migrationBuilder.DropTable(
+                name: "UserCollectionMapping");
 
             migrationBuilder.DropTable(
                 name: "Institution");
 
             migrationBuilder.DropTable(
                 name: "ManualCashFlows");
+
+            migrationBuilder.DropTable(
+                name: "Collections");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUsers");
 
             migrationBuilder.DropTable(
                 name: "CFClassifications");

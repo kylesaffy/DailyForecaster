@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    [Migration("20200529033028_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20200531081929_initialcreate")]
+    partial class initialcreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -71,6 +71,20 @@ namespace DailyForecaster.Migrations
                     b.ToTable("AccountCollectionsMapping");
                 });
 
+            modelBuilder.Entity("DailyForecaster.Models.AspNetUsers", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(128)")
+                        .HasMaxLength(128);
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AspNetUsers");
+                });
+
             modelBuilder.Entity("DailyForecaster.Models.AutomatedCashFlow", b =>
                 {
                     b.Property<string>("ID")
@@ -124,7 +138,10 @@ namespace DailyForecaster.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("EndDFate")
+                    b.Property<string>("CollectionsObjCollectionsId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("StartDate")
@@ -132,7 +149,38 @@ namespace DailyForecaster.Migrations
 
                     b.HasKey("BudgetId");
 
+                    b.HasIndex("CollectionsObjCollectionsId");
+
                     b.ToTable("Budget");
+                });
+
+            modelBuilder.Entity("DailyForecaster.Models.BudgetTransaction", b =>
+                {
+                    b.Property<string>("BudgetTransactionId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<double>("Amount")
+                        .HasColumnType("float");
+
+                    b.Property<string>("BudgetId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CFClassificationId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CFTypeId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("BudgetTransactionId");
+
+                    b.HasIndex("CFClassificationId");
+
+                    b.HasIndex("CFTypeId");
+
+                    b.ToTable("BudgetTransactions");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.CFClassification", b =>
@@ -171,10 +219,32 @@ namespace DailyForecaster.Migrations
                     b.ToTable("CFTypes");
                 });
 
+            modelBuilder.Entity("DailyForecaster.Models.CollectionSharing", b =>
+                {
+                    b.Property<string>("CollectionSharingId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CollectionId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("count")
+                        .HasColumnType("int");
+
+                    b.HasKey("CollectionSharingId");
+
+                    b.ToTable("CollectionSharing");
+                });
+
             modelBuilder.Entity("DailyForecaster.Models.Collections", b =>
                 {
                     b.Property<string>("CollectionsId")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DurationType")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -182,6 +252,9 @@ namespace DailyForecaster.Migrations
 
                     b.Property<double>("TotalAmount")
                         .HasColumnType("float");
+
+                    b.Property<string>("UserCreated")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("CollectionsId");
 
@@ -275,18 +348,23 @@ namespace DailyForecaster.Migrations
 
             modelBuilder.Entity("DailyForecaster.Models.UserCollectionMapping", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<string>("UserCollectionMappingId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("CollectionId")
+                    b.Property<string>("CollectionsId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("UserId")
+                    b.Property<string>("Id")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(128)")
+                        .HasMaxLength(128);
 
-                    b.HasKey("Id");
+                    b.HasKey("UserCollectionMappingId");
+
+                    b.HasIndex("CollectionsId");
+
+                    b.HasIndex("Id");
 
                     b.ToTable("UserCollectionMapping");
                 });
@@ -323,6 +401,28 @@ namespace DailyForecaster.Migrations
                         .HasForeignKey("ManualCashFlowId");
                 });
 
+            modelBuilder.Entity("DailyForecaster.Models.Budget", b =>
+                {
+                    b.HasOne("DailyForecaster.Models.Collections", "CollectionsObj")
+                        .WithMany()
+                        .HasForeignKey("CollectionsObjCollectionsId");
+                });
+
+            modelBuilder.Entity("DailyForecaster.Models.BudgetTransaction", b =>
+                {
+                    b.HasOne("DailyForecaster.Models.CFClassification", "CFClassification")
+                        .WithMany("BudgetTransactions")
+                        .HasForeignKey("CFClassificationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DailyForecaster.Models.CFType", "CFType")
+                        .WithMany("BudgetTransactions")
+                        .HasForeignKey("CFTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("DailyForecaster.Models.ManualCashFlow", b =>
                 {
                     b.HasOne("DailyForecaster.Models.CFClassification", "CFClassification")
@@ -334,6 +434,21 @@ namespace DailyForecaster.Migrations
                     b.HasOne("DailyForecaster.Models.CFType", "CFType")
                         .WithMany()
                         .HasForeignKey("CFTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DailyForecaster.Models.UserCollectionMapping", b =>
+                {
+                    b.HasOne("DailyForecaster.Models.Collections", "Collections")
+                        .WithMany("UserCollectionMappings")
+                        .HasForeignKey("CollectionsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DailyForecaster.Models.AspNetUsers", "AspNetUsers")
+                        .WithMany("UserCollectionMappings")
+                        .HasForeignKey("Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

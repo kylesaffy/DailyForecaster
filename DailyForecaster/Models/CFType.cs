@@ -18,5 +18,13 @@ namespace DailyForecaster.Models
 		[Required]
 		public string Name { get; set; }
 		public string ClientReference { get; set; }
+		public virtual ICollection<BudgetTransaction> BudgetTransactions { get; set; }
+		public List<CFType> GetCFList()
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.CFTypes.ToList();
+			}
+		}
 	}
 }

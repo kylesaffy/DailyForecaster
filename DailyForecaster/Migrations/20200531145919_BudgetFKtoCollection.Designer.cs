@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200531145919_BudgetFKtoCollection")]
+    partial class BudgetFKtoCollection
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -169,16 +171,11 @@ namespace DailyForecaster.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(128)");
-
                     b.HasKey("BudgetTransactionId");
 
                     b.HasIndex("CFClassificationId");
 
                     b.HasIndex("CFTypeId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("BudgetTransactions");
                 });
@@ -425,10 +422,6 @@ namespace DailyForecaster.Migrations
                         .HasForeignKey("CFTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("DailyForecaster.Models.AspNetUsers", "AspNetUsers")
-                        .WithMany("BudgetTransactions")
-                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.Collections", b =>
