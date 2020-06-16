@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 using DailyForecaster.Models;
@@ -36,6 +37,8 @@ namespace DailyForecaster.Models
 		public string ExpenseLocation { get; set; }
 		public string PhotoBlobLink { get; set; }
 		public string UserId { get; set; }
+		[ForeignKey("AccountId")]
+		public Account Account { get; set; }
 		[Required]
 		public string AccountId {get;set;}
 		public bool isDeleted { get; set; }

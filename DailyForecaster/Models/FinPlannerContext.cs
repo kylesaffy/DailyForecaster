@@ -25,6 +25,8 @@ namespace DailyForecaster.Models
         public DbSet<BudgetTransaction> BudgetTransactions { get; set; }
         public DbSet<CollectionSharing> CollectionSharing { get; set; }
         public DbSet<AspNetUsers> AspNetUsers { get; set; }
+        public DbSet<RateInformation> RateInformation { get; set; }
+        public DbSet<AccountType> AccountType { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()

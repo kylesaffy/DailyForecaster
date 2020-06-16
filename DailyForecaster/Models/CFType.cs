@@ -23,7 +23,7 @@ namespace DailyForecaster.Models
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
-				return _context.CFTypes.ToList();
+				return _context.CFTypes.OrderBy(x=>x.Name).ToList();
 			}
 		}
 	}

@@ -20,28 +20,52 @@ namespace DailyForecaster.Controllers
         [Route("BudgetCheck")]
         [HttpGet]
         public ActionResult BudgetCheck(string collectionId)
-		{
+        {
             Budget budget = new Budget();
             return Ok(budget.BudgetCheck(collectionId));
 
-		}
+        }
         [Route("GetCollections")]
         [HttpGet]
-        public ActionResult GetCollections(string userId,string type)
-		{
-            if(type == "Budget")
-			{
+        public ActionResult GetCollections(string userId, string type)
+        {
+            if (type == "Budget")
+            {
                 Collections collection = new Collections();
-                List<Collections> list = collection.GetCollections(userId,type);
+                List<Collections> list = collection.GetCollections(userId, type);
                 return Ok(list);
-			}
-            else if(type == "Transactions")
+            }
+            else if (type == "Transactions")
             {
                 return Ok();
-			}
+            }
             return Ok();
         }
-
+        [Route("GetCollection")]
+        [HttpGet]
+        public ActionResult GetCollection(string collectionsId)
+        {
+            Collections collections = new Collections(collectionsId);
+            foreach(Budget item in collections.Budgets)
+			{
+                item.Collection = null;
+			}
+            return Ok(collections);
+        }
+        [Route("GetAccounts")]
+        [HttpGet]
+        public ActionResult GetAccounts(string collectionsId)
+		{
+            Account account = new Account();
+            return Ok(account.GetAccounts(collectionsId));
+		}
+        [Route("GetAccountType")]
+        [HttpGet]
+        public ActionResult GetAccountType()
+        {
+            AccountType accountType = new AccountType();
+            return Ok(accountType.GetAccountTypes());
+        }
         [Route("AssigningSharedCollection")]
         [HttpPost]
         public ActionResult AssigningSharedCollection([FromBody] JsonElement json)
@@ -53,24 +77,24 @@ namespace DailyForecaster.Controllers
         [Route("SetSharedCollection")]
         [HttpPost]
         public ActionResult SetSharedCollection(string collectionId)
-		{
+        {
             CollectionSharing collectionSharing = new CollectionSharing(collectionId);
-            return Ok(new ReturnModel() { result= true, returnStr= collectionSharing.CollectionSharingId });
-		}
+            return Ok(new ReturnModel() { result = true, returnStr = collectionSharing.CollectionSharingId });
+        }
         [Route("CollectionsCount")]
         [HttpGet]
         public ActionResult CollectionsCount(string userId)
-		{
+        {
             UserCollectionMapping mapping = new UserCollectionMapping();
-            if(mapping.CollectionsCounter(userId) > 0)
-			{
+            if (mapping.CollectionsCounter(userId) > 0)
+            {
                 return Ok(true);
-			}
-			else
-			{
+            }
+            else
+            {
                 return Ok(false);
-			}
-		}
+            }
+        }
         [Route("GetCFType")]
         [HttpGet]
         public ActionResult GetCFType()
@@ -124,6 +148,42 @@ namespace DailyForecaster.Controllers
             Collections collections = new Collections();
             return Ok(collections.CreateCollection(obj));
         }
+  //      [Route("BudgetCount")]
+  //      [HttpGet]
+  //      public ActionResult BudgetCount(string collectionsId,DateTime? startDate)
+		//{
+  //          Budget budget = new Budget();
+  //          return Ok(budget.BudgetCount(collectionsId));
+		//}
+        [Route("BudgetEdit")]
+        [HttpGet]
+        public ActionResult BudgetEdit(string collectionsId)
+		{
+            Budget budget = new Budget();
+            budget = budget.GetBudget(collectionsId);
+            return Ok(budget);
+		}
+        [Route("getInstitutions")]
+        [HttpGet]
+        public ActionResult getInstitutions()
+		{
+            Institution institution = new Institution();
+            return Ok(institution.GetInstitutions());
+		}
+        [Route("AddAccount")]
+        [HttpPost]
+        public ActionResult AddAccount([FromBody] JsonElement json)
+		{
+            Account account = JsonConvert.DeserializeObject<Account>(json.GetRawText());
+            ReturnModel returnModel = account.AddAccount(account);
+            return Ok(returnModel);
+		}
+        //[Route("BudgetEdit")]
+        //[HttpGet]
+        //public ActionResult BudgetEdit(string collectionsId, DateTime date)
+        //{
+        //    return Ok();
+        //}
     }
 	public class ReturnModel {
         public bool result { get; set; }

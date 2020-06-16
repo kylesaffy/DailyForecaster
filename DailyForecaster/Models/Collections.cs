@@ -16,24 +16,45 @@ namespace DailyForecaster.Models
 		public string CollectionsId { get; set; }
 		[Required]
 		public string Name { get; set; }
-		public List<Account> Accounts { get; set; }
 		public double TotalAmount { get; set; }
 		public string DurationType { get; set; }
 		public DateTime DateCreated { get; set; }
 		[ForeignKey("AspNetUsers")]
 		public string UserCreated { get; set; }
+		public int ResetDay { get; set; }
 		public AspNetUsers AspNetUsers { get; set; }
 		public ICollection<UserCollectionMapping> UserCollectionMappings { get; set; }
 		public ICollection<Budget> Budgets { get; set; }
+		public ICollection<Account> Accounts { get; set; }
 		public Collections() { }
-		private Collections(string durationType,string name,string userId)
+		private Collections(string durationType,string name,string userId, int resetDate)
 		{
 			CollectionsId = Guid.NewGuid().ToString();
 			Name = name;
 			DurationType = durationType;
 			AspNetUsers user = new AspNetUsers();
 			UserCreated = user.getUserId(userId);
-			DateCreated = DateTime.Now; 
+			DateCreated = DateTime.Now;
+			ResetDay = resetDate;
+		}
+		public Collections(string collectionsId)
+		{
+			Collections col = new Collections();
+			List<Budget> budgets = new List<Budget>();
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				col = _context.Collections.Find(collectionsId);
+				budgets = _context.Budget.Where(x => x.CollectionId == collectionsId).ToList();
+			}
+			CollectionsId = collectionsId;
+			Name = col.Name;
+			Accounts = col.Accounts;
+			TotalAmount = col.TotalAmount;
+			DurationType = col.DurationType;
+			DateCreated = col.DateCreated;
+			UserCreated = col.UserCreated;
+			Budgets = budgets;
+			ResetDay = col.ResetDay;
 		}
 		public List<Collections> GetCollections(string userId,string type)
 		{
@@ -77,7 +98,7 @@ namespace DailyForecaster.Models
 		}
 		public ReturnModel CreateCollection(NewCollectionsObj obj)
 		{
-			Collections col = new Collections(obj.durationType, obj.name,obj.User);
+			Collections col = new Collections(obj.durationType, obj.name,obj.User, obj.resetDate);
 			UserCollectionMapping mapping = new UserCollectionMapping(col.CollectionsId,obj.User);
 			ReturnModel returnModel = new ReturnModel();
 			if(mapping.Id == "999")
@@ -104,11 +125,13 @@ namespace DailyForecaster.Models
 			}
 		}
 		
+		
 	}
 	public class NewCollectionsObj
 	{
 		public string durationType { get; set; }
 		public string name { get; set; }
 		public string User { get; set; }
+		public int resetDate { get; set; }
 	}
 }

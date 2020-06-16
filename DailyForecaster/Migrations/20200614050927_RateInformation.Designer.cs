@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200614050927_RateInformation")]
+    partial class RateInformation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -26,9 +28,6 @@ namespace DailyForecaster.Migrations
 
                     b.Property<double>("AccountLimit")
                         .HasColumnType("float");
-
-                    b.Property<string>("AccountTypeId")
-                        .HasColumnType("nvarchar(450)");
 
                     b.Property<double>("Available")
                         .HasColumnType("float");
@@ -52,9 +51,6 @@ namespace DailyForecaster.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<double>("MonthlyFee")
-                        .HasColumnType("float");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -63,8 +59,6 @@ namespace DailyForecaster.Migrations
                         .HasColumnType("float");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AccountTypeId");
 
                     b.HasIndex("CollectionsId");
 
@@ -87,19 +81,6 @@ namespace DailyForecaster.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("AccountCollectionsMapping");
-                });
-
-            modelBuilder.Entity("DailyForecaster.Models.AccountType", b =>
-                {
-                    b.Property<string>("AccountTypeId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("AccountTypeId");
-
-                    b.ToTable("AccountType");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.AspNetUsers", b =>
@@ -438,11 +419,7 @@ namespace DailyForecaster.Migrations
 
             modelBuilder.Entity("DailyForecaster.Models.Account", b =>
                 {
-                    b.HasOne("DailyForecaster.Models.AccountType", "AccountType")
-                        .WithMany("Accounts")
-                        .HasForeignKey("AccountTypeId");
-
-                    b.HasOne("DailyForecaster.Models.Collections", "Collections")
+                    b.HasOne("DailyForecaster.Models.Collections", null)
                         .WithMany("Accounts")
                         .HasForeignKey("CollectionsId");
 

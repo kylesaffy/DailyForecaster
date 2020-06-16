@@ -18,5 +18,12 @@ namespace DailyForecaster.Models
 		public string WebLink { get; set; }
 		public string Email { get; set; }
 		public string BlobString { get; set; }
+		public List<Institution> GetInstitutions()
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.Institution.ToList();
+			}
+		}
 	}
 }

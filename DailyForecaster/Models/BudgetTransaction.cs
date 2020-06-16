@@ -15,6 +15,7 @@ namespace DailyForecaster.Models
 		public string BudgetTransactionId { get; set; }
 		[Required]
 		public string BudgetId { get; set; }
+		public string Name { get; set; }
 		public double Amount { get; set; }
 		[ForeignKey("CFType")]
 		public string CFTypeId { get; set; }
@@ -22,6 +23,8 @@ namespace DailyForecaster.Models
 		public string CFClassificationId { get; set; }
 		[ForeignKey("AspNetUsers")]
 		public string UserId { get; set; }
+		[ForeignKey("BudgetId")]
+		public Budget Budget { get; set; }
 		public AspNetUsers AspNetUsers { get; set; }
 		[Required]
 		public CFType CFType { get; set; }
@@ -42,14 +45,29 @@ namespace DailyForecaster.Models
 			BudgetTransactionId = Guid.NewGuid().ToString();
 			BudgetId = budgetId;
 			Amount = b.Amount;
+			Name = b.Name;
 			CFTypeId = b.CFTypeId;
 			CFClassificationId = b.CFClassificationId;
-			UserId = AspNetUsers.getUserId(b.UserId);
+			AspNetUsers users = new AspNetUsers();
+			UserId = users.getUserId(b.UserId);
 			//using (FinPlannerContext _context = new FinPlannerContext())
 			//{
 			//	CFType = _context.CFTypes.Find(CFTypeId);
 			//	CFClassification = _context.CFClassifications.Find(CFClassificationId);
 			//}
+		}
+		public List<BudgetTransaction> GetBudgetTransactions(string budgetId)
+		{
+			List<BudgetTransaction> transactions = new List<BudgetTransaction>();
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				transactions = _context.BudgetTransactions.Where(x => x.BudgetId == budgetId).ToList();
+			}
+			foreach(BudgetTransaction item in transactions)
+			{
+				item.Budget = null;
+			}
+			return transactions;
 		}
 	}
 }
