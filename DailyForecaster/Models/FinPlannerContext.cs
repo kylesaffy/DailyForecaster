@@ -27,6 +27,8 @@ namespace DailyForecaster.Models
         public DbSet<AspNetUsers> AspNetUsers { get; set; }
         public DbSet<RateInformation> RateInformation { get; set; }
         public DbSet<AccountType> AccountType { get; set; }
+        public DbSet<Simulation> Simualtion { get; set; }
+        public DbSet<Notes> Notes { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()

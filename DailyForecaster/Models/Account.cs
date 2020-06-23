@@ -52,6 +52,31 @@ namespace DailyForecaster.Models
 				return accounts;
 			}
 		}
+		public List<Account> GetAccountsWithCF(string collectionsId)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				List<Account> accounts = _context.Account.Where(x => x.CollectionsId == collectionsId).ToList();
+				foreach (Account item in accounts)
+				{
+					item.Institution = _context.Institution.Find(item.InstitutionId);
+					item.AccountType = _context.AccountType.Find(item.AccountTypeId);
+					item.AccountType.Accounts = null;
+					item.ManualCashFlows = _context.ManualCashFlows.Where(x => x.AccountId == item.Id).OrderByDescending(x=>x.DateBooked).Take(10).ToList();
+					foreach(ManualCashFlow flow in item.ManualCashFlows)
+					{
+						flow.CFClassification = _context.CFClassifications.Find(flow.CFClassificationId);
+						flow.CFClassification.ManualCashFlows = null;
+					}
+					item.Collections = _context.Collections.Find(item.CollectionsId);
+					//foreach(ManualCashFlow flow in item.ManualCashFlows)
+					//{
+					//	flow.Account.ManualCashFlows = null;
+					//}
+				}
+				return accounts;
+			}
+		}
 		public ReturnModel AddAccount(Account account)
 		{
 			ReturnModel model = new ReturnModel();

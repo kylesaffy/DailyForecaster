@@ -15,12 +15,25 @@ namespace DailyForecaster.Models
 		public int Sign { get; set; }
 
 		public virtual ICollection<BudgetTransaction> BudgetTransactions { get; set; }
+		public virtual ICollection<ManualCashFlow> ManualCashFlows { get; set; }
 		public List<CFClassification> GetList()
 		{
 			using (FinPlannerContext _context = new FinPlannerContext())
 			{
 				return _context.CFClassifications.ToList();
 			}
+		}
+		public CFClassification() { }
+		public CFClassification(string id)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				CFClassification temp = _context.CFClassifications.Find(id);
+				Id = temp.Id;
+				Name = temp.Name;
+				Sign = temp.Sign;
+			}
+			
 		}
 	}
 }

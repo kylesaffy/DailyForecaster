@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
+using DailyForecaster.Controllers;
 using DailyForecaster.Models;
 namespace DailyForecaster.Models
 {
@@ -20,8 +21,12 @@ namespace DailyForecaster.Models
 		[Required]
 		public string Id { get; set; }
 		[Required]
+		public string CFTypeId { get; set; }
+		[ForeignKey("CFTypeId")]
 		public CFType CFType { get; set; }
 		[Required]
+		public string CFClassificationId { get; set; }
+		[ForeignKey("CFClassificationId")]
 		public CFClassification CFClassification { get; set; }
 		[Required]
 		public double Amount { get; set; }
@@ -42,19 +47,23 @@ namespace DailyForecaster.Models
 		[Required]
 		public string AccountId {get;set;}
 		public bool isDeleted { get; set; }
-		public ManualCashFlow(string cfId,string cfClass, double amount, DateTime dateBooked, string source, string userID,bool exp,string el)
+		public ManualCashFlow(ManualCashFlow flow)
 		{
-			CFType = _context.CFTypes.Where(x=>x.Id==cfId).FirstOrDefault();
-			CFClassification = _context.CFClassifications.Find(cfClass);
-			Amount = amount;
-			DateBooked = dateBooked;
+			AspNetUsers users = new AspNetUsers();
+			CFTypeId = flow.CFTypeId;
+			CFClassificationId = flow.CFClassificationId;
+			Amount = flow.Amount;
+			DateBooked = flow.DateBooked;
 			DateCaptured = DateTime.Now;
-			SourceOfExpense = source;
-			Expected = exp;
+			SourceOfExpense = flow.SourceOfExpense;
+			Expected = flow.Expected;
 			Id = Guid.NewGuid().ToString();
-			UserId = userID;
+			UserId = users.getUserId(flow.UserId);
 			isDeleted = false;
-			ExpenseLocation = el;
+			ExpenseLocation = flow.ExpenseLocation;
+			AccountId = flow.AccountId;
+			Description = flow.Description;
+			ExpenseLocation = flow.ExpenseLocation;
 		}
 		public ManualCashFlow(CFType cfId, CFClassification cfClass, double amount, DateTime dateBooked, string source, string userID, bool exp, string el)
 		{
@@ -69,11 +78,7 @@ namespace DailyForecaster.Models
 			UserId = userID;
 			isDeleted = false;
 			ExpenseLocation = el;
-		}
-		public ManualCashFlow(tempManualCashFlow cf)
-		{
-			new ManualCashFlow(cf.CFType, cf.CFClassification, cf.Amount, cf.DateBooked, cf.SourceOfExpense, cf.UserId, cf.Expected, cf.ExpenseLocation);
-		}
+		}		   		
 		public ManualCashFlow(string id)
 		{
 			_context.ManualCashFlows.Find(id);
@@ -82,9 +87,37 @@ namespace DailyForecaster.Models
 		{
 			return _context.ManualCashFlows.Where(x => x.AccountId == AccId).ToList();
 		}
+		public List<ManualCashFlow> GetManualCashFlows(string accountId, DateTime startDate, DateTime endDate)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.ManualCashFlows.Where(x => x.AccountId == accountId).Where(x => x.DateBooked > startDate && x.DateBooked < endDate).ToList();
+			}
+		}
 		public ManualCashFlow()
 		{
 
+		}
+		public ReturnModel Save()
+		{
+			ManualCashFlow flow = new ManualCashFlow(this);
+			ReturnModel returnModel = new ReturnModel();
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Add(flow);
+				try
+				{
+					_context.SaveChanges();
+					returnModel.result = true;
+					return returnModel;
+				}
+				catch(Exception e)
+				{
+					returnModel.returnStr = e.Message;
+					returnModel.result = false;
+					return returnModel;
+				}
+			}
 		}
 	}
 	public class tempManualCashFlow
@@ -98,5 +131,6 @@ namespace DailyForecaster.Models
 		public string ExpenseLocation { get; set; }
 		public string PhotoBlobLink { get; set; }
 		public string UserId { get; set; }
+		public string accountId { get; set; }
 	}
 }

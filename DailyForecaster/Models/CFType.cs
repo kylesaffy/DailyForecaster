@@ -19,11 +19,37 @@ namespace DailyForecaster.Models
 		public string Name { get; set; }
 		public string ClientReference { get; set; }
 		public virtual ICollection<BudgetTransaction> BudgetTransactions { get; set; }
-		public List<CFType> GetCFList()
+		public List<CFType> GetCFList(string collectionsId)
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
-				return _context.CFTypes.OrderBy(x=>x.Name).ToList();
+				return _context.CFTypes.Where(x=>x.ClientReference == collectionsId || x.Custom == false).OrderBy(x=>x.Name).ToList();
+			}
+		}
+		public CFType() { }
+		public CFType(string id)
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				CFType temp = _context.CFTypes.Find(id);
+				Id = temp.Id;
+				Custom = temp.Custom;
+				Name = temp.Name;
+				ClientReference = temp.ClientReference;
+			}
+		}
+		public CFType CreateCFType(string collectionsId, string name)
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				CFType type = new CFType();
+				type.Id = Guid.NewGuid().ToString();
+				type.Custom = true;
+				type.Name = name;
+				type.ClientReference = collectionsId;
+				_context.CFTypes.Add(type);
+				_context.SaveChanges();
+				return type;
 			}
 		}
 	}

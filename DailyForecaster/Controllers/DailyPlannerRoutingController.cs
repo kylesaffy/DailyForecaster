@@ -17,6 +17,48 @@ namespace DailyForecaster.Controllers
     [ApiController]
     public class DailyPlannerRoutingController : ControllerBase
     {
+        [Route("SafeToSpend")]
+        [HttpGet]
+        public ActionResult SafeToSpend(string collectionsId)
+		{
+            return Ok(new BudgetTransactionComparison(collectionsId));
+		}
+        [Route("GetIndex")]
+        [HttpGet]
+        public ActionResult GetIndex(string userId)
+		{
+            Collections collection = new Collections();
+            List<Collections> collections = collection.GetCollections(userId, "TransactionList");
+            List<ManualCashFlow> flows = new List<ManualCashFlow>();
+            foreach (Collections item in collections)
+            {
+                if (item.Accounts != null)
+                {
+                    foreach (Account acc in item.Accounts)
+                    {
+                        flows.AddRange(acc.ManualCashFlows);
+                    }
+                }
+            }
+            Budget budget = new Budget();
+            DateTime currentDate = DateTime.Now;
+            foreach(Collections item in collections)
+			{
+                if (budget.BudgetCount(item.CollectionsId) > 0)
+                {
+                    if (budget.DateCheck2(item.CollectionsId, currentDate))
+                    {
+                        budget.Duplicate(item);
+                    }
+                }
+			}
+            foreach(ManualCashFlow item in flows)
+			{
+                item.Account.ManualCashFlows = null;
+                item.Account.Collections.Accounts = null;
+			}
+            return Ok(flows);
+		}
         [Route("BudgetCheck")]
         [HttpGet]
         public ActionResult BudgetCheck(string collectionId)
@@ -74,6 +116,13 @@ namespace DailyForecaster.Controllers
             CollectionSharing sharing = new CollectionSharing();
             return Ok(sharing.AddUserToCollection(obj));
         }
+        [Route("SaveManualCashFlow")]
+        [HttpPost]
+        public ActionResult SaveManualCashFlow([FromBody] JsonElement json)
+        {
+            ManualCashFlow obj = JsonConvert.DeserializeObject<ManualCashFlow>(json.GetRawText());
+            return Ok(obj.Save());
+        }
         [Route("SetSharedCollection")]
         [HttpPost]
         public ActionResult SetSharedCollection(string collectionId)
@@ -97,10 +146,10 @@ namespace DailyForecaster.Controllers
         }
         [Route("GetCFType")]
         [HttpGet]
-        public ActionResult GetCFType()
+        public ActionResult GetCFType(string collectionsId)
         {
             CFType cf = new CFType();
-            return Ok(cf.GetCFList());
+            return Ok(cf.GetCFList(collectionsId));
         }
         [Route("GetClassification")]
         [HttpGet]
@@ -160,8 +209,10 @@ namespace DailyForecaster.Controllers
         public ActionResult BudgetEdit(string collectionsId)
 		{
             Budget budget = new Budget();
-            budget = budget.GetBudget(collectionsId);
-            return Ok(budget);
+            Collections collections = new Collections(collectionsId);
+            collections.Budgets = new List<Budget>();
+            collections.Budgets.Add(budget.GetBudget(collectionsId));
+            return Ok(collections);
 		}
         [Route("getInstitutions")]
         [HttpGet]

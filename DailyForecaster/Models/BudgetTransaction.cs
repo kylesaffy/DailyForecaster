@@ -30,23 +30,34 @@ namespace DailyForecaster.Models
 		public CFType CFType { get; set; }
 		[Required]
 		public CFClassification CFClassification { get; set; }
+		public ICollection<Notes> Notes {get;set;}
 		public BudgetTransaction() { }
-		public List<BudgetTransaction> CreateBudgetTransactions(List<BudgetTransaction> transactions, string BudgetId)
+		public List<BudgetTransaction> CreateBudgetTransactions(List<BudgetTransaction> transactions, string BudgetId, string collectionsId)
 		{
 			List<BudgetTransaction> newTransactions = new List<BudgetTransaction>();
 			foreach(BudgetTransaction item in transactions)
 			{
-				newTransactions.Add(new BudgetTransaction(item, BudgetId));
+				newTransactions.Add(new BudgetTransaction(item, BudgetId,collectionsId));
 			}
 			return newTransactions;
 		}
-		private BudgetTransaction(BudgetTransaction b, string budgetId)
+		public BudgetTransaction(BudgetTransaction b, string budgetId,string collectionsId)
 		{
 			BudgetTransactionId = Guid.NewGuid().ToString();
 			BudgetId = budgetId;
 			Amount = b.Amount;
 			Name = b.Name;
-			CFTypeId = b.CFTypeId;
+			CFType type = new CFType();
+			List<CFType> list = type.GetCFList(collectionsId);
+			if (list.Any(x=>x.Id == b.CFTypeId))
+			{
+				CFTypeId = b.CFTypeId;
+			}
+			else
+			{
+				type = type.CreateCFType(collectionsId, b.CFTypeId);
+				CFTypeId = type.Id;
+			}
 			CFClassificationId = b.CFClassificationId;
 			AspNetUsers users = new AspNetUsers();
 			UserId = users.getUserId(b.UserId);

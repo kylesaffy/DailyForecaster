@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200620080348_AddSimulation")]
+    partial class AddSimulation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -96,9 +98,6 @@ namespace DailyForecaster.Migrations
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("Transactional")
-                        .HasColumnType("bit");
 
                     b.HasKey("AccountTypeId");
 
@@ -399,26 +398,6 @@ namespace DailyForecaster.Migrations
                     b.ToTable("ManualCashFlows");
                 });
 
-            modelBuilder.Entity("DailyForecaster.Models.Notes", b =>
-                {
-                    b.Property<string>("NotesId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BudgetTransactionId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("NotesId");
-
-                    b.HasIndex("BudgetTransactionId");
-
-                    b.ToTable("Notes");
-                });
-
             modelBuilder.Entity("DailyForecaster.Models.RateInformation", b =>
                 {
                     b.Property<string>("RateInformationId")
@@ -450,9 +429,6 @@ namespace DailyForecaster.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("SimulationAssumptionsId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("SimulationName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -461,42 +437,7 @@ namespace DailyForecaster.Migrations
 
                     b.HasIndex("CollectionsId");
 
-                    b.HasIndex("SimulationAssumptionsId")
-                        .IsUnique()
-                        .HasFilter("[SimulationAssumptionsId] IS NOT NULL");
-
                     b.ToTable("Simualtion");
-                });
-
-            modelBuilder.Entity("DailyForecaster.Models.SimulationAssumptions", b =>
-                {
-                    b.Property<string>("SimulationAssumptionsId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<bool>("Bonus")
-                        .HasColumnType("bit");
-
-                    b.Property<double>("BonusAmount")
-                        .HasColumnType("float");
-
-                    b.Property<int>("BonusMonth")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("Increase")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("IncreaseMonth")
-                        .HasColumnType("int");
-
-                    b.Property<double>("IncreasePercentage")
-                        .HasColumnType("float");
-
-                    b.Property<int>("NumberOfMonths")
-                        .HasColumnType("int");
-
-                    b.HasKey("SimulationAssumptionsId");
-
-                    b.ToTable("SimulationAssumptions");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.UserCollectionMapping", b =>
@@ -624,15 +565,6 @@ namespace DailyForecaster.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("DailyForecaster.Models.Notes", b =>
-                {
-                    b.HasOne("DailyForecaster.Models.BudgetTransaction", "BudgetTransaction")
-                        .WithMany("Notes")
-                        .HasForeignKey("BudgetTransactionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("DailyForecaster.Models.Simulation", b =>
                 {
                     b.HasOne("DailyForecaster.Models.Collections", "Collections")
@@ -640,10 +572,6 @@ namespace DailyForecaster.Migrations
                         .HasForeignKey("CollectionsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("DailyForecaster.Models.SimulationAssumptions", "SimulationAssumptions")
-                        .WithOne("Simulation")
-                        .HasForeignKey("DailyForecaster.Models.Simulation", "SimulationAssumptionsId");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.UserCollectionMapping", b =>

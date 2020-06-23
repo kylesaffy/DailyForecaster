@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Composition;
 using System.Linq;
 using System.Threading.Tasks;
 using DailyForecaster.Controllers;
@@ -26,6 +27,7 @@ namespace DailyForecaster.Models
 		public ICollection<UserCollectionMapping> UserCollectionMappings { get; set; }
 		public ICollection<Budget> Budgets { get; set; }
 		public ICollection<Account> Accounts { get; set; }
+		public ICollection<Simulation> Simualtions { get; set; }
 		public Collections() { }
 		private Collections(string durationType,string name,string userId, int resetDate)
 		{
@@ -69,24 +71,31 @@ namespace DailyForecaster.Models
 					.ToList();
 				foreach (string item in collectonIds)
 				{
-					if (type == "Accounts")
+					switch (type)
 					{
-						collections.Add(new Collections(_context.Collections.Find(item)));
-					}
-					else
-					{
-						collections.Add(_context.Collections.Find(item));
-					}
+						case "Accounts":
+							collections.Add(new Collections(_context.Collections.Find(item)));
+							break;
+						case "TransactionList":
+							collections.Add(new Collections(_context.Collections.Find(item)));
+							break;
+						default:
+							collections.Add(_context.Collections.Find(item));
+							break;
+					}			 						
 				}
 			}
 			return collections;
 		}
 		public Collections(Collections col)
 		{
+			Account account = new Account();
 			Collections collection = col;
-			AccountCollectionsMapping mapping = new AccountCollectionsMapping();
-			collection.Accounts = mapping.GetAccounts(col.CollectionsId);
-			collection.TotalAmount = collection.SumAmount();
+			CollectionsId = col.CollectionsId;
+			Name = col.Name;
+			Accounts = account.GetAccountsWithCF(col.CollectionsId);
+			DurationType = col.DurationType;
+			//collection.TotalAmount = collection.SumAmount();
 		}
 		public double SumAmount()
 		{
