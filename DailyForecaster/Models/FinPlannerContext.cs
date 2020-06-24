@@ -29,6 +29,8 @@ namespace DailyForecaster.Models
         public DbSet<AccountType> AccountType { get; set; }
         public DbSet<Simulation> Simualtion { get; set; }
         public DbSet<Notes> Notes { get; set; }
+        public DbSet<AccountChange> AccountChange { get; set; }
+        public DbSet<ClickTracker> ClickTracker { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()

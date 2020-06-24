@@ -98,6 +98,38 @@ namespace DailyForecaster.Models
 		{
 
 		}
+		public ReturnModel AddTransfer(TransferObject obj)
+		{
+			CFClassification classification = new CFClassification();
+			List<CFClassification> classifications = classification.GetList();
+			ManualCashFlow to = new ManualCashFlow()
+			{
+				Id = Guid.NewGuid().ToString(),
+				CFClassificationId = classifications.Where(x => x.Sign == 1).Select(x => x.Id).FirstOrDefault(),
+				CFTypeId = "999",
+				Amount = obj.Amount,
+				SourceOfExpense = "Transfer",
+				Description = "Transfer",
+				DateBooked = obj.DateBooked,
+				DateCaptured = DateTime.Now,
+				AccountId = obj.TransferTo,
+			};
+			ManualCashFlow from = new ManualCashFlow()
+			{
+				Id = Guid.NewGuid().ToString(),
+				CFClassificationId = classifications.Where(x => x.Sign == -1).Select(x => x.Id).FirstOrDefault(),
+				CFTypeId = "999",
+				SourceOfExpense = "Transfer",
+				Description = "Transfer",
+				Amount = obj.Amount,
+				DateBooked = obj.DateBooked,
+				DateCaptured = DateTime.Now,
+				AccountId = obj.TransferFrom,
+			};
+			to.Save();
+			from.Save();
+			return new ReturnModel() { result = true };
+		}
 		public ReturnModel Save()
 		{
 			ManualCashFlow flow = new ManualCashFlow(this);
@@ -108,6 +140,8 @@ namespace DailyForecaster.Models
 				try
 				{
 					_context.SaveChanges();
+					AccountChange change = new AccountChange();
+					change.AddAccountChange(flow);
 					returnModel.result = true;
 					return returnModel;
 				}

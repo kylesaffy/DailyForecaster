@@ -34,7 +34,8 @@ namespace DailyForecaster.Data
 				new CFType{Id = Guid.NewGuid().ToString(),Custom = false,Name = "Takeout"},
 				new CFType{Id = Guid.NewGuid().ToString(),Custom = false,Name = "School Fees"},
 				new CFType{Id = Guid.NewGuid().ToString(),Custom = false,Name = "Transportation"},
-				new CFType{Id = Guid.NewGuid().ToString(),Custom = false,Name = "Medication"}
+				new CFType{Id = Guid.NewGuid().ToString(),Custom = false,Name = "Medication"},
+				new CFType{Id = Guid.NewGuid().ToString(),Custom = true, ClientReference = "999", Name = "Transfer"}
 			};
 			foreach(CFType item in cfTypes)
 			{

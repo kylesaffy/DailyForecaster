@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200623032354_AddAccountChange")]
+    partial class AddAccountChange
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -289,34 +291,6 @@ namespace DailyForecaster.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("CFTypes");
-                });
-
-            modelBuilder.Entity("DailyForecaster.Models.ClickTracker", b =>
-                {
-                    b.Property<string>("ClickTrackerId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<bool>("GET")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Location")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("POST")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("RecordDateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RequestData")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("ClickTrackerId");
-
-                    b.ToTable("ClickTracker");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.CollectionSharing", b =>
