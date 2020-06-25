@@ -18,20 +18,6 @@ namespace DailyForecaster.Controllers
     [ApiController]
     public class DailyPlannerRoutingController : ControllerBase
     {
-        [Route("GetUser")]
-        [HttpGet]
-        public ActionResult GetUser()
-		{
-            string authHeader = this.HttpContext.Request.Headers["Authorization"];
-            TokenModel tokenModel = new TokenModel();
-            ClaimsPrincipal auth = tokenModel.GetPrincipal(authHeader);
-            if (auth.Identity.IsAuthenticated)
-            {
-                AspNetUsers users = new AspNetUsers();
-                return Ok(users.getUserId(auth.Identity.Name));
-            }
-            return Ok("");
-        }
         [Route("SafeToSpend")]
         [HttpGet]
         public ActionResult SafeToSpend(string collectionsId)
