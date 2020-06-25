@@ -3,9 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UserSecretsId>34a1729b-c5c1-4aee-a2bf-25cd97c333ea</UserSecretsId>
+    <ApplicationInsightsResourceId>/subscriptions/7ffa2f29-07eb-44b2-9cc0-10bec8e7ce45/resourceGroups/moneyminders/providers/microsoft.insights/components/moneyminders202006250701</ApplicationInsightsResourceId>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.13.1" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Core" Version="5.2.7" />
     <PackageReference Include="Microsoft.AspNetCore.AzureKeyVault.HostingStartup" Version="2.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="3.1.1" />
