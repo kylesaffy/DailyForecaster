@@ -95,6 +95,7 @@ namespace DailyForecaster.Models
 			Name = col.Name;
 			Accounts = account.GetAccountsWithCF(col.CollectionsId);
 			DurationType = col.DurationType;
+			ResetDay = col.ResetDay;
 			//collection.TotalAmount = collection.SumAmount();
 		}
 		public double SumAmount()

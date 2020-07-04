@@ -5,12 +5,6 @@
       "type": "appInsights.azure",
       "connectionId": "APPINSIGHTS_INSTRUMENTATIONKEY",
       "secretStore": "LocalSecretsFile"
-    },
-    "mssql1": {
-      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroup1')]/providers/Microsoft.Sql/servers/moneymindersdbserver/databases/moneymindersdb",
-      "type": "mssql.azure",
-      "connectionId": "DefaultConnection",
-      "secretStore": "LocalSecretsFile"
     }
   }
 }

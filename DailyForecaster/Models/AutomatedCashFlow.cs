@@ -35,7 +35,9 @@ namespace DailyForecaster.Models
 		{ }
 		public List<AutomatedCashFlow> GetAutomatedCashFlows(string AccId)
 		{
-			return _context.AutomatedCashFlows.Where(x => x.AccountId == AccId).ToList();
+			using (FinPlannerContext _context = new FinPlannerContext()) {
+				return _context.AutomatedCashFlows.Where(x => x.AccountId == AccId).ToList();
+			}
 		}
 		public List<AutomatedCashFlow> GetAutomatedCashFlows(string AccId,DateTime startDate,DateTime endDate)
 		{

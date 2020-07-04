@@ -85,7 +85,10 @@ namespace DailyForecaster.Models
 		}
 		public List<ManualCashFlow> GetManualCashFlows(string AccId)
 		{
-			return _context.ManualCashFlows.Where(x => x.AccountId == AccId).ToList();
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.ManualCashFlows.Where(x => x.AccountId == AccId).ToList();
+			}
 		}
 		public List<ManualCashFlow> GetManualCashFlows(string accountId, DateTime startDate, DateTime endDate)
 		{

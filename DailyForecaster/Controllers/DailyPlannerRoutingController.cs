@@ -10,14 +10,23 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Cors;
 using Newtonsoft.Json;
 using System.Security.Claims;
+using System.Security.Cryptography.X509Certificates;
 
 namespace DailyForecaster.Controllers
 {
+    
     [Route("[controller]")]
     [EnableCors("AllowOrigin")]
     [ApiController]
     public class DailyPlannerRoutingController : ControllerBase
     {
+        [Route("BasicEmail")]
+        [HttpPost]
+        public ActionResult BasicEmail([FromBody] JsonElement json)
+		{
+            EmailFunction email = JsonConvert.DeserializeObject<EmailFunction>(json.GetRawText());
+            return Ok(email.SendEmail());
+		}
         [Route("SafeToSpend")]
         [HttpGet]
         public ActionResult SafeToSpend(string collectionsId)
@@ -29,6 +38,28 @@ namespace DailyForecaster.Controllers
             {
                 new ClickTracker("SafeToSpend", true, false, "collectionsId " + collectionsId, auth.Identity.Name);
                 return Ok(new BudgetTransactionComparison(collectionsId));
+            }
+            return Ok("");
+        }
+        [Route("GetTransactions")]
+        [HttpGet]
+        public ActionResult GetTransactions(string id, DateTime startDate, DateTime endDate)
+		{
+            string authHeader = this.HttpContext.Request.Headers["Authorization"];
+            TokenModel tokenModel = new TokenModel();
+            ClaimsPrincipal auth = tokenModel.GetPrincipal(authHeader);
+            if (auth.Identity.IsAuthenticated)
+            {
+                GetTransactionsObj obj = new GetTransactionsObj()
+                {
+                    StartDate = startDate,
+                    EndDate = endDate,
+                    Id = id
+                };
+                ReportedTransaction transaction = new ReportedTransaction();
+                List<ReportedTransaction> transactions = transaction.GetTransactions(obj.Id);
+                transactions = transactions.Where(x => x.DateCaptured <= obj.EndDate && x.DateCaptured >= obj.StartDate).ToList();
+                return Ok(transactions);
             }
             return Ok("");
         }
@@ -58,16 +89,16 @@ namespace DailyForecaster.Controllers
                 }
                 Budget budget = new Budget();
                 DateTime currentDate = DateTime.Now;
-                foreach (Collections item in collections)
-                {
-                    if (budget.BudgetCount(item.CollectionsId) > 0)
-                    {
-                        if (budget.DateCheck2(item.CollectionsId, currentDate))
-                        {
-                            budget.Duplicate(item);
-                        }
-                    }
-                }
+                //foreach (Collections item in collections)
+                //{
+                //    if (budget.BudgetCount(item.CollectionsId) > 0)
+                //    {
+                //        if (budget.DateCheck2(item.CollectionsId, currentDate))
+                //        {
+                //            budget.Duplicate(item);
+                //        }
+                //    }
+                //}
                 foreach (ManualCashFlow item in flows)
                 {
                     item.Account.ManualCashFlows = null;
