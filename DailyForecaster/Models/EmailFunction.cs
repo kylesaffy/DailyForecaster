@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DailyForecaster.Controllers;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -44,6 +45,7 @@ namespace DailyForecaster.Models
 			MailMessage message = new MailMessage(from, to);
 			message.Body = Message;
 			message.Subject = Subject;
+			message.IsBodyHtml = true;
 			message.SubjectEncoding = System.Text.Encoding.UTF8;
 			try
 			{

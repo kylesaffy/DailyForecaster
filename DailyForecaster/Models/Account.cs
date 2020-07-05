@@ -1,4 +1,5 @@
 ﻿using DailyForecaster.Controllers;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -33,10 +34,21 @@ namespace DailyForecaster.Models
 		public string AccountTypeId { get; set; }
 		public ICollection<ManualCashFlow> ManualCashFlows { get; set; }
 		public AccountType AccountType { get; set; }
+		public List<ReportedTransaction> ReportedTransactions { get; set; }
 		public List<ReportedTransaction> GetTransactions()
 		{
 			ReportedTransaction reportedTransaction = new ReportedTransaction();
 			return reportedTransaction.GetTransactions(this.Id);
+		}
+		public Account GetAccount(string id)
+		{
+			Account account = new Account();
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				account = _context.Account.Find(id);
+			}
+			account.GetTransactions();
+			return account;
 		}
 		public List<Account> GetAccounts(string collectionsId)
 		{
@@ -83,7 +95,15 @@ namespace DailyForecaster.Models
 			account.Id = Guid.NewGuid().ToString();
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
-				_context.Account.Add(account);
+				if (account.Id == null)
+				{
+					account.Id = Guid.NewGuid().ToString();
+					_context.Account.Add(account);
+				}
+				else
+				{
+					_context.Entry(account).State = EntityState.Modified;
+				}
 				try
 				{
 					_context.SaveChanges();

@@ -20,6 +20,21 @@ namespace DailyForecaster.Controllers
     [ApiController]
     public class DailyPlannerRoutingController : ControllerBase
     {
+        [Route("AccountDetails")]
+        [HttpGet]
+        public ActionResult AccountDetails(string id)
+		{
+            string authHeader = this.HttpContext.Request.Headers["Authorization"];
+            TokenModel tokenModel = new TokenModel();
+            ClaimsPrincipal auth = tokenModel.GetPrincipal(authHeader);
+            if (auth.Identity.IsAuthenticated)
+            {
+                new ClickTracker("AccountDetails", true, false, "AccountId " + id, auth.Identity.Name);
+                Account account = new Account();
+                return Ok(account.GetAccount(id));
+            }
+            return Ok("");
+        }
         [Route("BasicEmail")]
         [HttpPost]
         public ActionResult BasicEmail([FromBody] JsonElement json)
