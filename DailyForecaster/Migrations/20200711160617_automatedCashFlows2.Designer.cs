@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200711160617_automatedCashFlows2")]
+    partial class automatedCashFlows2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -183,6 +185,9 @@ namespace DailyForecaster.Migrations
                     b.Property<DateTime>("DateCaptured")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("ManualCashFlowId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("SourceOfExpense")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -198,29 +203,9 @@ namespace DailyForecaster.Migrations
 
                     b.HasIndex("CFTypeId");
 
+                    b.HasIndex("ManualCashFlowId");
+
                     b.ToTable("AutomatedCashFlows");
-                });
-
-            modelBuilder.Entity("DailyForecaster.Models.AutomatedLog", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("End")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ProcessName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Start")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("result")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AutomatedLog");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.Budget", b =>
@@ -319,12 +304,6 @@ namespace DailyForecaster.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("YodleeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("YodleeSGId")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -487,9 +466,6 @@ namespace DailyForecaster.Migrations
                     b.Property<double>("Amount")
                         .HasColumnType("float");
 
-                    b.Property<string>("AutomatedCashFlowId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("CFClassificationId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -529,10 +505,6 @@ namespace DailyForecaster.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AccountId");
-
-                    b.HasIndex("AutomatedCashFlowId")
-                        .IsUnique()
-                        .HasFilter("[AutomatedCashFlowId] IS NOT NULL");
 
                     b.HasIndex("CFClassificationId");
 
@@ -771,6 +743,10 @@ namespace DailyForecaster.Migrations
                         .HasForeignKey("CFTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("DailyForecaster.Models.ManualCashFlow", "ManualCashFlow")
+                        .WithMany()
+                        .HasForeignKey("ManualCashFlowId");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.Budget", b =>
@@ -825,10 +801,6 @@ namespace DailyForecaster.Migrations
                         .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("DailyForecaster.Models.AutomatedCashFlow", "AutomatedCashFlow")
-                        .WithOne("ManualCashFlow")
-                        .HasForeignKey("DailyForecaster.Models.ManualCashFlow", "AutomatedCashFlowId");
 
                     b.HasOne("DailyForecaster.Models.CFClassification", "CFClassification")
                         .WithMany("ManualCashFlows")

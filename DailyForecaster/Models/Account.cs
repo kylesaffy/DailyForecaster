@@ -33,12 +33,15 @@ namespace DailyForecaster.Models
 		[ForeignKey("AccountType")]
 		public string AccountTypeId { get; set; }
 		public ICollection<ManualCashFlow> ManualCashFlows { get; set; }
+		public ICollection<AutomatedCashFlow> AutomatedCashFlows { get; set; }
 		public AccountType AccountType { get; set; }
-		public List<ReportedTransaction> ReportedTransactions { get; set; }
-		public List<ReportedTransaction> GetTransactions()
+		public virtual List<ReportedTransaction> ReportedTransactions { get; set; }
+		public string AccountIdentifier { get; set; }
+		public int YodleeId { get; set; }
+		public void GetTransactions()
 		{
 			ReportedTransaction reportedTransaction = new ReportedTransaction();
-			return reportedTransaction.GetTransactions(this.Id);
+			this.ReportedTransactions = reportedTransaction.GetTransactions(this.Id);
 		}
 		public Account GetAccount(string id)
 		{
@@ -50,6 +53,30 @@ namespace DailyForecaster.Models
 			account.GetTransactions();
 			return account;
 		}
+		public async Task<bool> UpdateAccounts(string collectionsId,List<Account> accounts)
+		{
+			YodleeAccountModel model = new YodleeAccountModel();
+			List<YodleeAccountLevel> yodleeAccounts = await model.GetYodleeAccounts(collectionsId);
+			try
+			{
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					foreach (Account item in accounts.Where(x=>x.YodleeId == 0 && x.AccountIdentifier != null))
+					{
+							item.YodleeId = yodleeAccounts.Where(x => x.accountNumber == item.AccountIdentifier).Select(x => x.id).FirstOrDefault();
+							_context.Entry(item).State = EntityState.Modified;
+					}
+					_context.SaveChanges();	
+				}
+				return true;
+			}
+			catch(Exception e)
+			{
+				ExceptionCatcher catcher = new ExceptionCatcher();
+				catcher.Catch(e.Message);
+				return false;
+			}
+		}
 		public List<Account> GetAccounts(string collectionsId)
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())
@@ -59,6 +86,7 @@ namespace DailyForecaster.Models
 				{
 					item.Institution = _context.Institution.Find(item.InstitutionId);
 					item.AccountType = _context.AccountType.Find(item.AccountTypeId);
+					item.GetTransactions();
 					item.AccountType.Accounts = null;
 				}
 				return accounts;
@@ -75,6 +103,7 @@ namespace DailyForecaster.Models
 					item.AccountType = _context.AccountType.Find(item.AccountTypeId);
 					item.AccountType.Accounts = null;
 					item.ManualCashFlows = _context.ManualCashFlows.Where(x => x.AccountId == item.Id).OrderByDescending(x=>x.DateBooked).Take(10).ToList();
+					item.AutomatedCashFlows = _context.AutomatedCashFlows.Where(x => x.AccountId == item.Id).OrderByDescending(x=>x.DateBooked).Take(30).ToList();
 					foreach(ManualCashFlow flow in item.ManualCashFlows)
 					{
 						flow.CFClassification = _context.CFClassifications.Find(flow.CFClassificationId);
@@ -92,7 +121,7 @@ namespace DailyForecaster.Models
 		public ReturnModel AddAccount(Account account)
 		{
 			ReturnModel model = new ReturnModel();
-			account.Id = Guid.NewGuid().ToString();
+			account.AccountIdentifier = "xxxx" + account.AccountIdentifier;
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
 				if (account.Id == null)
@@ -102,7 +131,9 @@ namespace DailyForecaster.Models
 				}
 				else
 				{
-					_context.Entry(account).State = EntityState.Modified;
+					Account account1 = _context.Account.Find(account.Id);
+					account1.Update(account);
+					_context.Entry(account1).State = EntityState.Modified;
 				}
 				try
 				{
@@ -113,9 +144,26 @@ namespace DailyForecaster.Models
 				{
 					model.result = false;
 					model.returnStr = e.Message;
+					ExceptionCatcher catcher = new ExceptionCatcher();
+					catcher.Catch(e.Message);
 				}
 			}
 			return model;;
+		}
+		private void Update(Account account)
+		{
+			this.AccountLimit = account.AccountLimit;
+			this.AccountTypeId = account.AccountTypeId;
+			this.Available = account.Available;
+			this.CreditRate = account.CreditRate;
+			this.DebitRate = account.DebitRate;
+			this.Floating = account.Floating;
+			this.FloatingType = account.FloatingType;
+			this.InstitutionId = account.InstitutionId;
+			this.MonthlyFee = account.MonthlyFee;
+			this.Name = account.Name;
+			this.NetAmount = account.NetAmount;
+			this.AccountIdentifier = account.AccountIdentifier;
 		}
 	}
 }

@@ -18,6 +18,8 @@ namespace DailyForecaster.Models
 		[Required]
 		public string Name { get; set; }
 		public string ClientReference { get; set; }
+		public int YodleeId { get; set; }
+		public int YodleeSGId { get; set; }
 		public virtual ICollection<BudgetTransaction> BudgetTransactions { get; set; }
 		public List<CFType> GetCFList(string collectionsId)
 		{

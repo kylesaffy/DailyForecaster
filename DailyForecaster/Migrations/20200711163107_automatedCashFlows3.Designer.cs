@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200711163107_automatedCashFlows3")]
+    partial class automatedCashFlows3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -201,28 +203,6 @@ namespace DailyForecaster.Migrations
                     b.ToTable("AutomatedCashFlows");
                 });
 
-            modelBuilder.Entity("DailyForecaster.Models.AutomatedLog", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("End")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ProcessName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Start")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("result")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AutomatedLog");
-                });
-
             modelBuilder.Entity("DailyForecaster.Models.Budget", b =>
                 {
                     b.Property<string>("BudgetId")
@@ -319,12 +299,6 @@ namespace DailyForecaster.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("YodleeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("YodleeSGId")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

@@ -8,6 +8,7 @@ namespace DailyForecaster.Models
 {
 	public class ReportedTransaction
 	{
+		public string Id { get; set; }
 		public CFType CFType { get; set; }
 		[Required]
 		public CFClassification CFClassification { get; set; }

@@ -1,4 +1,5 @@
 ﻿using DailyForecaster.Controllers;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -14,7 +15,7 @@ namespace DailyForecaster.Models
 		private static string FromEmail = "admin@moneyminders.co.za";
 		private static string SMTPServer = "mail.moneyminders.co.za";
 		private static int port = 587;
-		private static string password = ",3{hE]&WRP*5";
+		private static string password = "j^NBx+pqX@BD";
 		public string Body { get; set; }
 		public string To { get; set; }
 		public string Subject { get; set; }
@@ -47,15 +48,50 @@ namespace DailyForecaster.Models
 			message.Subject = Subject;
 			message.IsBodyHtml = true;
 			message.SubjectEncoding = System.Text.Encoding.UTF8;
+			EmailStore emailStore = new EmailStore() {
+				Body = Message,
+				To = to.ToString(),
+				From = from.ToString(),
+				EmailDate = DateTime.Now,
+				EmailStoreId = Guid.NewGuid().ToString(),
+				Subject = Subject
+			};
+			emailStore.Save();
 			try
-			{
+			{						 
 				client.Send(message);
 			}
 			catch(SmtpException e)
 			{
-				string error = e.Message;
+				ExceptionCatcher catcher = new ExceptionCatcher();
+				catcher.Catch(e.Message);
 			}
 		}
 		
+	}
+	public class EmailStore
+	{
+		public string EmailStoreId { get; set; }
+		public string To { get; set; }
+		public string From { get; set; }
+		public string Body { get; set; }
+		public DateTime EmailDate { get; set; }
+		public string Subject { get; set; }
+		public void Save()
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.EmailStore.Add(this);
+				try
+				{
+					_context.SaveChanges();
+				}
+				catch(Exception e)
+				{
+					ExceptionCatcher catcher = new ExceptionCatcher();
+					catcher.Catch(e.Message);
+				}
+			}
+		}
 	}
 }

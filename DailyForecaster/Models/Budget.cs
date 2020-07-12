@@ -258,7 +258,8 @@ namespace DailyForecaster.Models
 		}
 		public Budget GetBudget(string collectionsId)
 		{
-			int check = BudgetCount(collectionsId);
+			Collections collection = new Collections(collectionsId);
+			int check = collection.BudgetCount();
 			Budget budget = new Budget();
 			switch (check)
 			{
@@ -388,16 +389,7 @@ namespace DailyForecaster.Models
 				_context.SaveChanges();
 			}
 		}
-		public int BudgetCount(string collectionsId)
-		{
-			Collections collections = new Collections(collectionsId);
-			int count = collections.Budgets.Count();
-			if(count > 2)
-			{
-				count = 2;
-			}
-			return count;
-		}
+		
 		private Budget getSingle(string collectionsId)
 		{
 			Collections collections = new Collections(collectionsId);

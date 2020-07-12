@@ -13,11 +13,6 @@ namespace DailyForecaster.Models
 	/// </summary>
 	public class ManualCashFlow
 	{
-		private readonly FinPlannerContext _context;
-		public ManualCashFlow(FinPlannerContext context)
-		{
-			_context = context;
-		}
 		[Required]
 		public string Id { get; set; }
 		[Required]
@@ -46,6 +41,9 @@ namespace DailyForecaster.Models
 		public Account Account { get; set; }
 		[Required]
 		public string AccountId {get;set;}
+		[ForeignKey("AutomatedCashFlowId")]
+		public AutomatedCashFlow AutomatedCashFlow { get; set; }
+		public string AutomatedCashFlowId { get; set; }
 		public bool isDeleted { get; set; }
 		public ManualCashFlow(ManualCashFlow flow)
 		{
@@ -78,11 +76,7 @@ namespace DailyForecaster.Models
 			UserId = userID;
 			isDeleted = false;
 			ExpenseLocation = el;
-		}		   		
-		public ManualCashFlow(string id)
-		{
-			_context.ManualCashFlows.Find(id);
-		}
+		}		  		
 		public List<ManualCashFlow> GetManualCashFlows(string AccId)
 		{
 			using (FinPlannerContext _context = new FinPlannerContext())

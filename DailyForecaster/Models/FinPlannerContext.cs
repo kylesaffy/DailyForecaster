@@ -31,6 +31,10 @@ namespace DailyForecaster.Models
         public DbSet<Notes> Notes { get; set; }
         public DbSet<AccountChange> AccountChange { get; set; }
         public DbSet<ClickTracker> ClickTracker { get; set; }
+        public DbSet<ExceptionCatcher> ExceptionCatcher { get; set; }
+        public DbSet<YodleeModel> YodleeModel { get; set; }
+        public DbSet<EmailStore> EmailStore { get; set; }
+        public DbSet<AutomatedLog> AutomatedLog { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()

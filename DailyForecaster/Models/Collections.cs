@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Composition;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using DailyForecaster.Controllers;
 using DailyForecaster.Models;
@@ -29,7 +30,7 @@ namespace DailyForecaster.Models
 		public ICollection<Account> Accounts { get; set; }
 		public ICollection<Simulation> Simualtions { get; set; }
 		public Collections() { }
-		private Collections(string durationType,string name,string userId, int resetDate)
+		private Collections(string durationType, string name, string userId, int resetDate)
 		{
 			CollectionsId = Guid.NewGuid().ToString();
 			Name = name;
@@ -48,6 +49,12 @@ namespace DailyForecaster.Models
 				col = _context.Collections.Find(collectionsId);
 				budgets = _context.Budget.Where(x => x.CollectionId == collectionsId).ToList();
 			}
+			BudgetTransaction transaction = new BudgetTransaction();
+			foreach (Budget item in budgets)
+			{
+				item.Collection = null;
+				item.BudgetTransactions = transaction.GetBudgetTransactions(item.BudgetId);
+			}
 			CollectionsId = collectionsId;
 			Name = col.Name;
 			Accounts = col.Accounts;
@@ -58,34 +65,63 @@ namespace DailyForecaster.Models
 			Budgets = budgets;
 			ResetDay = col.ResetDay;
 		}
-		public List<Collections> GetCollections(string userId,string type)
+		public int BudgetCount()
 		{
-			AspNetUsers user = new AspNetUsers();
-			userId = user.getUserId(userId);
-			List<Collections> collections = new List<Collections>();
-			using (FinPlannerContext _context = new FinPlannerContext())
+			int count = this.Budgets.Count();
+			if (count > 2)
 			{
-				List<string> collectonIds = _context.UserCollectionMapping
-					.Where(x => x.Id == userId)
-					.Select(x => x.CollectionsId)
-					.ToList();
-				foreach (string item in collectonIds)
-				{
-					switch (type)
-					{
-						case "Accounts":
-							collections.Add(new Collections(_context.Collections.Find(item)));
-							break;
-						case "TransactionList":
-							collections.Add(new Collections(_context.Collections.Find(item)));
-							break;
-						default:
-							collections.Add(_context.Collections.Find(item));
-							break;
-					}			 						
-				}
+				count = 2;
 			}
-			return collections;
+			return count;
+
+		}
+		public List<Collections> GetCollections(string userId, string type)
+		{
+			if (userId != "")
+			{
+				AspNetUsers user = new AspNetUsers();
+				userId = user.getUserId(userId);
+				List<Collections> collections = new List<Collections>();
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					List<string> collectonIds = _context.UserCollectionMapping
+						.Where(x => x.Id == userId)
+						.Select(x => x.CollectionsId)
+						.ToList();
+					foreach (string item in collectonIds)
+					{
+						switch (type)
+						{
+							case "Accounts":
+								collections.Add(new Collections(_context.Collections.Find(item)));
+								break;
+							case "TransactionList":
+								collections.Add(new Collections(_context.Collections.Find(item)));
+								break;
+							default:
+								collections.Add(_context.Collections.Find(item));
+								break;
+						}
+					}
+				}
+				return collections;
+			}
+			else
+			{
+				List<Collections> collections = new List<Collections>();
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					List<string> collectonIds = _context.UserCollectionMapping
+						.Select(x => x.CollectionsId)
+						.Distinct()
+						.ToList();
+					foreach (string item in collectonIds)
+					{
+						collections.Add(new Collections(_context.Collections.Find(item)));
+					}
+				}
+				return collections;
+			}
 		}
 		public Collections(Collections col)
 		{
@@ -100,18 +136,18 @@ namespace DailyForecaster.Models
 		}
 		public double SumAmount()
 		{
-			foreach(Account acc in Accounts)
+			foreach (Account acc in Accounts)
 			{
-				TotalAmount += acc.NetAmount; 
+				TotalAmount += acc.NetAmount;
 			}
 			return TotalAmount;
 		}
 		public ReturnModel CreateCollection(NewCollectionsObj obj)
 		{
-			Collections col = new Collections(obj.durationType, obj.name,obj.User, obj.resetDate);
-			UserCollectionMapping mapping = new UserCollectionMapping(col.CollectionsId,obj.User);
+			Collections col = new Collections(obj.durationType, obj.name, obj.User, obj.resetDate);
+			UserCollectionMapping mapping = new UserCollectionMapping(col.CollectionsId, obj.User);
 			ReturnModel returnModel = new ReturnModel();
-			if(mapping.Id == "999")
+			if (mapping.Id == "999")
 			{
 				returnModel.result = false;
 				return returnModel;
@@ -134,7 +170,48 @@ namespace DailyForecaster.Models
 				return returnModel;
 			}
 		}
-		
+		public bool CollectionCycle()
+		{
+			List<Collections> collections = GetCollections("", "");
+			DateTime date = DateTime.Now.Date;
+			try
+			{
+				foreach (Collections item in collections)
+				{
+					Budget budget = item.Budgets.OrderByDescending(x => x.EndDate).FirstOrDefault();
+					if (budget.EndDate == date)
+					{
+						budget.Duplicate(item);
+					}
+				}
+				return true;
+			}
+			catch (Exception e)
+			{
+				ExceptionCatcher exception = new ExceptionCatcher();
+				exception.Catch(e.Message);
+				return false;
+			}
+		}
+		public async Task<bool> YodleeAccountConnect()
+		{
+			List<Collections> collections = GetCollections("", "");
+			Account account = new Account();
+			bool result = true;
+			foreach(Collections item in collections.Where(x=>x.Accounts.Any()))
+			{
+				if (item.Accounts.Where(x => x.AccountIdentifier != null).Any())
+				{
+					result = await account.UpdateAccounts(item.CollectionsId, item.Accounts.ToList());
+					if (!result)
+					{
+						ExceptionCatcher catcher = new ExceptionCatcher();
+						catcher.Catch("Collestions Id: " + item.CollectionsId);
+					}
+				}
+			}
+			return true;
+		}
 		
 	}
 	public class NewCollectionsObj

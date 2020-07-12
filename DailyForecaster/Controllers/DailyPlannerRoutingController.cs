@@ -11,15 +11,18 @@ using Microsoft.AspNetCore.Cors;
 using Newtonsoft.Json;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.Extensions.Primitives;
+using System.Net.Http;
 
 namespace DailyForecaster.Controllers
 {
-    
     [Route("[controller]")]
     [EnableCors("AllowOrigin")]
     [ApiController]
     public class DailyPlannerRoutingController : ControllerBase
     {
+        private static string googleAPI = "https://www.google.com/recaptcha/api/siteverify";
+        private static string reCAPTCHAsecret = "6LeYfa4ZAAAAAOnPNDisNyX18flb1MSZvs8xyoTL";
         [Route("AccountDetails")]
         [HttpGet]
         public ActionResult AccountDetails(string id)
@@ -308,7 +311,7 @@ namespace DailyForecaster.Controllers
             {
                 new ClickTracker("GetCFType", true, false, "collectionsId " + collectionsId, auth.Identity.Name);
                 CFType cf = new CFType();
-                return Ok(cf.GetCFList(collectionsId));
+                return Ok(cf.GetCFList(collectionsId).Where(x=>x.Id != "39a1d903-f4e3-4e4a-986a-604bd8dff20e"));
             }
             return Ok("");
         }
@@ -330,13 +333,28 @@ namespace DailyForecaster.Controllers
         [Route("Create")]
         [HttpPost]
         //[ResponseType(typeof(ManualCashFlow))]
-        public ActionResult Create()
+        public async Task<ActionResult> Create()
         {
-
-            //Collections collections = new Collections();
-            //string blobString = collections.Account.Institution.BlobString;
-            //double total = numbers;
-            return Ok(new { Name = "Success" });
+            //YodleeModel model = new YodleeModel();
+            //ReturnModel returnModel = await model.Register();
+            //return Ok(returnModel);
+            return Ok("Sucess");
+        }
+        [Route("getYodleeToken")]
+        [HttpGet]
+        public async Task<ActionResult> getYodleeToken(string collectionsId)
+		{
+            string authHeader = this.HttpContext.Request.Headers["Authorization"];
+            TokenModel tokenModel = new TokenModel();
+            ClaimsPrincipal auth = tokenModel.GetPrincipal(authHeader);
+            if (auth.Identity.IsAuthenticated)
+            {
+                new ClickTracker("GetYodleeToken", true, false, collectionsId, auth.Identity.Name);
+                YodleeModel yodleeModel = new YodleeModel();
+                string token = await yodleeModel.getToken(collectionsId, auth.Identity.Name);
+                return Ok(token);
+            }
+            return Ok("");
         }
         [Route("BudgetNew")]
         [HttpPost]
@@ -408,10 +426,7 @@ namespace DailyForecaster.Controllers
             if (auth.Identity.IsAuthenticated)
             {
                 new ClickTracker("BudgetEdit", true, false, "collectionsId " + collectionsId, auth.Identity.Name);
-                Budget budget = new Budget();
                 Collections collections = new Collections(collectionsId);
-                collections.Budgets = new List<Budget>();
-                collections.Budgets.Add(budget.GetBudget(collectionsId));
                 return Ok(collections);
             }
             return Ok("");
@@ -453,6 +468,21 @@ namespace DailyForecaster.Controllers
             //    return Ok();
             //}
         }
+        [Route("BotCheck")]
+        [HttpPost]
+        public async Task<ActionResult> BotCheck(string token)
+		{
+            HttpClient client = new HttpClient();
+            HttpResponseMessage response = await client.GetAsync(googleAPI + "?secret=" + reCAPTCHAsecret + "&response=" + token);
+            return Ok(await response.Content.ReadAsStringAsync());
+		}
+        [Route("GetUser")]
+        [HttpGet]
+        public ActionResult GetUser(string userId)
+		{
+            AspNetUsers users = new AspNetUsers();
+            return Ok(users.getUserId(userId));
+		}
     }
 	public class ReturnModel {
         public bool result { get; set; }
