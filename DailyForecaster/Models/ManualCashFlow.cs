@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using DailyForecaster.Controllers;
 using DailyForecaster.Models;
+using Microsoft.EntityFrameworkCore;
+
 namespace DailyForecaster.Models
 {
 	/// <summary>
@@ -77,11 +79,28 @@ namespace DailyForecaster.Models
 			isDeleted = false;
 			ExpenseLocation = el;
 		}		  		
-		public List<ManualCashFlow> GetManualCashFlows(string AccId)
+		public List<ManualCashFlow> GetManualCashFlows(string AccId,int count = 10)
 		{
 			using (FinPlannerContext _context = new FinPlannerContext())
 			{
-				return _context.ManualCashFlows.Where(x => x.AccountId == AccId).ToList();
+				return _context
+					.ManualCashFlows
+					.Where(x => x.AccountId == AccId)
+					.OrderByDescending(x=>x.DateBooked)
+					.Take(count)
+					.ToList();
+			}
+		}
+		public List<ManualCashFlow> GetManualCahFlowsUnseen(List<string> accountsStr)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				List<ManualCashFlow> cfs = _context
+					.ManualCashFlows
+					.Where(man => accountsStr.Contains(man.AccountId))
+					.Where(x=>x.AutomatedCashFlowId == null)
+					.ToList();
+				return cfs;
 			}
 		}
 		public List<ManualCashFlow> GetManualCashFlows(string accountId, DateTime startDate, DateTime endDate)
@@ -94,6 +113,24 @@ namespace DailyForecaster.Models
 		public ManualCashFlow()
 		{
 
+		}
+		public void updateTransaction(string manId,string autoId)
+		{
+			try
+			{
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					ManualCashFlow man = _context.ManualCashFlows.Find(manId);
+					man.AutomatedCashFlowId = autoId;
+					_context.Entry(man).State = EntityState.Modified;
+					_context.SaveChanges();
+				}
+			}
+			catch(Exception e)
+			{
+				ExceptionCatcher exceptionCatcher = new ExceptionCatcher();
+				exceptionCatcher.Catch(e.Message);
+			}
 		}
 		public ReturnModel AddTransfer(TransferObject obj)
 		{

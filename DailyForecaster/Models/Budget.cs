@@ -24,6 +24,43 @@ namespace DailyForecaster.Models
 		public Collections Collection { get; set; }
 		public ICollection<BudgetTransaction> BudgetTransactions { get; set; }
 		public Budget() { }
+		public List<Budget> NewBudget(Collections collection)
+		{
+			List<Budget> budgets = new List<Budget>();
+			DateTime now = DateTime.Now;
+			DateTime start = DateTime.Now;
+			DateTime end = DateTime.Now;
+			if (collection.DurationType != "Day")
+			{
+				start = new DateTime(now.Year, now.Month, collection.ResetDay);
+				if (now < start)
+				{
+					switch (collection.DurationType)
+					{
+						case "Month":
+							start = start.AddMonths(-1);
+							break;
+						case "Week":
+							start = start.AddDays(-7);
+							break;
+					}
+				}
+			}
+			switch(collection.DurationType)
+			{
+				case "Month":
+					end = start.AddMonths(1);
+					break;
+				case "Week":
+					end = start.AddDays(7);
+					break;
+				default:
+					end = start.AddDays(1);
+					break;
+			}
+			budgets.Add(new Budget(collection.CollectionsId, start, end));
+			return budgets;
+		}
 		public Budget(string collectionsId, DateTime startDate, DateTime endDate)
 		{
 			BudgetId = Guid.NewGuid().ToString();
@@ -275,6 +312,16 @@ namespace DailyForecaster.Models
 			budget.Collection = null;
 			
 			return budget;
+		}
+		public List<Budget> GetBudgets(string collectionsId)
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context
+					.Budget
+					.Where(x => x.CollectionId == collectionsId)
+					.ToList();
+			}
 		}
 		private Budget FindBudget(string collectionId)
 		{

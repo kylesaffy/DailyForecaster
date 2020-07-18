@@ -21,6 +21,47 @@ namespace DailyForecaster.Models
 		public ManualCashFlow ManualCashFlow { get; set; }
 		[Required]
 		public string AccountId { get; set; }
+		public Account Account { get; set; }
+		public DateTime DateBooked { get; set; }
+		public bool Validated { get; set; }
+		public List<ReportedTransaction> GetTransactions(List<string> accountIds,int count,List<string> collectionsIds)
+		{
+			//get transaction
+			List<ManualCashFlow> manualCashFlows = new List<ManualCashFlow>();
+			List<AutomatedCashFlow> automatedCashFlows = new List<AutomatedCashFlow>();
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				manualCashFlows = _context
+					.ManualCashFlows
+					.Where(cf => accountIds.Contains(cf.AccountId))
+					.Where(x => x.AutomatedCashFlow == null)
+					.OrderByDescending(x=>x.DateBooked)
+					.Take(count)
+					.ToList();
+				automatedCashFlows = _context
+					.AutomatedCashFlows
+					.Where(cf => accountIds.Contains(cf.AccountId))
+					.OrderByDescending(x => x.DateBooked)
+					.Take(count)
+					.ToList();
+			}
+			//get type and classification lists
+			CFType type = new CFType();
+			CFClassification classification = new CFClassification();
+			List<CFType> types = type.GetCFList(collectionsIds);
+			List<CFClassification> classifications = classification.GetList();
+			//reconfigure cash flows
+			List<ReportedTransaction> transactions = new List<ReportedTransaction>();
+			foreach(AutomatedCashFlow item in automatedCashFlows)
+			{
+				transactions.Add(new ReportedTransaction(item,types,classifications));
+			}
+			foreach (ManualCashFlow item in manualCashFlows)
+			{
+				transactions.Add(new ReportedTransaction(item, types, classifications));
+			}
+			return transactions;
+		}
 		public List<ReportedTransaction> GetTransactions(Budget budget)
 		{
 			DateTime startDate = budget.StartDate.AddDays(-1);
@@ -34,21 +75,14 @@ namespace DailyForecaster.Models
 				ManualCashFlow manualCashFlow = new ManualCashFlow();					   				
 				List<AutomatedCashFlow> auto = automatedCashFlows.GetAutomatedCashFlows(item.Id,startDate,endDate);
 				List<ManualCashFlow> manual = manualCashFlow.GetManualCashFlows(item.Id,startDate,endDate);
+				manual = manual.Where(x => x.AutomatedCashFlowId == null).ToList();
 				foreach (AutomatedCashFlow automated in auto)
-				{
-					foreach (ManualCashFlow manual1 in manual)
-					{
-						if (automated.Amount == manual1.Amount && automated.AccountId == manual1.AccountId && (automated.DateBooked == manual1.DateBooked || manual1.DateBooked < automated.DateBooked.AddDays(8)))
-						{
-							manual.Remove(manual1);
-							break;
-						}
-					}
-					reportedTransactions.Add(new ReportedTransaction(automated));
+				{			 					
+					reportedTransactions.Add(new ReportedTransaction(automated,item));
 				}
 				foreach (ManualCashFlow man in manual)
 				{
-					reportedTransactions.Add(new ReportedTransaction(man));
+					reportedTransactions.Add(new ReportedTransaction(man,item));
 				} 				
 			}
 			return reportedTransactions;
@@ -58,41 +92,70 @@ namespace DailyForecaster.Models
 			AutomatedCashFlow automatedCashFlows = new AutomatedCashFlow();
 			ManualCashFlow manualCashFlow = new ManualCashFlow();
 			List<ReportedTransaction> reportedTransactions = new List<ReportedTransaction>();
-			List<AutomatedCashFlow> auto = automatedCashFlows.GetAutomatedCashFlows(AccountId);
+			List<AutomatedCashFlow> auto = automatedCashFlows.GetAutomatedCashFlows(AccountId,10000);
+			Account account = new Account();
+			account = account.GetAccount(AccountId,false);
 			List<ManualCashFlow> manual = manualCashFlow.GetManualCashFlows(AccountId);
-			foreach(AutomatedCashFlow automated in auto)
+			manual = manual.Where(x => x.AutomatedCashFlowId == null).ToList();
+			foreach (AutomatedCashFlow automated in auto)
 			{
-				foreach(ManualCashFlow manual1 in manual)
-				{
-					if(automated.Amount == manual1.Amount && automated.AccountId == manual1.AccountId && (automated.DateBooked == manual1.DateBooked || manual1.DateBooked < automated.DateBooked.AddDays(8) ))
-					{
-						manual.Remove(manual1);
-						break;
-					}
-				}
-				reportedTransactions.Add(new ReportedTransaction(automated));
+				reportedTransactions.Add(new ReportedTransaction(automated,account));
 			}
-			foreach(ManualCashFlow man in manual)
+			foreach (ManualCashFlow man in manual)
 			{
-				reportedTransactions.Add(new ReportedTransaction(man));
+				reportedTransactions.Add(new ReportedTransaction(man,account));
 			}
 			return reportedTransactions;
 		}
-		private ReportedTransaction(AutomatedCashFlow auto)
+		private ReportedTransaction(AutomatedCashFlow auto, Account account)
 		{
-			CFType = auto.CFType;
-			CFClassification = auto.CFClassification;
+			CFType = new CFType(auto.CFTypeId);
+			CFClassification = new CFClassification(auto.CFClassificationId);
 			Amount = auto.Amount;
 			DateCaptured = auto.DateCaptured;
 			SourceOfExpense = auto.SourceOfExpense;
+			Account = account;
+			Account.ManualCashFlows = null;
+			Account.AutomatedCashFlows = null;
+			DateBooked = auto.DateBooked;
+			Validated = auto.Validated;
+
 		}
-		private ReportedTransaction(ManualCashFlow manual)
+		private ReportedTransaction(AutomatedCashFlow auto,List<CFType> types,List<CFClassification> classifications)
+		{
+			CFType = types.Where(x=>x.Id == auto.CFTypeId).FirstOrDefault();
+			CFClassification = classifications.Where(x => x.Id == auto.CFClassificationId).FirstOrDefault();
+			Amount = auto.Amount;
+			DateCaptured = auto.DateCaptured;
+			SourceOfExpense = auto.SourceOfExpense;
+			AccountId = auto.AccountId;
+			DateBooked = auto.DateBooked;
+			Validated = auto.Validated;
+
+		}
+		private ReportedTransaction(ManualCashFlow manual, List<CFType> types, List<CFClassification> classifications)
+		{
+			CFType = types.Where(x => x.Id == manual.CFTypeId).FirstOrDefault();
+			CFClassification = classifications.Where(x => x.Id == manual.CFClassificationId).FirstOrDefault();
+			Amount = manual.Amount;
+			DateCaptured = manual.DateCaptured;
+			SourceOfExpense = manual.SourceOfExpense;
+			AccountId = manual.AccountId;
+			DateBooked = manual.DateBooked;
+			Validated = true;
+		}
+		private ReportedTransaction(ManualCashFlow manual, Account account)
 		{
 			CFType = new CFType(manual.CFTypeId);
 			CFClassification = new CFClassification(manual.CFClassificationId);
 			Amount = manual.Amount;
 			DateCaptured = manual.DateCaptured;
 			SourceOfExpense = manual.SourceOfExpense;
+			Account = account;
+			Account.ManualCashFlows = null;
+			Account.AutomatedCashFlows = null;
+			DateBooked = manual.DateBooked;
+			Validated = true;
 		}
 		public ReportedTransaction() { }
 	}

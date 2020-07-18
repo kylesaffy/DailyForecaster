@@ -28,6 +28,22 @@ namespace DailyForecaster.Models
 				return _context.CFTypes.Where(x=>x.ClientReference == collectionsId || x.Custom == false).OrderBy(x=>x.Name).ToList();
 			}
 		}
+		public List<CFType> GetCFList(List<string> collectionsIds)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				List<CFType> type = _context
+					.CFTypes
+					.Where(x =>	x.Custom == false)
+					.ToList();
+				type.AddRange(_context
+					.CFTypes
+					.Where(t => collectionsIds.Contains(t.ClientReference))
+					.ToList()
+					);
+				return type;
+			}
+		}
 		public CFType() { }
 		public CFType(string id)
 		{

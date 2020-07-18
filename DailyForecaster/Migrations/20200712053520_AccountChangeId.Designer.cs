@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200712053520_AccountChangeId")]
+    partial class AccountChangeId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -191,9 +193,6 @@ namespace DailyForecaster.Migrations
                     b.Property<string>("SourceOfExpense")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("Validated")
-                        .HasColumnType("bit");
 
                     b.Property<int>("YodleeId")
                         .HasColumnType("int");
@@ -610,9 +609,6 @@ namespace DailyForecaster.Migrations
                     b.Property<string>("CFTypeId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime>("DateBooked")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime>("DateCaptured")
                         .HasColumnType("datetime2");
 
@@ -622,9 +618,6 @@ namespace DailyForecaster.Migrations
                     b.Property<string>("SourceOfExpense")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("Validated")
-                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
@@ -872,7 +865,7 @@ namespace DailyForecaster.Migrations
 
             modelBuilder.Entity("DailyForecaster.Models.ReportedTransaction", b =>
                 {
-                    b.HasOne("DailyForecaster.Models.Account", "Account")
+                    b.HasOne("DailyForecaster.Models.Account", null)
                         .WithMany("ReportedTransactions")
                         .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)

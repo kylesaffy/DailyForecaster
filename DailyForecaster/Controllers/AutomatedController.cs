@@ -18,22 +18,37 @@ namespace DailyForecaster.Controllers
 		[HttpGet]
 		public async Task<ActionResult> UpdateAccounts()
 		{
+			DateTime start = DateTime.Now;
 			Collections collections = new Collections();
-			return Ok(await collections.YodleeAccountConnect());
+			bool result = await collections.YodleeAccountConnect();
+			DateTime end = DateTime.Now;
+			AutomatedLog log = new AutomatedLog();
+			log.SaveLog(start, end, "UpdateAccounts", result);
+			return Ok(result);
 		}
 		[Route("BudgetDuplicate")]
 		[HttpGet]
 		public ActionResult BudgetDuplicate()
 		{
+			DateTime start = DateTime.Now;
 			Collections collections = new Collections();
-			return Ok(collections.CollectionCycle());
+			bool result = collections.CollectionCycle();
+			DateTime end = DateTime.Now;
+			AutomatedLog log = new AutomatedLog();
+			log.SaveLog(start, end, "BudgetDuplicate", result);
+			return Ok(result);
 		}
 		[Route("UpdateTransactions")]
 		[HttpGet]
 		public async Task<ActionResult> UpdateTransactions()
 		{
+			DateTime start = DateTime.Now;
 			AutomatedCashFlow automatedCashFlow = new AutomatedCashFlow();
-			return Ok(await automatedCashFlow.UpdateTrandactions());
+			bool result = await automatedCashFlow.UpdateTransactions();
+			DateTime end = DateTime.Now;
+			AutomatedLog log = new AutomatedLog();
+			log.SaveLog(start, end, "UpdateTransactions", result);
+			return Ok(result);
 		}
 	}
 }

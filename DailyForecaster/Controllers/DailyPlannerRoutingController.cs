@@ -34,16 +34,16 @@ namespace DailyForecaster.Controllers
             {
                 new ClickTracker("AccountDetails", true, false, "AccountId " + id, auth.Identity.Name);
                 Account account = new Account();
-                return Ok(account.GetAccount(id));
+                return Ok(account.GetAccount(id,true));
             }
             return Ok("");
         }
         [Route("BasicEmail")]
         [HttpPost]
-        public ActionResult BasicEmail([FromBody] JsonElement json)
+        public ActionResult BasicEmail([FromBody] JsonElement json, string Name)
 		{
             EmailFunction email = JsonConvert.DeserializeObject<EmailFunction>(json.GetRawText());
-            return Ok(email.SendEmail());
+            return Ok(email.SendEmail(Name));
 		}
         [Route("SafeToSpend")]
         [HttpGet]
@@ -94,34 +94,15 @@ namespace DailyForecaster.Controllers
                 new ClickTracker("GetIndex", true, false, "userId " + users.getUserId(userId), auth.Identity.Name);
                 Collections collection = new Collections();
                 List<Collections> collections = collection.GetCollections(userId, "TransactionList");
-                List<ManualCashFlow> flows = new List<ManualCashFlow>();
-                foreach (Collections item in collections)
-                {
-                    if (item.Accounts != null)
-                    {
-                        foreach (Account acc in item.Accounts)
-                        {
-                            flows.AddRange(acc.ManualCashFlows);
-                        }
-                    }
-                }
-                Budget budget = new Budget();
-                DateTime currentDate = DateTime.Now;
-                //foreach (Collections item in collections)
-                //{
-                //    if (budget.BudgetCount(item.CollectionsId) > 0)
-                //    {
-                //        if (budget.DateCheck2(item.CollectionsId, currentDate))
-                //        {
-                //            budget.Duplicate(item);
-                //        }
-                //    }
-                //}
-                foreach (ManualCashFlow item in flows)
-                {
-                    item.Account.ManualCashFlows = null;
-                    item.Account.Collections.Accounts = null;
-                }
+                List<ReportedTransaction> flows = new List<ReportedTransaction>();
+                ReportedTransaction reportedTransaction = new ReportedTransaction();
+                foreach(Collections item in collections)
+				{
+                    foreach(Account acc in item.Accounts)
+					{
+                        flows.AddRange(reportedTransaction.GetTransactions(acc.Id));
+					}
+				}
                 return Ok(flows);
             }
             return Ok("");
@@ -143,7 +124,7 @@ namespace DailyForecaster.Controllers
         }
         [Route("GetCollections")]
         [HttpGet]
-        public ActionResult GetCollections(string userId, string type)
+        public ActionResult GetCollections(string type)
         {
             string authHeader = this.HttpContext.Request.Headers["Authorization"];
             TokenModel tokenModel = new TokenModel();
@@ -151,11 +132,11 @@ namespace DailyForecaster.Controllers
             if (auth.Identity.IsAuthenticated)
             {
                 AspNetUsers users = new AspNetUsers();
-                new ClickTracker("GetCollections", true, false, "userId " + users.getUserId(userId) + " type " + type, auth.Identity.Name);
-                if (type == "Budget")
+                new ClickTracker("GetCollections", true, false, "userId " + users.getUserId(auth.Identity.Name) + " type " + type, auth.Identity.Name);
+                if (type == "Index")
                 {
                     Collections collection = new Collections();
-                    List<Collections> list = collection.GetCollections(userId, type);
+                    List<Collections> list = collection.GetCollections(auth.Identity.Name, type);
                     return Ok(list);
                 }
                 else if (type == "Transactions")
@@ -476,13 +457,121 @@ namespace DailyForecaster.Controllers
             HttpResponseMessage response = await client.GetAsync(googleAPI + "?secret=" + reCAPTCHAsecret + "&response=" + token);
             return Ok(await response.Content.ReadAsStringAsync());
 		}
+        [Route("UnseenUpdate")]
+        [HttpPost]
+        public ActionResult UnseenUpdate(string manualcashflow, [FromBody] JsonElement json)
+		{
+            string authHeader = this.HttpContext.Request.Headers["Authorization"];
+            TokenModel tokenModel = new TokenModel();
+            ClaimsPrincipal auth = tokenModel.GetPrincipal(authHeader);
+            if (auth.Identity.IsAuthenticated)
+            {
+                new ClickTracker("AddAccount", false, true, json.GetRawText(), auth.Identity.Name);
+                AutomatedCashFlow automatedCashFlow = JsonConvert.DeserializeObject<AutomatedCashFlow>(json.GetRawText());
+				ReturnModel returnModel = automatedCashFlow.UpdateAutomated(manualcashflow);
+                return Ok(returnModel);
+            }
+            return Ok("");
+        }
         [Route("GetUser")]
         [HttpGet]
-        public ActionResult GetUser(string userId)
+        public ActionResult GetUser()
 		{
-            AspNetUsers users = new AspNetUsers();
-            return Ok(users.getUserId(userId));
+            string authHeader = this.HttpContext.Request.Headers["Authorization"];
+            TokenModel tokenModel = new TokenModel();
+            ClaimsPrincipal auth = tokenModel.GetPrincipal(authHeader);
+            if (auth.Identity.IsAuthenticated)
+            {
+                AspNetUsers users = new AspNetUsers();
+                return Ok(users.getUserId(auth.Identity.Name));
+            }
+            return Ok("");
 		}
+        [Route("GetUnseen")]
+        [HttpGet]
+        public ActionResult GetUnseen()
+        {
+            string authHeader = this.HttpContext.Request.Headers["Authorization"];
+            TokenModel tokenModel = new TokenModel();
+            ClaimsPrincipal auth = tokenModel.GetPrincipal(authHeader);
+            if (auth.Identity.IsAuthenticated)
+            {
+                int count = 0;
+                AspNetUsers users = new AspNetUsers();
+                string id = users.getUserId(auth.Identity.Name);
+                using (FinPlannerContext _context = new FinPlannerContext())
+                {
+                    List<string> collections = _context
+                        .UserCollectionMapping
+                        .Where(x => x.Id == id)
+                        .Select(x => x.CollectionsId)
+                        .ToList();
+                    List<string> accounts = _context
+                        .Account
+                        .Where(Acc => collections.Contains(Acc.CollectionsId))
+                        .Select(x => x.Id)
+                        .ToList();
+                    foreach (string item in accounts)
+                    {
+                        count = count + _context
+                            .AutomatedCashFlows
+                            .Where(auto => item.Contains(auto.AccountId))
+                            .Where(x => x.Validated == false)
+                            .Count();
+                    }
+                    return Ok(count);
+                }
+            }
+            return Ok("");
+        }
+        [Route("GetUnseenTransactions")]
+        [HttpGet]
+        public ActionResult GetUnseenTransactions()
+        {
+            string authHeader = this.HttpContext.Request.Headers["Authorization"];
+            TokenModel tokenModel = new TokenModel();
+            ClaimsPrincipal auth = tokenModel.GetPrincipal(authHeader);
+            if (auth.Identity.IsAuthenticated)
+            {
+                new ClickTracker("GetUnseenTransactions", true, false, "", auth.Identity.Name);
+                UnseenModel unseen = new UnseenModel(auth.Identity.Name);
+                return Ok(unseen);
+            }
+            return Ok("");
+        }
+        [Route("GetCFTypeUnseen")]
+        [HttpGet]
+        public ActionResult GetCFTypeUnseen()
+		{
+            string authHeader = this.HttpContext.Request.Headers["Authorization"];
+            TokenModel tokenModel = new TokenModel();
+            ClaimsPrincipal auth = tokenModel.GetPrincipal(authHeader);
+            if (auth.Identity.IsAuthenticated)
+            {
+                AspNetUsers users = new AspNetUsers();
+                string id = users.getUserId(auth.Identity.Name);
+                using (FinPlannerContext _context = new FinPlannerContext())
+                {
+                    List<string> collections = _context
+                            .UserCollectionMapping
+                            .Where(x => x.Id == id)
+                            .Select(x => x.CollectionsId)
+                            .ToList();
+                    List<CFType> types = new List<CFType>();
+                    foreach (string item in collections)
+                    {
+                        CFType type = new CFType();
+                        types.AddRange(type.GetCFList(item));
+                    }
+                    types = types
+                        .GroupBy(x => x.Id)
+                        .Select(g => g.First())
+                        .ToList();
+                    return Ok(types);
+                }
+            }
+            return Ok("");
+        }
     }
 	public class ReturnModel {
         public bool result { get; set; }

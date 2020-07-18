@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -43,15 +44,47 @@ namespace DailyForecaster.Models
 			ReportedTransaction reportedTransaction = new ReportedTransaction();
 			this.ReportedTransactions = reportedTransaction.GetTransactions(this.Id);
 		}
-		public Account GetAccount(string id)
+		public Account GetAccount(string id, bool transactions)
 		{
 			Account account = new Account();
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
 				account = _context.Account.Find(id);
 			}
-			account.GetTransactions();
+			if (transactions)
+			{
+				account.GetTransactions();
+			}
 			return account;
+		}
+		public List<Account> GetAccountIndex(List<string> collectionsIds,int count)
+		{
+
+			//get accounts
+			List<Account> accounts = new List<Account>();
+			//get accountTypes
+			List<AccountType> accountTypes = new List<AccountType>();
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				accounts = _context
+					.Account
+					.Where(acc => collectionsIds.Contains(acc.CollectionsId))
+					.ToList();
+				accountTypes = _context
+					.AccountType
+					.ToList();
+			}
+			//get transactions
+			ReportedTransaction reportedTransaction = new ReportedTransaction();
+			List<ReportedTransaction> transactions = reportedTransaction.GetTransactions(accounts.Select(x => x.Id).ToList(),count,collectionsIds);
+			//assign transactions
+			foreach(Account item in accounts)
+			{
+				item.ReportedTransactions = transactions.Where(x => x.AccountId == item.Id).ToList();
+				item.AccountType = accountTypes.Where(x => x.AccountTypeId == item.AccountTypeId).FirstOrDefault();
+				item.AccountType.Accounts = null;
+			}
+			return accounts;
 		}
 		public async Task<bool> UpdateAccounts(string collectionsId,List<Account> accounts)
 		{
@@ -92,21 +125,28 @@ namespace DailyForecaster.Models
 				return accounts;
 			}
 		}
-		public List<Account> GetAccountsWithCF(string collectionsId)
+		
+		public List<Account> GetAccountsWithCF(string collectionsId, int count)
 		{
 			using (FinPlannerContext _context = new FinPlannerContext())
 			{
+				List<CFClassification> classifications = _context.CFClassifications.ToList();
 				List<Account> accounts = _context.Account.Where(x => x.CollectionsId == collectionsId).ToList();
 				foreach (Account item in accounts)
 				{
 					item.Institution = _context.Institution.Find(item.InstitutionId);
 					item.AccountType = _context.AccountType.Find(item.AccountTypeId);
 					item.AccountType.Accounts = null;
-					item.ManualCashFlows = _context.ManualCashFlows.Where(x => x.AccountId == item.Id).OrderByDescending(x=>x.DateBooked).Take(10).ToList();
-					item.AutomatedCashFlows = _context.AutomatedCashFlows.Where(x => x.AccountId == item.Id).OrderByDescending(x=>x.DateBooked).Take(30).ToList();
+					item.ManualCashFlows = _context.ManualCashFlows.Where(x => x.AccountId == item.Id).OrderByDescending(x=>x.DateBooked).Take(count).ToList();
+					item.AutomatedCashFlows = _context.AutomatedCashFlows.Where(x => x.AccountId == item.Id).OrderByDescending(x=>x.DateBooked).Take(count).ToList();
 					foreach(ManualCashFlow flow in item.ManualCashFlows)
 					{
-						flow.CFClassification = _context.CFClassifications.Find(flow.CFClassificationId);
+						flow.CFClassification = classifications.Where(x => x.Id == flow.CFClassificationId).FirstOrDefault(); ;
+						flow.CFClassification.ManualCashFlows = null;
+					}
+					foreach (AutomatedCashFlow flow in item.AutomatedCashFlows)
+					{
+						flow.CFClassification = classifications.Where(x => x.Id == flow.CFClassificationId).FirstOrDefault(); ;
 						flow.CFClassification.ManualCashFlows = null;
 					}
 					item.Collections = _context.Collections.Find(item.CollectionsId);

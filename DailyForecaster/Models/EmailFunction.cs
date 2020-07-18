@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace DailyForecaster.Models
@@ -19,11 +21,11 @@ namespace DailyForecaster.Models
 		public string Body { get; set; }
 		public string To { get; set; }
 		public string Subject { get; set; }
-		public ReturnModel SendEmail()
+		public ReturnModel SendEmail(string Name)
 		{
 			try
 			{
-				SendEmail(this.To, this.Body, this.Subject);
+				SendEmail(this.To, this.Body, this.Subject,Name);
 				return new ReturnModel() { result = true };
 			}
 			catch (Exception e)
@@ -31,7 +33,7 @@ namespace DailyForecaster.Models
 				return new ReturnModel() { result = false, returnStr = e.Message };
 			}
 		}
-		private void SendEmail(string ToEmail, string Message, string Subject)
+		private void SendEmail(string ToEmail, string Message, string Subject,string Name)
 		{
 			SmtpClient client = new SmtpClient(SMTPServer, port)
 			{
@@ -44,7 +46,17 @@ namespace DailyForecaster.Models
 			MailAddress from = new MailAddress(FromEmail, "Admin", System.Text.Encoding.UTF8);
 			MailAddress to = new MailAddress(ToEmail);
 			MailMessage message = new MailMessage(from, to);
-			message.Body = Message;
+			if (Subject == "Confirm your account")
+			{
+				string text = File.ReadAllText(@"C:\Users\kyles\source\repos\kylesaffy\DailyForecaster\DailyForecaster\Components\EmailValidation.txt", Encoding.UTF8);
+				text = text.Replace("www.google.com", Message);
+				message.Body = text.Replace("[guest_name]", Name);
+
+			}
+			else
+			{
+				message.Body = Message;
+			}
 			message.Subject = Subject;
 			message.IsBodyHtml = true;
 			message.SubjectEncoding = System.Text.Encoding.UTF8;

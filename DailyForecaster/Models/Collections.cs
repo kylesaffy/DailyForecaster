@@ -49,6 +49,11 @@ namespace DailyForecaster.Models
 				col = _context.Collections.Find(collectionsId);
 				budgets = _context.Budget.Where(x => x.CollectionId == collectionsId).ToList();
 			}
+			if(budgets.Count() == 0)
+			{
+				Budget budget = new Budget();
+				budgets = budget.NewBudget(col);
+			}
 			BudgetTransaction transaction = new BudgetTransaction();
 			foreach (Budget item in budgets)
 			{
@@ -75,61 +80,123 @@ namespace DailyForecaster.Models
 			return count;
 
 		}
+		public int getUnseen(string userId)
+		{ 
+			return GetCollections(userId, "TransactionCount").Select(x=>x.Accounts.Select(y=>y.AutomatedCashFlows.Where(z=>z.Validated == false))).Count();
+		}
 		public List<Collections> GetCollections(string userId, string type)
 		{
+			List<Collections> collections = new List<Collections>();
 			if (userId != "")
 			{
 				AspNetUsers user = new AspNetUsers();
-				userId = user.getUserId(userId);
-				List<Collections> collections = new List<Collections>();
-				using (FinPlannerContext _context = new FinPlannerContext())
+				userId = user.getUserId(userId);   				
+				if (type != "Index")
 				{
-					List<string> collectonIds = _context.UserCollectionMapping
-						.Where(x => x.Id == userId)
-						.Select(x => x.CollectionsId)
-						.ToList();
-					foreach (string item in collectonIds)
+					using (FinPlannerContext _context = new FinPlannerContext())
 					{
-						switch (type)
+						List<string> collectionIds = _context.UserCollectionMapping
+							.Where(x => x.Id == userId)
+							.Select(x => x.CollectionsId)
+							.ToList();
+						foreach (string item in collectionIds)
 						{
-							case "Accounts":
-								collections.Add(new Collections(_context.Collections.Find(item)));
-								break;
-							case "TransactionList":
-								collections.Add(new Collections(_context.Collections.Find(item)));
-								break;
-							default:
-								collections.Add(_context.Collections.Find(item));
-								break;
+							switch (type)
+							{
+								case "Accounts":
+									collections.Add(new Collections(_context.Collections.Find(item), 0, type));
+									break;
+								case "TransactionList":
+									collections.Add(new Collections(_context.Collections.Find(item), 10, type));
+									break;
+								case "TransactionCount":
+									collections.Add(new Collections(_context.Collections.Find(item), 1000, type));
+									break;
+								default:
+									collections.Add(_context.Collections.Find(item));
+									break;
+							}
 						}
 					}
+					return collections;
 				}
-				return collections;
+				else
+				{
+					using(FinPlannerContext _context = new FinPlannerContext())
+					{
+						List<string> collectionsIds = _context.UserCollectionMapping
+							.Where(x => x.Id == userId)
+							.Select(x => x.CollectionsId)
+							.ToList();
+						collections.AddRange(GetCollections(collectionsIds,10));
+						return collections;
+					}
+				}
 			}
 			else
 			{
-				List<Collections> collections = new List<Collections>();
 				using (FinPlannerContext _context = new FinPlannerContext())
 				{
-					List<string> collectonIds = _context.UserCollectionMapping
-						.Select(x => x.CollectionsId)
-						.Distinct()
+					collections = _context
+						.Collections
 						.ToList();
-					foreach (string item in collectonIds)
-					{
-						collections.Add(new Collections(_context.Collections.Find(item)));
-					}
+				}
+				Account account = new Account();
+				foreach(Collections item in collections)
+				{
+					item.Accounts = account.GetAccounts(item.CollectionsId);
+				}
+				//what does this do? Who involes it?
+				Budget budget = new Budget();
+				foreach (Collections item in collections)
+				{
+					item.Budgets = budget.GetBudgets(item.CollectionsId);
 				}
 				return collections;
 			}
 		}
-		public Collections(Collections col)
+		public List<Collections> GetCollections(List<string> collectionsIds,int count)
+		{
+			//get collections
+			List<Collections> collections = new List<Collections>();
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				collections = _context
+					.Collections
+					.Where(col => collectionsIds.Contains(col.CollectionsId))
+					.ToList();
+			}
+			//get accounts
+			Account account = new Account();
+			List<Account> accounts = account.GetAccountIndex(collectionsIds,count);
+			//assign accounts
+			foreach(Collections item in collections)
+			{
+				item.Accounts = accounts.Where(x => x.CollectionsId == item.CollectionsId).ToList();
+			}
+			return collections;
+		}
+
+		public Collections(Collections col, int count,string type)
 		{
 			Account account = new Account();
-			Collections collection = col;
 			CollectionsId = col.CollectionsId;
 			Name = col.Name;
-			Accounts = account.GetAccountsWithCF(col.CollectionsId);
+			if (count > 0)
+			{
+				if (type == "Budget")
+				{
+
+				}
+				else
+				{
+					Accounts = account.GetAccountsWithCF(col.CollectionsId, count);
+				}
+			}
+			else
+			{
+				Accounts = account.GetAccounts(col.CollectionsId);
+			}
 			DurationType = col.DurationType;
 			ResetDay = col.ResetDay;
 			//collection.TotalAmount = collection.SumAmount();
@@ -179,9 +246,12 @@ namespace DailyForecaster.Models
 				foreach (Collections item in collections)
 				{
 					Budget budget = item.Budgets.OrderByDescending(x => x.EndDate).FirstOrDefault();
-					if (budget.EndDate == date)
+					if (budget != null)
 					{
-						budget.Duplicate(item);
+						if (budget.EndDate <= date)
+						{
+							budget.Duplicate(item);
+						}
 					}
 				}
 				return true;

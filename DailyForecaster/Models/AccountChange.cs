@@ -19,6 +19,9 @@ namespace DailyForecaster.Models
 		public string AutomatedCashFlowId { get; set; }
 		[ForeignKey("AutomatedCashFlowId")]
 		public AutomatedCashFlow AutomatedCashFlow { get; set; }
+		public string AccountId { get; set; }
+		[ForeignKey("AccountId")]
+		public Account Account { get; set; }
 		public void AddAccountChange(ManualCashFlow flow)
 		{
 			AccountChange change = new AccountChange();
@@ -35,6 +38,18 @@ namespace DailyForecaster.Models
 				_context.AccountChange.Add(change);
 				_context.SaveChanges();
 			}
+		}
+		public AccountChange AddAccountChange(AutomatedCashFlow flow, Account account,int sign)
+		{
+			AccountChange change = new AccountChange();
+			change.AccountChangeId = Guid.NewGuid().ToString();			
+			change.UpdatedBalance = Math.Round(account.Available + (flow.Amount * sign), 2);
+			account.Available = change.UpdatedBalance;
+			change.Account = account;
+			change.DateAdded = DateTime.Now;
+			change.AutomatedCashFlowId = flow.ID;
+			change.AccountId = account.Id;
+			return change;
 		}
 	}
 }
