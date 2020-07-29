@@ -21,13 +21,23 @@ namespace DailyForecaster.Models
 		public int YodleeId { get; set; }
 		public int YodleeSGId { get; set; }
 		public virtual ICollection<BudgetTransaction> BudgetTransactions { get; set; }
+		/// <summary>
+		/// Returns a list of CFTYpes for that collection
+		/// </summary>
+		/// <param name="collectionsId">Collection ID which is pulling the request</param>
+		/// <returns>Returns a list of all CFTYpes applicatble to that collection</returns>
 		public List<CFType> GetCFList(string collectionsId)
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
-				return _context.CFTypes.Where(x=>x.ClientReference == collectionsId || x.Custom == false).OrderBy(x=>x.Name).ToList();
+				return _context.CFTypes.Where(x=>x.ClientReference == collectionsId || x.Custom == false ).OrderBy(x=>x.Name).ToList();
 			}
 		}
+		/// <summary>
+		///    Returns a list of CFTYpes for a group collections
+		/// </summary>
+		/// <param name="collectionsIds"> A List of Collection ID's which is pulling the request</param>
+		/// <returns>Returns a list of all CFTYpes applicatble to those collections</returns>
 		public List<CFType> GetCFList(List<string> collectionsIds)
 		{
 			using (FinPlannerContext _context = new FinPlannerContext())
@@ -45,17 +55,46 @@ namespace DailyForecaster.Models
 			}
 		}
 		public CFType() { }
+		/// <summary>
+		/// Constructor returning the CFType of a particular CFType
+		/// </summary>
+		/// <param name="id">Either the Id or the name of a CFType</param>
 		public CFType(string id)
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
-				CFType temp = _context.CFTypes.Find(id);
-				Id = temp.Id;
-				Custom = temp.Custom;
-				Name = temp.Name;
-				ClientReference = temp.ClientReference;
+				try
+				{
+					CFType temp = _context.CFTypes.Find(id);
+					Id = temp.Id;
+					Custom = temp.Custom;
+					Name = temp.Name;
+					ClientReference = temp.ClientReference;
+					if(temp == null)
+					{
+						temp = _context.CFTypes.Where(x => x.Name == id).Where(x => x.Custom == false).FirstOrDefault();
+						Id = temp.Id;
+						Custom = temp.Custom;
+						Name = temp.Name;
+						ClientReference = temp.ClientReference;
+					}
+				}
+				catch
+				{
+					CFType temp = _context.CFTypes.Where(x=>x.Name == id).Where(x=>x.Custom == false).FirstOrDefault();
+					Id = temp.Id;
+					Custom = temp.Custom;
+					Name = temp.Name;
+					ClientReference = temp.ClientReference;
+				}
 			}
 		}
+		/// <summary>
+		/// Add a custom CFType to the dataset
+		/// </summary>
+		/// <param name="collectionsId">Id of the collection creating the custom type</param>
+		/// <param name="name">The custom name that is being provided</param>
+		/// <returns>The new CFType that has been created</returns>
 		public CFType CreateCFType(string collectionsId, string name)
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())

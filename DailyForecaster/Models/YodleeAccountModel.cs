@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DailyForecaster.Migrations;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,6 +28,57 @@ namespace DailyForecaster.Models
 				accounts = JsonConvert.DeserializeObject<YodleeAccountModel>(str);
 			}
 			return accounts.account;
+		}
+		public async Task<bool> UpdateYodlee()
+		{
+			Collections collection = new Collections();
+			YodleeModel yodlee = new YodleeModel();
+			List<Collections> collections = collection.GetCollections("", "");
+			bool result = true;
+			foreach(string id in collections.Where(x=>x.Accounts.Count()>0).Select(x=>x.CollectionsId))
+			//foreach(string id in collections.Where(x=>x.CollectionsId == "f687f366-d162-4a04-89c7-8e0ad123f9cf").Select(x=>x.CollectionsId))
+			{
+				if(!result)
+				{
+					return result;
+				}
+				string token = await yodlee.getToken(id, "");
+				List<string> providers = await GetProviders(token);
+				foreach(string provider in providers.Distinct())
+				{
+					HttpClient client = new HttpClient();
+					client.DefaultRequestHeaders.Add("Api-Version", "1.1");
+					client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+					HttpResponseMessage response = await client.PutAsync(url + "/providerAccounts?providerAccountIds=" + provider,new StringContent(""));
+					if(!response.IsSuccessStatusCode)
+					{
+						result = false;
+						break;
+					}
+				}
+			}
+			return result;
+		}
+		public async Task<List<string>> GetProviders(string token)
+		{
+			List<string> providers = new List<string>();
+			HttpClient client = new HttpClient();
+			client.DefaultRequestHeaders.Add("Api-Version", "1.1");
+			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+			HttpResponseMessage response = await client.GetAsync(url + "/accounts");
+			if (response.IsSuccessStatusCode)
+			{
+				string str = await response.Content.ReadAsStringAsync();
+				YodleeAccountModel accounts = JsonConvert.DeserializeObject<YodleeAccountModel>(str);
+				if (accounts.account != null)
+				{
+					foreach (YodleeAccountLevel item in accounts.account)
+					{
+						providers.Add(item.providerAccountId.ToString());
+					}
+				}
+			}
+			return providers;
 		}
 	}
 	public class YodleeAccountLevel

@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200722031301_budgettransationc1")]
+    partial class budgettransationc1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -289,9 +291,6 @@ namespace DailyForecaster.Migrations
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("Simulation")
-                        .HasColumnType("bit");
 
                     b.Property<string>("SimulationId")
                         .HasColumnType("nvarchar(450)");

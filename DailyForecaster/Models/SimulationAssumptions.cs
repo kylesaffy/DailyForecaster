@@ -19,7 +19,11 @@ namespace DailyForecaster.Models
 		[Required]
 		public bool Increase { get; set; }
 		public int IncreaseMonth { get; set; }
-		public double IncreasePercentage { get; set; } 
+		public double IncreasePercentage { get; set; }
+		public bool Recurring { get; set; }
+		public CFClassification CFClassification { get; set; }
+		public CFType CFType { get; set; }
+
 		public Simulation Simulation { get; set; }
 	}
 }

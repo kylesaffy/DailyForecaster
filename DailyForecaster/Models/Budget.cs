@@ -23,7 +23,24 @@ namespace DailyForecaster.Models
 		[ForeignKey("CollectionId")]
 		public Collections Collection { get; set; }
 		public ICollection<BudgetTransaction> BudgetTransactions { get; set; }
+		public bool Simulation { get; set; }
 		public Budget() { }
+		public void GetBudgetTransacions()
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				BudgetTransactions = _context.BudgetTransactions.Where(x => x.BudgetId == this.BudgetId).ToList();
+			}
+			CFClassification classification = new CFClassification();
+			List<CFClassification> classifications = classification.GetList();
+			CFType type = new CFType();
+			List<CFType> types = type.GetCFList(this.CollectionId);
+			foreach(BudgetTransaction item in BudgetTransactions)
+			{
+				item.CFClassification = classifications.Where(x => x.Id == item.CFClassificationId).FirstOrDefault();
+				item.CFType = types.Where(x => x.Id == item.CFTypeId).FirstOrDefault();
+			}
+		}
 		public List<Budget> NewBudget(Collections collection)
 		{
 			List<Budget> budgets = new List<Budget>();
@@ -150,7 +167,7 @@ namespace DailyForecaster.Models
 						StartDate = new DateTime(StartDate.Year, StartDate.Month, 1).AddMonths(1);
 						StartDate = StartDate.AddDays(-1);
 					}
-					else if(day > col.ResetDay)
+					else if(day >= col.ResetDay)
 					{
 						StartDate = new DateTime(StartDate.Year, StartDate.Month, col.ResetDay);
 					}
@@ -197,67 +214,76 @@ namespace DailyForecaster.Models
 				{
 					Budget budget = _context.Budget.Where(x => x.CollectionId == collectionId && x.StartDate == StartDate).FirstOrDefault();
 					BudgetTransaction budgetTransaction = new BudgetTransaction();
-					List<BudgetTransaction> budgetTransactions = budgetTransaction.GetBudgetTransactions(budget.BudgetId);
-					foreach(BudgetTransaction item in transactions)
+					try
 					{
-						//does it exist?
-						bool exists = budgetTransactions
-							.Where(x => x.BudgetTransactionId == item.BudgetTransactionId)
-							.Any();
-						//does not exist
-						if(!exists)
+						List<BudgetTransaction> budgetTransactions = budgetTransaction.GetBudgetTransactions(budget.BudgetId);
+					
+						foreach(BudgetTransaction item in transactions)
 						{
-							_context.BudgetTransactions.Add(new BudgetTransaction(item, budget.BudgetId,budget.CollectionId));
+							//does it exist?
+							bool exists = budgetTransactions
+								.Where(x => x.BudgetTransactionId == item.BudgetTransactionId)
+								.Any();
+							//does not exist
+							if(!exists)
+							{
+								_context.BudgetTransactions.Add(new BudgetTransaction(item, budget.BudgetId,budget.CollectionId));
+							}
+							//does exist
+							else
+							{
+								BudgetTransaction newT = _context
+										.BudgetTransactions
+										.Find(item.BudgetTransactionId);
+								double amount = budgetTransactions
+									.Where(x=>x.BudgetTransactionId == item.BudgetTransactionId)
+									.Select(x => x.Amount)
+									.FirstOrDefault();
+								string name = budgetTransactions
+									.Where(x => x.BudgetTransactionId == item.BudgetTransactionId)
+									.Select(x => x.Name)
+									.FirstOrDefault();
+								string typeId = budgetTransactions
+									.Where(x => x.BudgetTransactionId == item.BudgetTransactionId)
+									.Select(x => x.CFTypeId)
+									.FirstOrDefault();
+								//if amount is different
+								if (amount != item.Amount)
+								{
+									newT.Amount = item.Amount;
+								}
+								//if name is different
+								if (name != item.Name)
+								{ 
+									newT.Name = item.Name;
+								}
+								if(typeId != item.CFTypeId)
+								{
+									newT.CFTypeId = item.CFTypeId;
+								}
+								if (amount != item.Amount || name != item.Name || typeId != item.CFClassificationId)
+								{
+									_context.Entry(newT).State = EntityState.Modified;
+								}
+							}
 						}
-						//does exist
-						else
+						//remove deleted items
+						foreach(BudgetTransaction item in budgetTransactions)
 						{
-							BudgetTransaction newT = _context
-									.BudgetTransactions
-									.Find(item.BudgetTransactionId);
-							double amount = budgetTransactions
-								.Where(x=>x.BudgetTransactionId == item.BudgetTransactionId)
-								.Select(x => x.Amount)
-								.FirstOrDefault();
-							string name = budgetTransactions
-								.Where(x => x.BudgetTransactionId == item.BudgetTransactionId)
-								.Select(x => x.Name)
-								.FirstOrDefault();
-							string typeId = budgetTransactions
-								.Where(x => x.BudgetTransactionId == item.BudgetTransactionId)
-								.Select(x => x.CFTypeId)
-								.FirstOrDefault();
-							//if amount is different
-							if (amount != item.Amount)
+							//is it in the list
+							bool check = transactions.Where(x => x.BudgetTransactionId == item.BudgetTransactionId).Any();
+							if(!check)
 							{
-								newT.Amount = item.Amount;
-							}
-							//if name is different
-							if (name != item.Name)
-							{ 
-								newT.Name = item.Name;
-							}
-							if(typeId != item.CFTypeId)
-							{
-								newT.CFTypeId = item.CFTypeId;
-							}
-							if (amount != item.Amount || name != item.Name || typeId != item.CFClassificationId)
-							{
-								_context.Entry(newT).State = EntityState.Modified;
+								_context.BudgetTransactions.Remove(item);
 							}
 						}
+						_context.SaveChanges();
 					}
-					//remove deleted items
-					foreach(BudgetTransaction item in budgetTransactions)
+					catch (Exception e)
 					{
-						//is it in the list
-						bool check = transactions.Where(x => x.BudgetTransactionId == item.BudgetTransactionId).Any();
-						if(!check)
-						{
-							_context.BudgetTransactions.Remove(item);
-						}
+						ExceptionCatcher catcher = new ExceptionCatcher();
+						catcher.Catch(e.Message);
 					}
-					_context.SaveChanges();
 				}
 				return false;
 			}
@@ -295,22 +321,13 @@ namespace DailyForecaster.Models
 		}
 		public Budget GetBudget(string collectionsId)
 		{
-			Collections collection = new Collections(collectionsId);
-			int check = collection.BudgetCount();
 			Budget budget = new Budget();
-			switch (check)
+			Collections collection = new Collections(collectionsId);
+			if(collection.Budgets.Count() != 0)
 			{
-				case 0:
-					break;
-				case 1:
-					budget = getSingle(collectionsId);
-					break;
-				case 2:
-					budget = FindBudget(collectionsId);
-					break;
-			}
-			budget.Collection = null;
-			
+				budget = collection.Budgets.Where(x=>x.Simulation == false).OrderByDescending(x => x.EndDate).First();
+				budget.Collection = null;
+			}			
 			return budget;
 		}
 		public List<Budget> GetBudgets(string collectionsId)
@@ -353,7 +370,7 @@ namespace DailyForecaster.Models
 					}
 					else
 					{
-						currentDate = currentDate.AddMonths(-1);
+						currentDate = resetDate.AddMonths(-1);
 					}
 					using (FinPlannerContext _context = new FinPlannerContext())
 					{
@@ -392,7 +409,7 @@ namespace DailyForecaster.Models
 						StartDate = new DateTime(StartDate.Year, StartDate.Month, 1).AddMonths(1);
 						StartDate = StartDate.AddDays(-1);
 					}
-					else if (day > collections.ResetDay)
+					else if (day >= collections.ResetDay)
 					{
 						StartDate = new DateTime(StartDate.Year, StartDate.Month, collections.ResetDay);
 					}

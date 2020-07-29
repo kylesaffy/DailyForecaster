@@ -48,7 +48,14 @@ namespace DailyForecaster.Models
 			MailMessage message = new MailMessage(from, to);
 			if (Subject == "Confirm your account")
 			{
-				string text = File.ReadAllText(@"C:\Users\kyles\source\repos\kylesaffy\DailyForecaster\DailyForecaster\Components\EmailValidation.txt", Encoding.UTF8);
+				string text = "";
+				var webRequest = WebRequest.Create(@"https://storageaccountmoney9367.blob.core.windows.net/emailimages/EmailValidation.txt");
+				using(var response = webRequest.GetResponse())
+				using(var content = response.GetResponseStream())
+				using (var reader = new StreamReader(content))
+				{
+					text = reader.ReadToEnd();
+				};					
 				text = text.Replace("www.google.com", Message);
 				message.Body = text.Replace("[guest_name]", Name);
 
@@ -61,7 +68,7 @@ namespace DailyForecaster.Models
 			message.IsBodyHtml = true;
 			message.SubjectEncoding = System.Text.Encoding.UTF8;
 			EmailStore emailStore = new EmailStore() {
-				Body = Message,
+				Body = message.Body,
 				To = to.ToString(),
 				From = from.ToString(),
 				EmailDate = DateTime.Now,

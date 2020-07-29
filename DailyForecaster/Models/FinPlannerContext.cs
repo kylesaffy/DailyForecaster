@@ -35,6 +35,10 @@ namespace DailyForecaster.Models
         public DbSet<YodleeModel> YodleeModel { get; set; }
         public DbSet<EmailStore> EmailStore { get; set; }
         public DbSet<AutomatedLog> AutomatedLog { get; set; }
+        public DbSet<MonthlyAmortisation> MonthlyAmortisation { get; set; }
+        public DbSet<PaymentModel> PaymentModel { get; set; }
+        public DbSet<AccountAmortisation> AccountAmortisation { get; set; }
+        public DbSet<AccountBalance> AccountBalance { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()

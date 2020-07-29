@@ -14,6 +14,18 @@ namespace DailyForecaster.Controllers
 	[ApiController]
 	public class AutomatedController : ControllerBase
 	{
+		[Route("UpdateYodleeAccounts")]
+		[HttpGet]
+		public async Task<ActionResult> UpdateYodleeAccounts()
+		{
+			DateTime start = DateTime.Now;
+			YodleeAccountModel model = new YodleeAccountModel();
+			bool result = await model.UpdateYodlee();
+			DateTime end = DateTime.Now;
+			AutomatedLog log = new AutomatedLog();
+			log.SaveLog(start, end, "UpdateYodleeAccounts", result);
+			return Ok(result);
+		}
 		[Route("UpdateAccounts")]
 		[HttpGet]
 		public async Task<ActionResult> UpdateAccounts()

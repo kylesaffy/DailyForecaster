@@ -76,7 +76,7 @@ namespace DailyForecaster.Controllers
                 };
                 ReportedTransaction transaction = new ReportedTransaction();
                 List<ReportedTransaction> transactions = transaction.GetTransactions(obj.Id);
-                transactions = transactions.Where(x => x.DateCaptured <= obj.EndDate && x.DateCaptured >= obj.StartDate).ToList();
+                transactions = transactions.Where(x => x.DateCaptured <= obj.EndDate && x.DateCaptured >= obj.StartDate).Where(x=>x.CFType.Id != "999").OrderByDescending(x=>x.DateBooked).ToList();
                 return Ok(transactions);
             }
             return Ok("");
@@ -347,8 +347,9 @@ namespace DailyForecaster.Controllers
             ClaimsPrincipal auth = tokenModel.GetPrincipal(authHeader);
             if (auth.Identity.IsAuthenticated)
             {
-                new ClickTracker("BudgetNew", false, true, json.GetRawText(), auth.Identity.Name);
-                NewBudgetObj obj = JsonConvert.DeserializeObject<NewBudgetObj>(json.GetRawText());
+                new ClickTracker("BudgetNew/Update", false, true, json.GetRawText(), auth.Identity.Name);
+                string str = json.GetRawText();
+                NewBudgetObj obj = JsonConvert.DeserializeObject<NewBudgetObj>(str);
                 Budget budget = new Budget();
                 bool ans = budget.Create(obj);
                 return Ok(ans);
@@ -366,7 +367,8 @@ namespace DailyForecaster.Controllers
             if (auth.Identity.IsAuthenticated)
             {
                 new ClickTracker("BudgetEdit", false, true, json.GetRawText(), auth.Identity.Name);
-                NewBudgetObj obj = JsonConvert.DeserializeObject<NewBudgetObj>(json.GetRawText());
+                string str = json.GetRawText();
+                NewBudgetObj obj = JsonConvert.DeserializeObject<NewBudgetObj>(str);
                 Budget budget = new Budget();
                 bool ans = budget.Edit(obj);
                 return Ok(ans);
@@ -466,7 +468,7 @@ namespace DailyForecaster.Controllers
             ClaimsPrincipal auth = tokenModel.GetPrincipal(authHeader);
             if (auth.Identity.IsAuthenticated)
             {
-                new ClickTracker("AddAccount", false, true, json.GetRawText(), auth.Identity.Name);
+                new ClickTracker("UnseenUpdate", false, true, json.GetRawText(), auth.Identity.Name);
                 AutomatedCashFlow automatedCashFlow = JsonConvert.DeserializeObject<AutomatedCashFlow>(json.GetRawText());
 				ReturnModel returnModel = automatedCashFlow.UpdateAutomated(manualcashflow);
                 return Ok(returnModel);

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.Tracing;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -35,10 +36,39 @@ namespace DailyForecaster.Models
 		public string AccountTypeId { get; set; }
 		public ICollection<ManualCashFlow> ManualCashFlows { get; set; }
 		public ICollection<AutomatedCashFlow> AutomatedCashFlows { get; set; }
+		public ICollection<AccountBalance> AccountBalances { get; set; }
 		public AccountType AccountType { get; set; }
 		public virtual List<ReportedTransaction> ReportedTransactions { get; set; }
 		public string AccountIdentifier { get; set; }
 		public int YodleeId { get; set; }
+		public DateTime Maturity { get; set; }
+		public AccountAmortisation AccountAmortisation { get; set; }
+		public double MonthlyPayment { get; set; }
+		public Account() { }
+		public Account(string id)
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				Account account = _context.Account.Find(id);
+				Id = account.Id;
+				Name = account.Name;
+				InstitutionId = account.InstitutionId;
+				Available = account.Available;
+				AccountLimit = account.AccountLimit;
+				NetAmount = account.NetAmount;
+				DebitRate = account.DebitRate;
+				CreditRate = account.CreditRate;
+				Floating = account.Floating;
+				FloatingType = account.FloatingType;
+				MonthlyFee = account.MonthlyFee;
+				CollectionsId = account.CollectionsId;
+				AccountTypeId = account.AccountTypeId;
+				AccountIdentifier = account.AccountIdentifier;
+				YodleeId = account.YodleeId;
+				Maturity = account.Maturity;
+				MonthlyPayment = account.MonthlyPayment;
+			}
+		}
 		public void GetTransactions()
 		{
 			ReportedTransaction reportedTransaction = new ReportedTransaction();
@@ -94,11 +124,42 @@ namespace DailyForecaster.Models
 			{
 				using (FinPlannerContext _context = new FinPlannerContext())
 				{
-					foreach (Account item in accounts.Where(x=>x.YodleeId == 0 && x.AccountIdentifier != null))
+					foreach (Account item in accounts)
 					{
+						if (item.YodleeId == 0 && item.AccountIdentifier != null)
+						{
 							item.YodleeId = yodleeAccounts.Where(x => x.accountNumber == item.AccountIdentifier).Select(x => x.id).FirstOrDefault();
-							_context.Entry(item).State = EntityState.Modified;
+						}
+						else
+						{
+							YodleeAccountLevel accountLevel = yodleeAccounts.Where(x => x.accountNumber == item.AccountIdentifier).FirstOrDefault();
+							if (accountLevel != null)
+							{
+								if (accountLevel.availableBalance != null)
+								{
+									item.Available = accountLevel.availableBalance.amount;
+								}
+								else if(accountLevel.availableCredit != null)
+								{
+									item.Available = accountLevel.availableCredit.amount;
+								}
+								else
+								{
+									item.Available = accountLevel.balance.amount;
+								}
+							}
+						}
+						_context.Entry(item).State = EntityState.Modified;
+						AccountBalance balance = new AccountBalance()
+						{
+							AccountBalanceId = Guid.NewGuid().ToString(),
+							AccountId = item.Id,
+							Amount = item.Available,
+							Date = DateTime.Now.Date
+						};
+						_context.Add(balance);
 					}
+					
 					_context.SaveChanges();	
 				}
 				return true;
@@ -204,6 +265,15 @@ namespace DailyForecaster.Models
 			this.Name = account.Name;
 			this.NetAmount = account.NetAmount;
 			this.AccountIdentifier = account.AccountIdentifier;
+			this.Maturity = account.Maturity;
+			this.MonthlyPayment = account.MonthlyPayment;
+			AccountType type = new AccountType();
+			if(type.isAmortised(account.AccountTypeId) && account.Maturity != DateTime.MinValue && account.MonthlyPayment != 0)
+			{
+				AccountAmortisation amortisation = new AccountAmortisation();
+				amortisation.Update(account);
+			}
 		}
+		
 	}
 }

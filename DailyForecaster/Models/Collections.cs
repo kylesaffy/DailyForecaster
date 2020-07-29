@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Composition;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using DailyForecaster.Controllers;
 using DailyForecaster.Models;
+using Microsoft.EntityFrameworkCore;
 using SQLitePCL;
 
 namespace DailyForecaster.Models
@@ -279,10 +281,61 @@ namespace DailyForecaster.Models
 						catcher.Catch("Collestions Id: " + item.CollectionsId);
 					}
 				}
+				BankCharges(item);
 			}
 			return true;
 		}
-		
+		public void BankCharges(Collections collection)
+		{
+			try
+			{
+				Budget budget = collection.Budgets.Where(x => x.Simulation == false).OrderByDescending(x => x.EndDate).First();
+				double fees = 0;
+				foreach(Account acc in collection.Accounts.Where(x=>x.AccountType.Transactional == true))
+				{
+					fees = fees + acc.MonthlyFee;
+					double debt = acc.AccountLimit - acc.Available;
+					if (debt > 0)
+					{
+						fees = fees + debt * (acc.DebitRate / 12 / 100);
+					}
+				}
+				fees = Math.Round(fees, 2);
+				budget.GetBudgetTransacions();
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					if (budget.BudgetTransactions.Where(x => x.CFType.Name == "Bank Charges" && x.Automated == true).Any())
+					{
+						BudgetTransaction transaction = budget.BudgetTransactions.Where(x => x.CFType.Name == "Bank Charges" && x.Automated == true).FirstOrDefault();
+						transaction.Amount = fees;
+						_context.Entry(transaction).State = EntityState.Modified;
+					}
+					else
+					{
+						CFClassification classification = new CFClassification("Expense");
+						CFType type = new CFType("Bank Charges");
+						BudgetTransaction transaction = new BudgetTransaction()
+						{
+							BudgetId = budget.BudgetId,
+							Automated = true,
+							BudgetTransactionId = Guid.NewGuid().ToString(),
+							CFClassificationId = classification.Id,
+							CFTypeId = type.Id,
+							Name = "Automated Bank Charges",
+							Amount = fees,
+						};
+						_context.Add(transaction);
+					}
+					_context.SaveChanges();
+				}
+			}
+			catch (Exception e)
+			{
+				ExceptionCatcher catcher = new ExceptionCatcher();
+				catcher.Catch(e.Message);
+			}
+		}
+
 	}
 	public class NewCollectionsObj
 	{

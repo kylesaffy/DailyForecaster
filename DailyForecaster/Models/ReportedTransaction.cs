@@ -64,26 +64,37 @@ namespace DailyForecaster.Models
 		}
 		public List<ReportedTransaction> GetTransactions(Budget budget)
 		{
-			DateTime startDate = budget.StartDate.AddDays(-1);
-			DateTime endDate = budget.EndDate.AddDays(1);
+			DateTime startDate = budget.StartDate.AddDays(-3);
+			DateTime endDate = budget.EndDate.AddDays(3);
 			Account account = new Account();
 			List<Account> accounts = account.GetAccounts(budget.CollectionId);
 			List<ReportedTransaction> reportedTransactions = new List<ReportedTransaction>();
 			foreach (Account item in accounts)
 			{
-				AutomatedCashFlow automatedCashFlows = new AutomatedCashFlow();
-				ManualCashFlow manualCashFlow = new ManualCashFlow();					   				
-				List<AutomatedCashFlow> auto = automatedCashFlows.GetAutomatedCashFlows(item.Id,startDate,endDate);
-				List<ManualCashFlow> manual = manualCashFlow.GetManualCashFlows(item.Id,startDate,endDate);
-				manual = manual.Where(x => x.AutomatedCashFlowId == null).ToList();
-				foreach (AutomatedCashFlow automated in auto)
-				{			 					
-					reportedTransactions.Add(new ReportedTransaction(automated,item));
-				}
-				foreach (ManualCashFlow man in manual)
+				List<ReportedTransaction> transactions = item.ReportedTransactions.Where(x => x.DateBooked > startDate && x.DateBooked < endDate).ToList();
+				foreach(ReportedTransaction t in transactions)
 				{
-					reportedTransactions.Add(new ReportedTransaction(man,item));
-				} 				
+					t.AccountId = item.Id;
+					t.Account = item;
+				}
+				reportedTransactions.AddRange(transactions);
+				//AutomatedCashFlow automatedCashFlows = new AutomatedCashFlow();
+				//ManualCashFlow manualCashFlow = new ManualCashFlow();					   				
+				//List<AutomatedCashFlow> auto = automatedCashFlows.GetAutomatedCashFlows(item.Id,startDate,endDate);
+				//List<ManualCashFlow> manual = manualCashFlow.GetManualCashFlows(item.Id,startDate,endDate);
+				//manual = manual.Where(x => x.AutomatedCashFlowId == null).ToList();
+				//foreach (AutomatedCashFlow automated in auto)
+				//{			 					
+				//	reportedTransactions.Add(new ReportedTransaction(automated,item));
+				//}
+				//foreach (ManualCashFlow man in manual)
+				//{
+				//	reportedTransactions.Add(new ReportedTransaction(man,item));
+				//} 				
+			}
+			foreach(ReportedTransaction item in reportedTransactions)
+			{
+				item.Account.AccountType = accounts.Where(x => x.AccountTypeId == item.Account.AccountTypeId).Select(x => x.AccountType).FirstOrDefault();
 			}
 			return reportedTransactions;
 		}

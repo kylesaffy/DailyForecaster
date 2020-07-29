@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200721034258_AmortAdd")]
+    partial class AmortAdd
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -100,27 +102,6 @@ namespace DailyForecaster.Migrations
                         .HasFilter("[AccountId] IS NOT NULL");
 
                     b.ToTable("AccountAmortisation");
-                });
-
-            modelBuilder.Entity("DailyForecaster.Models.AccountBalance", b =>
-                {
-                    b.Property<string>("AccountBalanceId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("AccountId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<double>("Amount")
-                        .HasColumnType("float");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("AccountBalanceId");
-
-                    b.HasIndex("AccountId");
-
-                    b.ToTable("AccountBalance");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.AccountChange", b =>
@@ -290,9 +271,6 @@ namespace DailyForecaster.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("Simulation")
-                        .HasColumnType("bit");
-
                     b.Property<string>("SimulationId")
                         .HasColumnType("nvarchar(450)");
 
@@ -315,9 +293,6 @@ namespace DailyForecaster.Migrations
 
                     b.Property<double>("Amount")
                         .HasColumnType("float");
-
-                    b.Property<bool>("Automated")
-                        .HasColumnType("bit");
 
                     b.Property<string>("BudgetId")
                         .IsRequired()
@@ -881,13 +856,6 @@ namespace DailyForecaster.Migrations
                     b.HasOne("DailyForecaster.Models.Account", "Account")
                         .WithOne("AccountAmortisation")
                         .HasForeignKey("DailyForecaster.Models.AccountAmortisation", "AccountId");
-                });
-
-            modelBuilder.Entity("DailyForecaster.Models.AccountBalance", b =>
-                {
-                    b.HasOne("DailyForecaster.Models.Account", "Account")
-                        .WithMany("AccountBalances")
-                        .HasForeignKey("AccountId");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.AccountChange", b =>

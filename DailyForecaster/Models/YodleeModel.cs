@@ -125,6 +125,8 @@ namespace DailyForecaster.Models
 			}
 			else
 			{
+				ExceptionCatcher catcher = new ExceptionCatcher();
+				catcher.Catch("No Token generated");
 				returnModel.result = false;
 			}
 			return returnModel;

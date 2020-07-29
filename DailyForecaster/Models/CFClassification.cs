@@ -16,6 +16,10 @@ namespace DailyForecaster.Models
 
 		public virtual ICollection<BudgetTransaction> BudgetTransactions { get; set; }
 		public virtual ICollection<ManualCashFlow> ManualCashFlows { get; set; }
+		/// <summary>
+		/// Accesses the DB and returns a full list
+		/// </summary>
+		/// <returns>Returns a full list of CFClassifications</returns>
 		public List<CFClassification> GetList()
 		{
 			using (FinPlannerContext _context = new FinPlannerContext())
@@ -24,14 +28,34 @@ namespace DailyForecaster.Models
 			}
 		}
 		public CFClassification() { }
+		/// <summary>
+		/// Constuctor that returns a single CFClassification by Id	or name
+		/// </summary>
+		/// <param name="id">The Id or name of the CFClassification</param>
 		public CFClassification(string id)
 		{
 			using (FinPlannerContext _context = new FinPlannerContext())
 			{
-				CFClassification temp = _context.CFClassifications.Find(id);
-				Id = temp.Id;
-				Name = temp.Name;
-				Sign = temp.Sign;
+				try {
+						CFClassification temp = _context.CFClassifications.Find(id);
+						Id = temp.Id;
+						Name = temp.Name;
+						Sign = temp.Sign;
+						if (temp == null)
+						{
+							temp = _context.CFClassifications.Where(x => x.Name == id).FirstOrDefault();
+							Id = temp.Id;
+							Name = temp.Name;
+							Sign = temp.Sign;
+						}
+					}
+				catch
+				{
+					CFClassification temp = _context.CFClassifications.Where(x => x.Name == id).FirstOrDefault();
+					Id = temp.Id;
+					Name = temp.Name;
+					Sign = temp.Sign;
+				}
 			}
 			
 		}

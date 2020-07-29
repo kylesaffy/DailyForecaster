@@ -31,6 +31,7 @@ namespace DailyForecaster.Models
 		[Required]
 		public CFClassification CFClassification { get; set; }
 		public ICollection<Notes> Notes {get;set;}
+		public bool Automated { get; set; }
 		public BudgetTransaction() { }
 		public List<BudgetTransaction> CreateBudgetTransactions(List<BudgetTransaction> transactions, string BudgetId, string collectionsId)
 		{
