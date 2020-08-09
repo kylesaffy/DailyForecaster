@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -21,9 +22,11 @@ namespace DailyForecaster.Models
 		public int IncreaseMonth { get; set; }
 		public double IncreasePercentage { get; set; }
 		public bool Recurring { get; set; }
+		public DateTime ChangeDate { get; set; }
 		public CFClassification CFClassification { get; set; }
 		public CFType CFType { get; set; }
-
 		public Simulation Simulation { get; set; }
+		public string Type { get; set; }
+		public SimulationAssumptions() { }
 	}
 }

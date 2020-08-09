@@ -25,6 +25,9 @@ namespace DailyForecaster.Models
 		public DateTime DateCreated { get; set; }
 		[ForeignKey("AspNetUsers")]
 		public string UserCreated { get; set; }
+		[ForeignKey("FirebaseUserId")]
+		public string FirebaseUserId { get; set; }
+		public FirebaseUser FirebaseUser { get; set; }
 		public int ResetDay { get; set; }
 		public AspNetUsers AspNetUsers { get; set; }
 		public ICollection<UserCollectionMapping> UserCollectionMappings { get; set; }
@@ -32,6 +35,28 @@ namespace DailyForecaster.Models
 		public ICollection<Account> Accounts { get; set; }
 		public ICollection<Simulation> Simualtions { get; set; }
 		public Collections() { }
+		/// <summary>
+		/// Exlpicit eager articulated list of collection objects
+		/// </summary>
+		/// <param name="collectionsIds">List of the collection Ids</param>
+		/// <returns>Returns a list of collection from the string of Ids supplied</returns>
+		public List<Collections> GetEagerList(List<string> collectionsIds)
+		{
+			List<Collections> collections = new List<Collections>();
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				foreach (string id in collectionsIds)
+				{
+					collections.Add(_context
+						.Collections
+						.Include(x=>x.Name)
+						.Include(x=>x.CollectionsId)
+						.Where(x => x.CollectionsId == id)
+						.FirstOrDefault());
+				}
+			}
+			return collections;
+		}
 		private Collections(string durationType, string name, string userId, int resetDate)
 		{
 			CollectionsId = Guid.NewGuid().ToString();
@@ -51,7 +76,7 @@ namespace DailyForecaster.Models
 				col = _context.Collections.Find(collectionsId);
 				budgets = _context.Budget.Where(x => x.CollectionId == collectionsId).ToList();
 			}
-			if(budgets.Count() == 0)
+			if (budgets.Count() == 0)
 			{
 				Budget budget = new Budget();
 				budgets = budget.NewBudget(col);
@@ -83,8 +108,8 @@ namespace DailyForecaster.Models
 
 		}
 		public int getUnseen(string userId)
-		{ 
-			return GetCollections(userId, "TransactionCount").Select(x=>x.Accounts.Select(y=>y.AutomatedCashFlows.Where(z=>z.Validated == false))).Count();
+		{
+			return GetCollections(userId, "TransactionCount").Select(x => x.Accounts.Select(y => y.AutomatedCashFlows.Where(z => z.Validated == false))).Count();
 		}
 		public List<Collections> GetCollections(string userId, string type)
 		{
@@ -92,7 +117,7 @@ namespace DailyForecaster.Models
 			if (userId != "")
 			{
 				AspNetUsers user = new AspNetUsers();
-				userId = user.getUserId(userId);   				
+				userId = user.getUserId(userId);
 				if (type != "Index")
 				{
 					using (FinPlannerContext _context = new FinPlannerContext())
@@ -124,13 +149,13 @@ namespace DailyForecaster.Models
 				}
 				else
 				{
-					using(FinPlannerContext _context = new FinPlannerContext())
+					using (FinPlannerContext _context = new FinPlannerContext())
 					{
 						List<string> collectionsIds = _context.UserCollectionMapping
 							.Where(x => x.Id == userId)
 							.Select(x => x.CollectionsId)
 							.ToList();
-						collections.AddRange(GetCollections(collectionsIds,10));
+						collections.AddRange(GetCollections(collectionsIds, 10));
 						return collections;
 					}
 				}
@@ -144,7 +169,7 @@ namespace DailyForecaster.Models
 						.ToList();
 				}
 				Account account = new Account();
-				foreach(Collections item in collections)
+				foreach (Collections item in collections)
 				{
 					item.Accounts = account.GetAccounts(item.CollectionsId);
 				}
@@ -157,29 +182,37 @@ namespace DailyForecaster.Models
 				return collections;
 			}
 		}
-		public List<Collections> GetCollections(List<string> collectionsIds,int count)
+		public List<Collections> GetCollections(List<string> collectionsIds, int count)
 		{
 			//get collections
 			List<Collections> collections = new List<Collections>();
-			using(FinPlannerContext _context = new FinPlannerContext())
+			try
 			{
-				collections = _context
-					.Collections
-					.Where(col => collectionsIds.Contains(col.CollectionsId))
-					.ToList();
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					collections = _context
+						.Collections
+						.Where(col => collectionsIds.Contains(col.CollectionsId))
+						.ToList();
+				}
+			}
+			catch (Exception e)
+			{
+				ExceptionCatcher catcher = new ExceptionCatcher();
+				catcher.Catch(e.Message);
 			}
 			//get accounts
 			Account account = new Account();
-			List<Account> accounts = account.GetAccountIndex(collectionsIds,count);
+			List<Account> accounts = account.GetAccountIndex(collectionsIds, count);
 			//assign accounts
-			foreach(Collections item in collections)
+			foreach (Collections item in collections)
 			{
 				item.Accounts = accounts.Where(x => x.CollectionsId == item.CollectionsId).ToList();
 			}
 			return collections;
 		}
 
-		public Collections(Collections col, int count,string type)
+		public Collections(Collections col, int count, string type)
 		{
 			Account account = new Account();
 			CollectionsId = col.CollectionsId;
@@ -270,7 +303,7 @@ namespace DailyForecaster.Models
 			List<Collections> collections = GetCollections("", "");
 			Account account = new Account();
 			bool result = true;
-			foreach(Collections item in collections.Where(x=>x.Accounts.Any()))
+			foreach (Collections item in collections.Where(x => x.Accounts.Any()))
 			{
 				if (item.Accounts.Where(x => x.AccountIdentifier != null).Any())
 				{
@@ -291,7 +324,7 @@ namespace DailyForecaster.Models
 			{
 				Budget budget = collection.Budgets.Where(x => x.Simulation == false).OrderByDescending(x => x.EndDate).First();
 				double fees = 0;
-				foreach(Account acc in collection.Accounts.Where(x=>x.AccountType.Transactional == true))
+				foreach (Account acc in collection.Accounts.Where(x => x.AccountType.Transactional == true))
 				{
 					fees = fees + acc.MonthlyFee;
 					double debt = acc.AccountLimit - acc.Available;

@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200805025209_addSpread")]
+    partial class addSpread
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -385,9 +387,6 @@ namespace DailyForecaster.Migrations
                     b.Property<bool>("Custom")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("Infaltion")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -458,7 +457,7 @@ namespace DailyForecaster.Migrations
                     b.Property<string>("DurationType")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("FirebaseUserId")
+                    b.Property<string>("FirebaseUserCreated")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
@@ -476,7 +475,7 @@ namespace DailyForecaster.Migrations
 
                     b.HasKey("CollectionsId");
 
-                    b.HasIndex("FirebaseUserId");
+                    b.HasIndex("FirebaseUserCreated");
 
                     b.HasIndex("UserCreated");
 
@@ -863,9 +862,6 @@ namespace DailyForecaster.Migrations
                     b.Property<string>("CFTypeId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime>("ChangeDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<bool>("Increase")
                         .HasColumnType("bit");
 
@@ -880,9 +876,6 @@ namespace DailyForecaster.Migrations
 
                     b.Property<bool>("Recurring")
                         .HasColumnType("bit");
-
-                    b.Property<string>("Type")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("SimulationAssumptionsId");
 
@@ -1054,7 +1047,7 @@ namespace DailyForecaster.Migrations
                 {
                     b.HasOne("DailyForecaster.Models.FirebaseUser", "FirebaseUser")
                         .WithMany("Collections")
-                        .HasForeignKey("FirebaseUserId");
+                        .HasForeignKey("FirebaseUserCreated");
 
                     b.HasOne("DailyForecaster.Models.AspNetUsers", "AspNetUsers")
                         .WithMany("Collections")

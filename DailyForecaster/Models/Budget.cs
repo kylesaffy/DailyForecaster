@@ -75,15 +75,16 @@ namespace DailyForecaster.Models
 					end = start.AddDays(1);
 					break;
 			}
-			budgets.Add(new Budget(collection.CollectionsId, start, end));
+			budgets.Add(new Budget(collection.CollectionsId, start, end, false));
 			return budgets;
 		}
-		public Budget(string collectionsId, DateTime startDate, DateTime endDate)
+		public Budget(string collectionsId, DateTime startDate, DateTime endDate,bool simulation)
 		{
 			BudgetId = Guid.NewGuid().ToString();
 			StartDate = startDate;
 			CollectionId = collectionsId;
 			EndDate = endDate;
+			Simulation = simulation;
 		}
 		public bool BudgetCheck(string collectionId)
 		{
@@ -186,7 +187,7 @@ namespace DailyForecaster.Models
 			if (DateCheck(collectionId, EndDate))
 			{
 				
-				Budget budget = new Budget(collectionId, StartDate, EndDate);
+				Budget budget = new Budget(collectionId, StartDate, EndDate, false);
 				BudgetTransaction t = new BudgetTransaction();
 				List<BudgetTransaction> list = t.CreateBudgetTransactions(transactions,budget.BudgetId,budget.CollectionId);
 				try
@@ -319,13 +320,39 @@ namespace DailyForecaster.Models
 				}
 			}
 		}
+		/// <summary>
+		/// Amount that has actually been spent under the current period for a given collection
+		/// </summary>
+		/// <param name="collectionsId">Unique Id of a collection</param>
+		/// <returns>The amount that has been spent in the current budgeting period (Total Actual Expenses)</returns>
+		public double GetSpentAmount(string collectionsId)
+		{
+			Budget budget = GetBudget(collectionsId);
+			ReportedTransaction transaction = new ReportedTransaction();
+			return transaction.GetTransactions(budget).Where(x => x.CFClassification.Sign == -1).Select(x => x.Amount).Sum();
+		}
+		/// <summary>
+		/// Amount that is budgeted to be spent for under the current period for a given collection
+		/// </summary>
+		/// <param name="collectionsId">Unique Id of a collection</param>
+		/// <returns>The amount that is expected to be spent in the current budgeting period (Total Expected Expenses)</returns>
+		public double GetBudgetedAmount(string collectionsId)
+		{
+			string Id = GetBudget(collectionsId).BudgetId;
+			BudgetTransaction transaction = new BudgetTransaction();
+			return transaction.ExpectedExpenses(Id);
+		}
 		public Budget GetBudget(string collectionsId)
 		{
 			Budget budget = new Budget();
 			Collections collection = new Collections(collectionsId);
 			if(collection.Budgets.Count() != 0)
 			{
-				budget = collection.Budgets.Where(x=>x.Simulation == false).OrderByDescending(x => x.EndDate).First();
+				budget = collection
+					.Budgets
+					.Where(x=>x.Simulation == false)
+					.OrderByDescending(x => x.EndDate)
+					.First();
 				budget.Collection = null;
 			}			
 			return budget;
@@ -337,6 +364,7 @@ namespace DailyForecaster.Models
 				return _context
 					.Budget
 					.Where(x => x.CollectionId == collectionsId)
+					.Where(x=>x.Simulation == false)
 					.ToList();
 			}
 		}
@@ -374,7 +402,11 @@ namespace DailyForecaster.Models
 					}
 					using (FinPlannerContext _context = new FinPlannerContext())
 					{
-						budget = _context.Budget.Where(x => x.CollectionId == collectionId && x.StartDate == currentDate).FirstOrDefault();
+						budget = _context
+							.Budget
+							.Where(x => x.CollectionId == collectionId && x.StartDate == currentDate)
+							.Where(x=>x.Simulation == false)
+							.FirstOrDefault();
 					}
 					break;
 			}

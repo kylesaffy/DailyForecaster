@@ -23,6 +23,9 @@ namespace DailyForecaster.Models
 		public string CFClassificationId { get; set; }
 		[ForeignKey("AspNetUsers")]
 		public string UserId { get; set; }
+		[ForeignKey("FirebaseUser")]
+		public string FirebaseUserId { get; set; }
+		public FirebaseUser FirebaseUser { get; set; }
 		[ForeignKey("BudgetId")]
 		public Budget Budget { get; set; }
 		public AspNetUsers AspNetUsers { get; set; }
@@ -33,6 +36,23 @@ namespace DailyForecaster.Models
 		public ICollection<Notes> Notes {get;set;}
 		public bool Automated { get; set; }
 		public BudgetTransaction() { }
+		/// <summary>
+		/// Returns the amount that is expected to be spent within a particular budget
+		/// </summary>
+		/// <param name="budgetId">Unique Id of the budget that is under consideration</param>
+		/// <returns>Returns a double of the amount that is expected to be spent</returns>
+		public double ExpectedExpenses(string budgetId)
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context
+					.BudgetTransactions
+					.Where(x => x.BudgetId == budgetId)
+					.Where(x => x.CFClassification.Sign == -1)
+					.Select(x => x.Amount)
+					.Sum();
+			}
+		}
 		public List<BudgetTransaction> CreateBudgetTransactions(List<BudgetTransaction> transactions, string BudgetId, string collectionsId)
 		{
 			List<BudgetTransaction> newTransactions = new List<BudgetTransaction>();
@@ -61,7 +81,15 @@ namespace DailyForecaster.Models
 			}
 			CFClassificationId = b.CFClassificationId;
 			AspNetUsers users = new AspNetUsers();
-			UserId = users.getUserId(b.UserId);
+			try
+			{
+				UserId = users.getUserId(b.UserId);
+			}
+			catch
+			{
+				FirebaseUser user = new FirebaseUser();
+				FirebaseUserId = user.GetFirebaseUser(UserId);
+			}
 			//using (FinPlannerContext _context = new FinPlannerContext())
 			//{
 			//	CFType = _context.CFTypes.Find(CFTypeId);
@@ -73,7 +101,15 @@ namespace DailyForecaster.Models
 			List<BudgetTransaction> transactions = new List<BudgetTransaction>();
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
-				transactions = _context.BudgetTransactions.Where(x => x.BudgetId == budgetId).ToList();
+				try
+				{
+					transactions = _context.BudgetTransactions.Where(x => x.BudgetId == budgetId).ToList();
+				}
+				catch(Exception e)
+				{
+					ExceptionCatcher catcher = new ExceptionCatcher();
+					catcher.Catch(e.Message);
+				}
 			}
 			foreach(BudgetTransaction item in transactions)
 			{

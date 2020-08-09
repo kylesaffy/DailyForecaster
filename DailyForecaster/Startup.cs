@@ -12,6 +12,13 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Auth;
+using Microsoft.WindowsAzure.Storage.Blob;
+using System.IO;
+using System.Net;
 
 namespace DailyForecaster
 {
@@ -38,6 +45,20 @@ namespace DailyForecaster
 						 .AllowAnyHeader()
 						 .AllowAnyMethod());
 			});
+
+			// get key for SAS
+			string value = Configuration["Token"];
+			// get file
+			//var webRequest = WebRequest.Create(@"https://storageaccountmoney9367.blob.core.windows.net/emailimages/moneyminders-firebase-adminsdk-4q78b-f0036fedba.json");
+			//using (var response = webRequest.GetResponse())
+			//using (var content = response.GetResponseStream())
+			//{											  
+			var pathKey = Path.Combine(Directory.GetCurrentDirectory(), "moneyminders-firebase-adminsdk-4q78b-f0036fedba.json");
+				FirebaseApp.Create(new AppOptions
+				{
+					Credential = GoogleCredential.FromFile(pathKey)
+				});
+			//}
 			services.AddApplicationInsightsTelemetry(Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
 		}
 

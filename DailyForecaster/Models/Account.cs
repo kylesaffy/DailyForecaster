@@ -28,6 +28,7 @@ namespace DailyForecaster.Models
 		public double CreditRate { get; set; }
 		public bool Floating { get; set; }
 		public string FloatingType { get; set; }
+		public double Spread { get; set; }
 		public double MonthlyFee { get; set; }
 		public string CollectionsId { get; set; }
 		[ForeignKey("CollectionsId")]
@@ -45,6 +46,23 @@ namespace DailyForecaster.Models
 		public AccountAmortisation AccountAmortisation { get; set; }
 		public double MonthlyPayment { get; set; }
 		public Account() { }
+		/// <summary>
+		/// Available amount on all acounts within a collection
+		/// </summary>
+		/// <param name="collecionsId">Unique id of collection</param>
+		/// <returns>Returns double of the amount available within the collection of accounts</returns>
+		public double GetAvaialable(string collecionsId)
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context
+					.Account
+					.Where(x => x.CollectionsId == collecionsId)
+					.Where(x => x.AccountType.Transactional)
+					.Select(x => x.Available)
+					.Sum();
+			}
+		}
 		public Account(string id)
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())
@@ -267,6 +285,15 @@ namespace DailyForecaster.Models
 			this.AccountIdentifier = account.AccountIdentifier;
 			this.Maturity = account.Maturity;
 			this.MonthlyPayment = account.MonthlyPayment;
+			if (account.Floating)
+			{
+				RateInformation information = new RateInformation();
+				this.Spread = information.GetSpread(account);
+			}
+			else
+			{
+				this.Spread = 0;
+			}
 			AccountType type = new AccountType();
 			if(type.isAmortised(account.AccountTypeId) && account.Maturity != DateTime.MinValue && account.MonthlyPayment != 0)
 			{

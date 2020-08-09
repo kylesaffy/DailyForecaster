@@ -36,9 +36,14 @@ namespace DailyForecaster
 
 		public static IHostBuilder CreateWebHostBuilder(string[] args) =>
 			Host.CreateDefaultBuilder(args)
-				.ConfigureWebHostDefaults(webBuilder =>
-				{
-					webBuilder.UseStartup<Startup>();
-				});
+			//.ConfigureAppConfiguration((context, config)=>
+			//{
+			//	var root = config.Build();
+			//	config.AddAzureKeyVault($"https://{root["KeyVault:Vault"]}.vault.azure.net/", root["KeyVault:ClientId"], root["KeyVault:ClientSecret"]);
+			//})
+			.ConfigureWebHostDefaults(webBuilder =>
+			{
+				webBuilder.UseStartup<Startup>();
+			});
 	}
 }

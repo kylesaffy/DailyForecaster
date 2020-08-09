@@ -20,6 +20,7 @@ namespace DailyForecaster.Models
 		public string ClientReference { get; set; }
 		public int YodleeId { get; set; }
 		public int YodleeSGId { get; set; }
+		public bool Infaltion { get; set; }
 		public virtual ICollection<BudgetTransaction> BudgetTransactions { get; set; }
 		/// <summary>
 		/// Returns a list of CFTYpes for that collection
@@ -103,6 +104,7 @@ namespace DailyForecaster.Models
 				type.Id = Guid.NewGuid().ToString();
 				type.Custom = true;
 				type.Name = name;
+				type.Infaltion = true;
 				type.ClientReference = collectionsId;
 				_context.CFTypes.Add(type);
 				_context.SaveChanges();

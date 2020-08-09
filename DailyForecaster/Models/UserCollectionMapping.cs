@@ -15,16 +15,64 @@ namespace DailyForecaster.Models
 		[Required]
 		public string CollectionsId { get; set; }
 		public Collections Collections { get; set; }
-		[Required]
-		[StringLength(128)]
+		public string FirebaseUserId { get; set; }
+		[ForeignKey("FirebaseUserID")]
+		public FirebaseUser FirebaseUser { get; set; }
 		public string Id { get; set; }
 		[ForeignKey("Id")]
 		public AspNetUsers AspNetUsers { get; set; }
 		public UserCollectionMapping() { }
+		/// <summary>
+		/// Checks if the collection is linked to more than one user
+		/// </summary>
+		/// <param name="collectionsId">The unique ID of the collection</param>
+		/// <returns>Returns a bool, with true if more than one user is linked to the collection provided</returns>
+		public bool IsShared(string collectionsId)
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context
+					.UserCollectionMapping
+					.Where(x => x.CollectionsId == collectionsId)
+					.Count() > 1;
+			}
+		}
+		/// <summary>
+		/// Responsible for returning the mapping of a single user to the collections to which they are assigned
+		/// </summary>
+		/// <param name="userId">The unique ID of the user</param>
+		/// <param name="type">Either firebase or asp</param>
+		/// <returns>Returns a string of the id's of the collections to which a single user is associated</returns>
+		public List<string> getCollectionIds(string userId, string type)
+		{
+			switch(type)
+			{
+				case "firebase":
+					using(FinPlannerContext _context = new FinPlannerContext())
+					{
+						return _context.UserCollectionMapping.Where(x => x.FirebaseUserId == userId).Select(x => x.CollectionsId).ToList();
+					}
+				case "asp":
+					using (FinPlannerContext _context = new FinPlannerContext())
+					{
+						return _context.UserCollectionMapping.Where(x => x.Id == userId).Select(x => x.CollectionsId).ToList();
+					}
+				default:
+					return null;
+			}
+		}
 		public UserCollectionMapping (string collectionsId,string userId)
 		{
-			AspNetUsers user = new AspNetUsers();
-			userId = user.getUserId(userId);
+			try
+			{
+				AspNetUsers user = new AspNetUsers();
+				userId = user.getUserId(userId);
+			}
+			catch
+			{
+				FirebaseUser user = new FirebaseUser();
+				userId = user.GetFirebaseUser(userId);
+			}
 			if (CheckUser(collectionsId, userId))
 			{
 				UserCollectionMappingId = Guid.NewGuid().ToString();
@@ -64,7 +112,7 @@ namespace DailyForecaster.Models
 				//userId = aspNetUsers.getUserId(userId);
 				foreach(UserCollectionMapping item in mappings)
 				{
-					if(item.Id == userId)
+					if(item.Id == userId || item.FirebaseUserId == userId)
 					{
 						ans = false;
 						break;
@@ -90,7 +138,7 @@ namespace DailyForecaster.Models
 					//userId = aspNetUsers.getUserId(userId);
 					foreach (UserCollectionMapping item in mappings)
 					{
-						if (item.Id == Id)
+						if (item.Id == Id||item.FirebaseUserId == Id)
 						{
 							ans = false;
 							break;

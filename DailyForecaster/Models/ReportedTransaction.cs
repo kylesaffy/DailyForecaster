@@ -62,6 +62,11 @@ namespace DailyForecaster.Models
 			}
 			return transactions;
 		}
+		/// <summary>
+		/// Reported transactions for a given period 
+		/// </summary>
+		/// <param name="budget">The budget that is under examination</param>
+		/// <returns>Reutns a list of reported transactions for the budget</returns>
 		public List<ReportedTransaction> GetTransactions(Budget budget)
 		{
 			DateTime startDate = budget.StartDate.AddDays(-3);

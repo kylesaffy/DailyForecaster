@@ -39,6 +39,8 @@ namespace DailyForecaster.Models
         public DbSet<PaymentModel> PaymentModel { get; set; }
         public DbSet<AccountAmortisation> AccountAmortisation { get; set; }
         public DbSet<AccountBalance> AccountBalance { get; set; }
+        public DbSet<FirebaseUser> FirebaseUser { get; set; }
+        public DbSet<FirebaseLogin> FirebaseLogin { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()

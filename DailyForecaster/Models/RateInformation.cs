@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 using System.Threading.Tasks;
 
 namespace DailyForecaster.Models
@@ -12,5 +13,20 @@ namespace DailyForecaster.Models
 		public DateTime DateEffective { get; set; }
 		public double RepoRate { get; set; }
 		public double PrimeRate { get; set; }
+		public double JIBAR_3_Month { get; set; }
+		public double GetSpread(Account account)
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				RateInformation information = _context.RateInformation.OrderByDescending(x => x.DateEffective).FirstOrDefault();
+				switch(account.FloatingType)
+				{
+					case "Prime":
+						return account.DebitRate - information.PrimeRate;
+				}
+			}
+			return 0;
+		}
 	}
+	
 }

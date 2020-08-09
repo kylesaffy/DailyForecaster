@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200806032524_simulationassumptionscorrections")]
+    partial class simulationassumptionscorrections
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -383,9 +385,6 @@ namespace DailyForecaster.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("Custom")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("Infaltion")
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
