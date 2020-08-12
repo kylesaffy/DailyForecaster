@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200809063543_addAccountState")]
+    partial class addAccountState
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -191,7 +193,9 @@ namespace DailyForecaster.Migrations
 
                     b.HasIndex("AccountId");
 
-                    b.HasIndex("BudgetId");
+                    b.HasIndex("BudgetId")
+                        .IsUnique()
+                        .HasFilter("[BudgetId] IS NOT NULL");
 
                     b.ToTable("AccountState");
                 });
@@ -863,7 +867,7 @@ namespace DailyForecaster.Migrations
                         .IsUnique()
                         .HasFilter("[SimulationAssumptionsId] IS NOT NULL");
 
-                    b.ToTable("Simulation");
+                    b.ToTable("Simualtion");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.SimulationAssumptions", b =>
@@ -903,9 +907,6 @@ namespace DailyForecaster.Migrations
 
                     b.Property<bool>("Recurring")
                         .HasColumnType("bit");
-
-                    b.Property<string>("SimualtionName")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Type")
                         .HasColumnType("nvarchar(max)");
@@ -1020,8 +1021,8 @@ namespace DailyForecaster.Migrations
                         .HasForeignKey("AccountId");
 
                     b.HasOne("DailyForecaster.Models.Budget", "Budget")
-                        .WithMany("AccountStates")
-                        .HasForeignKey("BudgetId");
+                        .WithOne("AccountState")
+                        .HasForeignKey("DailyForecaster.Models.AccountState", "BudgetId");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.AutomatedCashFlow", b =>

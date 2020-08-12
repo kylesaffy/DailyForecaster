@@ -82,11 +82,21 @@ namespace DailyForecaster.Models
 				}
 				catch
 				{
-					CFType temp = _context.CFTypes.Where(x=>x.Name == id).Where(x=>x.Custom == false).FirstOrDefault();
-					Id = temp.Id;
-					Custom = temp.Custom;
-					Name = temp.Name;
-					ClientReference = temp.ClientReference;
+					try
+					{
+						CFType temp = _context.CFTypes.Where(x => x.Name == id).Where(x => x.Custom == false).FirstOrDefault();
+						Id = temp.Id;
+						Custom = temp.Custom;
+						Name = temp.Name;
+						ClientReference = temp.ClientReference;
+					}
+					catch
+					{
+						Id = "";
+						Custom = false;
+						Name = "";
+						ClientReference = "";
+					}
 				}
 			}
 		}

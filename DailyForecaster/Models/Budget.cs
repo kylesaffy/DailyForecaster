@@ -24,6 +24,7 @@ namespace DailyForecaster.Models
 		public Collections Collection { get; set; }
 		public ICollection<BudgetTransaction> BudgetTransactions { get; set; }
 		public bool Simulation { get; set; }
+		public ICollection<AccountState> AccountStates { get; set; }
 		public Budget() { }
 		public void GetBudgetTransacions()
 		{
@@ -327,9 +328,16 @@ namespace DailyForecaster.Models
 		/// <returns>The amount that has been spent in the current budgeting period (Total Actual Expenses)</returns>
 		public double GetSpentAmount(string collectionsId)
 		{
-			Budget budget = GetBudget(collectionsId);
-			ReportedTransaction transaction = new ReportedTransaction();
-			return transaction.GetTransactions(budget).Where(x => x.CFClassification.Sign == -1).Select(x => x.Amount).Sum();
+			try
+			{
+				Budget budget = GetBudgetNew(collectionsId);
+				ReportedTransaction transaction = new ReportedTransaction();
+				return transaction.GetTransactions(budget).Where(x => x.CFClassification.Sign == -1).Select(x => x.Amount).Sum();
+			}
+			catch
+			{
+				return 0;
+			}
 		}
 		/// <summary>
 		/// Amount that is budgeted to be spent for under the current period for a given collection
@@ -338,9 +346,33 @@ namespace DailyForecaster.Models
 		/// <returns>The amount that is expected to be spent in the current budgeting period (Total Expected Expenses)</returns>
 		public double GetBudgetedAmount(string collectionsId)
 		{
-			string Id = GetBudget(collectionsId).BudgetId;
-			BudgetTransaction transaction = new BudgetTransaction();
-			return transaction.ExpectedExpenses(Id);
+			try
+			{
+				string Id = GetBudgetNew(collectionsId).BudgetId;
+				BudgetTransaction transaction = new BudgetTransaction();
+				return transaction.ExpectedExpenses(Id);
+			}
+			catch 
+			{ 
+				return 0;
+			}
+		}
+		/// <summary>
+		/// Returns the most recent budget within a collection
+		/// </summary>
+		/// <param name="collectionsId">Id of the colelction to which the budget is associated</param>
+		/// <returns>Returns a budget object associated with the Collection</returns>
+		public Budget GetBudgetNew(string collectionsId)
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context
+					.Budget
+					.Where(x => x.CollectionId == collectionsId)
+					.Where(x => x.Simulation == false)
+					.OrderByDescending(x => x.EndDate)
+					.FirstOrDefault();
+			}
 		}
 		public Budget GetBudget(string collectionsId)
 		{

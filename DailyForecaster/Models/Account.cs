@@ -55,12 +55,19 @@ namespace DailyForecaster.Models
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
-				return _context
-					.Account
-					.Where(x => x.CollectionsId == collecionsId)
-					.Where(x => x.AccountType.Transactional)
-					.Select(x => x.Available)
-					.Sum();
+				try
+				{
+					return _context
+						.Account
+						.Where(x => x.CollectionsId == collecionsId)
+						.Where(x => x.AccountType.Transactional)
+						.Select(x => x.Available)
+						.Sum();
+				}
+				catch
+				{
+					return 0;
+				}
 			}
 		}
 		public Account(string id)
@@ -105,6 +112,12 @@ namespace DailyForecaster.Models
 			}
 			return account;
 		}
+		/// <summary>
+		/// Returns a list of accounts associated with a list of collection
+		/// </summary>
+		/// <param name="collectionsIds">The list collections that is being requested</param>
+		/// <param name="count">The number of transactions that is requested</param>
+		/// <returns>A List of Account objects</returns>
 		public List<Account> GetAccountIndex(List<string> collectionsIds,int count)
 		{
 
@@ -122,15 +135,18 @@ namespace DailyForecaster.Models
 					.AccountType
 					.ToList();
 			}
-			//get transactions
-			ReportedTransaction reportedTransaction = new ReportedTransaction();
-			List<ReportedTransaction> transactions = reportedTransaction.GetTransactions(accounts.Select(x => x.Id).ToList(),count,collectionsIds);
-			//assign transactions
-			foreach(Account item in accounts)
+			if (count > 0)
 			{
-				item.ReportedTransactions = transactions.Where(x => x.AccountId == item.Id).ToList();
-				item.AccountType = accountTypes.Where(x => x.AccountTypeId == item.AccountTypeId).FirstOrDefault();
-				item.AccountType.Accounts = null;
+				//get transactions
+				ReportedTransaction reportedTransaction = new ReportedTransaction();
+				List<ReportedTransaction> transactions = reportedTransaction.GetTransactions(accounts.Select(x => x.Id).ToList(), count, collectionsIds);
+				//assign transactions
+				foreach (Account item in accounts)
+				{
+					item.ReportedTransactions = transactions.Where(x => x.AccountId == item.Id).ToList();
+					item.AccountType = accountTypes.Where(x => x.AccountTypeId == item.AccountTypeId).FirstOrDefault();
+					item.AccountType.Accounts = null;
+				}
 			}
 			return accounts;
 		}
@@ -189,7 +205,13 @@ namespace DailyForecaster.Models
 				return false;
 			}
 		}
-		public List<Account> GetAccounts(string collectionsId)
+		/// <summary>
+		/// List of accounts associated to a single Collection
+		/// </summary>
+		/// <param name="collectionsId">The collection Id that is being requested</param>
+		/// <param name="transactions">Are transactions to be included</param>
+		/// <returns>Returns a list of accounts associated to the collection Id</returns>
+		public List<Account> GetAccounts(string collectionsId,bool transactions = true)
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
@@ -198,7 +220,10 @@ namespace DailyForecaster.Models
 				{
 					item.Institution = _context.Institution.Find(item.InstitutionId);
 					item.AccountType = _context.AccountType.Find(item.AccountTypeId);
-					item.GetTransactions();
+					if (transactions)
+					{
+						item.GetTransactions();
+					}
 					item.AccountType.Accounts = null;
 				}
 				return accounts;

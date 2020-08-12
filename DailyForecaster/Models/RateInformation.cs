@@ -22,7 +22,7 @@ namespace DailyForecaster.Models
 				switch(account.FloatingType)
 				{
 					case "Prime":
-						return account.DebitRate - information.PrimeRate;
+						return account.CreditRate - information.PrimeRate;
 				}
 			}
 			return 0;

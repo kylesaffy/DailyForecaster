@@ -47,12 +47,18 @@ namespace DailyForecaster.Models
 			{
 				foreach (string id in collectionsIds)
 				{
-					collections.Add(_context
-						.Collections
-						.Include(x=>x.Name)
-						.Include(x=>x.CollectionsId)
-						.Where(x => x.CollectionsId == id)
-						.FirstOrDefault());
+					try
+					{
+						collections.Add(_context
+							.Collections
+							.Where(x => x.CollectionsId == id)
+							.FirstOrDefault());
+					}
+					catch(Exception e)
+					{
+						ExceptionCatcher catcher = new ExceptionCatcher();
+						catcher.Catch(e.Message);
+					}
 				}
 			}
 			return collections;
@@ -67,6 +73,10 @@ namespace DailyForecaster.Models
 			DateCreated = DateTime.Now;
 			ResetDay = resetDate;
 		}
+		/// <summary>
+		/// Returns a populated collections object
+		/// </summary>
+		/// <param name="collectionsId">Id of the collection object</param>
 		public Collections(string collectionsId)
 		{
 			Collections col = new Collections();
@@ -330,7 +340,7 @@ namespace DailyForecaster.Models
 					double debt = acc.AccountLimit - acc.Available;
 					if (debt > 0)
 					{
-						fees = fees + debt * (acc.DebitRate / 12 / 100);
+						fees = fees + debt * (acc.CreditRate / 12 / 100);
 					}
 				}
 				fees = Math.Round(fees, 2);

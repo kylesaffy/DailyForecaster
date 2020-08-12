@@ -45,12 +45,19 @@ namespace DailyForecaster.Models
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
-				return _context
-					.BudgetTransactions
-					.Where(x => x.BudgetId == budgetId)
-					.Where(x => x.CFClassification.Sign == -1)
-					.Select(x => x.Amount)
-					.Sum();
+				try
+				{
+					return _context
+						.BudgetTransactions
+						.Where(x => x.BudgetId == budgetId)
+						.Where(x => x.CFClassification.Sign == -1)
+						.Select(x => x.Amount)
+						.Sum();
+				}
+				catch
+				{
+					return 0;
+				}
 			}
 		}
 		public List<BudgetTransaction> CreateBudgetTransactions(List<BudgetTransaction> transactions, string BudgetId, string collectionsId)

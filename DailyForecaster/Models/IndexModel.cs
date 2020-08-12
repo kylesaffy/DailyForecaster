@@ -11,8 +11,8 @@ namespace DailyForecaster.Models
 	{
 		public bool isShared { get; set; }
 		public double Avaialble { get; set; }
-		public double Used { get; set; }
-		public double Budgeted { get; set; }
+		public string Used { get; set; }
+		public string Budgeted { get; set; }
 		public string Name { get; set; }
 		public string CollectionsId { get; set; }
 		/// <summary>
@@ -44,15 +44,22 @@ namespace DailyForecaster.Models
 			List<Collections> collections = collection.GetEagerList(collectionIds);
 			foreach(Collections item in collections)
 			{
-				model.Add(new IndexModel
+				try
 				{
-					Name = item.Name,
-					CollectionsId = item.CollectionsId,
-					Avaialble = account.GetAvaialable(item.CollectionsId),
-					Budgeted = budget.GetBudgetedAmount(item.CollectionsId),
-					Used = budget.GetSpentAmount(item.CollectionsId),
-					isShared = mapping.IsShared(item.CollectionsId)
-				});
+					IndexModel temp = new IndexModel();
+					temp.Name = item.Name;
+					temp.CollectionsId = item.CollectionsId;
+					temp.Avaialble = account.GetAvaialable(item.CollectionsId);
+					temp.Budgeted = Math.Round(budget.GetBudgetedAmount(item.CollectionsId), 2).ToString("N2");
+					temp.Used = Math.Round(budget.GetSpentAmount(item.CollectionsId), 2).ToString("N2");
+					temp.isShared = mapping.IsShared(item.CollectionsId);
+					model.Add(temp);
+				}
+				catch (Exception e)
+				{
+					ExceptionCatcher catcher = new ExceptionCatcher();
+					catcher.Catch(e.Message);
+				}
 			}
 			return model;
 		}

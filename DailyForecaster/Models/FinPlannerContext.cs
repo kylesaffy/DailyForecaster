@@ -27,7 +27,8 @@ namespace DailyForecaster.Models
         public DbSet<AspNetUsers> AspNetUsers { get; set; }
         public DbSet<RateInformation> RateInformation { get; set; }
         public DbSet<AccountType> AccountType { get; set; }
-        public DbSet<Simulation> Simualtion { get; set; }
+        public DbSet<Simulation> Simulation { get; set; }
+        public DbSet<SimulationAssumptions> SimulationAssumptions { get; set; }
         public DbSet<Notes> Notes { get; set; }
         public DbSet<AccountChange> AccountChange { get; set; }
         public DbSet<ClickTracker> ClickTracker { get; set; }
@@ -41,6 +42,7 @@ namespace DailyForecaster.Models
         public DbSet<AccountBalance> AccountBalance { get; set; }
         public DbSet<FirebaseUser> FirebaseUser { get; set; }
         public DbSet<FirebaseLogin> FirebaseLogin { get; set; }
+        public DbSet<AccountState> AccountState { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()

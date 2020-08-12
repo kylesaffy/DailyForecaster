@@ -1,8 +1,11 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 namespace DailyForecaster.Models
@@ -21,8 +24,75 @@ namespace DailyForecaster.Models
 		public string SimulationAssumptionsId { get; set; }
 		[ForeignKey("SimulationAssumptionsId")]
 		public SimulationAssumptions SimulationAssumptions { get; set; }
-		public void Build()
+		public Simulation() { }
+		/// <summary>
+		/// Instantiates a Simulation object and saves it
+		/// </summary>
+		/// <param name="assumptions">The asumtpions object that underpins the Simulation</param>
+		/// <param name="collectionsId">The collection that the simulation is being conducted under</param>
+		public Simulation(SimulationAssumptions assumptions, string collectionsId)
 		{
+			assumptions.SimulationAssumptionsId = Guid.NewGuid().ToString();
+			SimulationAssumptions = assumptions;
+			SimulationName = assumptions.SimualtionName;
+			SimulationId = "temp";
+			CollectionsId = collectionsId;
+			SimulationId = Save();
+		}
+		/// <summary>
+		/// Saves the current Simulation
+		/// </summary>
+		public string Save()
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				if (this.SimulationId == "temp")	 
+				{
+					this.SimulationId = Guid.NewGuid().ToString();
+					_context.Add(this.SimulationAssumptions);
+					_context.Add(this);
+				}
+				else
+				{
+					_context.Entry(this).State = EntityState.Modified;
+				}
+				//_context.SaveChanges();
+			}
+			return this.SimulationId;
+		}
+		/// <summary>
+		/// Builds the simulation using the connected references from the db pick-up
+		/// </summary>
+		/// <returns>Returns the initial build of the simulation</returns>
+		public Simulation BuildSimulation(SimulationAssumptions assumptions)
+		{
+			this.SimulationAssumptions = assumptions;
+			this.Build();
+			this.Collections.Accounts = null;
+			this.SimulationAssumptions.Simulation = null;
+			return this;
+		}
+		private void Build()
+		{
+			this.Collections = new Collections(this.CollectionsId);
+			// Get base information
+			Budget budget = Collections.Budgets.Where(x => x.Simulation == false).OrderByDescending(x => x.StartDate).FirstOrDefault();
+			this.Collections.Budgets = null;
+			Account account = new Account();
+			this.Collections.Accounts = account.GetAccounts(this.CollectionsId);
+			foreach(Account acc in Collections.Accounts)
+			{
+				acc.ReportedTransactions = null;
+				acc.AutomatedCashFlows = null;
+				acc.ManualCashFlows = null;
+				acc.Institution = null;
+			}
+			//this.SimulationAssumptions = new SimulationAssumptions(SimulationAssumptionsId);
+			this.Budgets = new List<Budget>();
+			CFClassification cf = new CFClassification();
+			List<CFClassification> cfList = cf.GetList();
+			CFType type = new CFType();
+			List<CFType> typeList = type.GetCFList(CollectionsId);
 			switch (this.Collections.DurationType)
 			{
 				case "Month":
@@ -33,22 +103,42 @@ namespace DailyForecaster.Models
 					{
 						date.AddMonths(1);
 					}
-					// Get base information
-					Budget budget = Collections.Budgets.Where(x => x.Simulation == false).OrderByDescending(x => x.StartDate).FirstOrDefault();
 					// Set Simulation Object
 					Simulation simulation = new Simulation();
 					// Loop for the number of Months
 					for (int i = 0; i < SimulationAssumptions.NumberOfMonths; i++)
 					{
 						Budget sim = new Budget(CollectionsId, date.AddMonths(i), date.AddMonths(i + 1), true);
+						sim.AccountStates = new List<AccountState>();
 						// If first month, then pull BudgetTransactions from actual BudgetTransactions ELSE pull from previous month
 						if (i == 0)
 						{
-							sim.BudgetTransactions = budget.BudgetTransactions;
+							sim.BudgetTransactions = budget.BudgetTransactions.Where(x=>x.Automated == false).ToList();
+							foreach(BudgetTransaction item in sim.BudgetTransactions)
+							{
+								item.CFClassification = cfList.Where(x => x.Id == item.CFClassificationId).FirstOrDefault();
+								item.CFType = typeList.Where(x => x.Id == item.CFTypeId).FirstOrDefault();
+							}
+							foreach(Account item in Collections.Accounts)
+							{
+								sim.AccountStates.Add(new AccountState(item,sim.BudgetId));
+							}
 						}
 						else
 						{
-							sim.BudgetTransactions = this.Budgets[i - 1].BudgetTransactions;
+							sim.BudgetTransactions = this.Budgets[i - 1].BudgetTransactions.Where(x => x.Automated == false).ToList();
+							foreach (BudgetTransaction item in sim.BudgetTransactions)
+							{
+								item.CFClassification = cfList.Where(x => x.Id == item.CFClassificationId).FirstOrDefault();
+							}
+							foreach (Account item in this.Collections.Accounts)
+							{
+								sim.AccountStates.Add(new AccountState(item, sim.BudgetId, this
+									.Budgets[i - 1]
+									.AccountStates
+									.Where(x => x.AccountId == item.Id)
+									.FirstOrDefault()));
+							}
 						}
 						//=======================================================================================================================================================
 						// Bonus Handling
@@ -80,7 +170,12 @@ namespace DailyForecaster.Models
 							{
 								foreach (BudgetTransaction transaction in sim.BudgetTransactions.Where(x => x.CFType.Name == "Salary"))
 								{
-									transaction.Amount = this.Budgets[i - 1].BudgetTransactions.Where(x => x.Name == transaction.Name).Select(x => x.Amount).FirstOrDefault() * (1 + SimulationAssumptions.IncreasePercentage);
+									transaction.Amount = this
+										.Budgets[i - 1]
+										.BudgetTransactions.Where(x => x.Name == transaction.Name)
+										.Select(x => x.Amount)
+										.FirstOrDefault() 
+										* (1 + SimulationAssumptions.IncreasePercentage);
 								}
 							}
 							else
@@ -101,6 +196,44 @@ namespace DailyForecaster.Models
 								item.Amount = item.Amount * 1.06;
 							}
 						}
+						//=======================================================================================================================================================
+						// Cashflow Handling
+						//=======================================================================================================================================================
+						if(i > 0)
+						{
+							double fees = 0;
+							foreach(Account acc in Collections.Accounts.Where(x=>x.AccountType.Transactional))
+							{
+								fees = fees + acc.MonthlyFee;
+								double debt = acc.AccountLimit - acc.Available;
+								if (debt > 0)
+								{
+									fees = fees + debt * (acc.CreditRate / 12 / 100);
+								}
+							}
+							fees = Math.Round(fees, 2);
+							CFClassification classification = new CFClassification("Expense");
+							CFType typeT = new CFType("Bank Charges");
+							sim.BudgetTransactions.Add(new BudgetTransaction
+							{
+								BudgetId = sim.BudgetId,
+								Automated = true,
+								BudgetTransactionId = Guid.NewGuid().ToString(),
+								CFClassificationId = classification.Id,
+								CFClassification = classification,
+								CFType = typeT,
+								CFTypeId = typeT.Id,
+								Name = "Automated Bank Charges",
+								Amount = fees,
+							});
+							sim.AccountStates
+								.Where(x => x.Amount < 0 && x.Account.AccountType.Transactional)
+								.OrderByDescending(x => x.Account.CreditRate)
+								.FirstOrDefault()
+								.Update(sim.BudgetTransactions.Sum(x => x.Amount * x.CFClassification.Sign));
+							
+						}
+						this.Budgets.Add(sim);
 					}
 
 					break;

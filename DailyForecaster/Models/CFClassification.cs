@@ -51,10 +51,20 @@ namespace DailyForecaster.Models
 					}
 				catch
 				{
-					CFClassification temp = _context.CFClassifications.Where(x => x.Name == id).FirstOrDefault();
-					Id = temp.Id;
-					Name = temp.Name;
-					Sign = temp.Sign;
+					try
+					{
+						CFClassification temp = _context.CFClassifications.Where(x => x.Name == id).FirstOrDefault();
+						Id = temp.Id;
+						Name = temp.Name;
+						Sign = temp.Sign;
+					}
+					catch
+					{
+						Id = "";
+						Name = "";
+						Sign = 0;
+					}
+					
 				}
 			}
 			
