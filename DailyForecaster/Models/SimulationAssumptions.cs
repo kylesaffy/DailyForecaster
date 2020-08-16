@@ -22,6 +22,8 @@ namespace DailyForecaster.Models
 		public int IncreaseMonth { get; set; }
 		public double IncreasePercentage { get; set; }
 		public bool Recurring { get; set; }
+		public double Amount { get; set; }
+		public string AccountId { get; set; }
 		public DateTime ChangeDate { get; set; }
 		public string CFClassificationId { get; set; }
 		[ForeignKey("CFClassificationId")]

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -31,6 +32,22 @@ namespace DailyForecaster.Controllers
 			{
 				collectionsId = this.HttpContext.Request.Headers["collectionsId"];
 			}
+			string accountId = "";
+			if (this.HttpContext.Request.Headers["accountId"] != "")
+			{
+				accountId = this.HttpContext.Request.Headers["accountId"];
+			}
+			DateTime startDate = DateTime.Now;
+			CultureInfo provider = CultureInfo.InvariantCulture;
+			if (this.HttpContext.Request.Headers["startDate"] != "")
+			{
+				startDate = DateTime.ParseExact(this.HttpContext.Request.Headers["startDate"], "dd/mm/yyyy", provider);
+			}
+			DateTime endDate = DateTime.Now;
+			if (this.HttpContext.Request.Headers["endDate"] != "")
+			{
+				endDate = DateTime.ParseExact(this.HttpContext.Request.Headers["endDate"], "dd/mm/yyyy", provider);
+			}
 			if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
 			{
 				switch (route)
@@ -41,6 +58,8 @@ namespace DailyForecaster.Controllers
 						return Index(auth.Claims["email"].ToString());
 					case "GetAccounts":
 						return GetAccounts(collectionsId);
+					case "GetReportedTransaction":
+						return GetReportedTransactions(accountId, startDate, endDate);
 				}
 			}
 			return Ok();
@@ -92,6 +111,18 @@ namespace DailyForecaster.Controllers
 				}
 			}
 			return Ok();
+		}
+		/// <summary>
+		/// Get for the reported transactions for a specified account
+		/// </summary>
+		/// <param name="accountId">Id for the account that is being requested</param>
+		/// <param name="startDate">The start date for which to request the transactions</param>
+		/// <param name="endDate">The end date for which to request the transactions</param>
+		/// <returns>A List of the Reported Transactions that is associated on that account between the specified dates</returns>
+		private ActionResult GetReportedTransactions(string accountId,DateTime startDate,DateTime endDate)
+		{
+			ReportedTransaction transaction = new ReportedTransaction();
+			return Ok(transaction.GetTransactions(accountId,startDate,endDate));
 		}
 		private ActionResult GetAccounts(string collectionsId)
 		{

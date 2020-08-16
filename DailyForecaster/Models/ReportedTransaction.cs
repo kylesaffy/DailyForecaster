@@ -61,6 +61,24 @@ namespace DailyForecaster.Models
 				transactions.Add(new ReportedTransaction(item, types, classifications));
 			}
 			return transactions;
+		}/// <summary>
+		/// Reported Transactions for a specified account within a specified period
+		/// </summary>
+		/// <param name="accountId">Id for the account in question</param>
+		/// <param name="startDate">The start date of the period in question</param>
+		/// <param name="endDate">The end date of the period in question</param>
+		/// <returns>A list of reported transactions on a specidified account within a specified period</returns>
+		public List<ReportedTransaction> GetTransactions(string accountId,DateTime startDate, DateTime endDate)
+		{
+			Account account = new Account();
+			account =  account.GetAccount(accountId,false);
+			List<ReportedTransaction> transactions = account.ReportedTransactions.Where(x => x.DateBooked > startDate && x.DateBooked < endDate).ToList();
+			foreach (ReportedTransaction t in transactions)
+			{
+				t.AccountId = account.Id;
+				t.Account = account;
+			}
+			return transactions;
 		}
 		/// <summary>
 		/// Reported transactions for a given period 

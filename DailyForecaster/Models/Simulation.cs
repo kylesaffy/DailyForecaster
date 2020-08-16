@@ -288,7 +288,103 @@ namespace DailyForecaster.Models
 								.FirstOrDefault()
 								.Update(Budgets[i].BudgetTransactions.Sum(x => x.Amount * x.CFClassification.Sign));
 			}
-
+		}
+		private void Scenario()
+		{
+			switch(SimulationAssumptions.Type)
+			{
+				case "Payment":
+					Payment();
+					break;
+			}
+		}
+		private void Payment()
+		{
+			CFClassification cf = new CFClassification();
+			List<CFClassification> cfList = cf.GetList();
+			CFType type = new CFType();
+			List<CFType> typeList = type.GetCFList(CollectionsId);
+			if (SimulationAssumptions.Recurring)
+			{
+				for (int i = 0; i < SimulationAssumptions.NumberOfMonths; i++)
+				{
+					Budgets[i].BudgetTransactions.Add(new BudgetTransaction
+					{
+						Amount = SimulationAssumptions.Amount,
+						Automated = true,
+						BudgetId = Budgets[i].BudgetId,
+						BudgetTransactionId = Guid.NewGuid().ToString(),
+						CFClassificationId = cfList.Where(x=>x.Sign == 1).FirstOrDefault().Id,
+						CFClassification = cfList.Where(x => x.Sign == 1).FirstOrDefault(),
+						CFTypeId = "999",
+						CFType = typeList.Where(x=>x.Id == "999").FirstOrDefault(),
+						Name = "Recurring Payment",
+					});
+					Budgets[i].BudgetTransactions.Add(new BudgetTransaction
+					{
+						Amount = SimulationAssumptions.Amount,
+						Automated = true,
+						BudgetId = Budgets[i].BudgetId,
+						BudgetTransactionId = Guid.NewGuid().ToString(),
+						CFClassificationId = cfList.Where(x => x.Sign == 1).FirstOrDefault().Id,
+						CFClassification = cfList.Where(x => x.Sign == -1).FirstOrDefault(),
+						CFTypeId = "999",
+						CFType = typeList.Where(x => x.Id == "999").FirstOrDefault(),
+						Name = "Recurring Payment",
+					});
+					Budgets[i].AccountStates
+						.Where(x => x.Amount < 0 && x.Account.AccountType.Transactional)
+						.OrderByDescending(x => x.Account.CreditRate)
+						.FirstOrDefault()
+						.Update(-SimulationAssumptions.Amount);
+					Budgets[i].AccountStates
+						.Where(x => x.AccountId == SimulationAssumptions.AccountId)
+						.FirstOrDefault()
+						.Update(SimulationAssumptions.Amount);
+				}
+			}
+			else
+			{
+				for(int i = 0; i < SimulationAssumptions.NumberOfMonths;i++)
+				{
+					if(SimulationAssumptions.ChangeDate == Budgets[i].StartDate)
+					{
+						Budgets[i].BudgetTransactions.Add(new BudgetTransaction
+						{
+							Amount = SimulationAssumptions.Amount,
+							Automated = true,
+							BudgetId = Budgets[i].BudgetId,
+							BudgetTransactionId = Guid.NewGuid().ToString(),
+							CFClassificationId = cfList.Where(x => x.Sign == 1).FirstOrDefault().Id,
+							CFClassification = cfList.Where(x => x.Sign == 1).FirstOrDefault(),
+							CFTypeId = "999",
+							CFType = typeList.Where(x => x.Id == "999").FirstOrDefault(),
+							Name = "Recurring Payment",
+						});
+						Budgets[i].BudgetTransactions.Add(new BudgetTransaction
+						{
+							Amount = SimulationAssumptions.Amount,
+							Automated = true,
+							BudgetId = Budgets[i].BudgetId,
+							BudgetTransactionId = Guid.NewGuid().ToString(),
+							CFClassificationId = cfList.Where(x => x.Sign == 1).FirstOrDefault().Id,
+							CFClassification = cfList.Where(x => x.Sign == -1).FirstOrDefault(),
+							CFTypeId = "999",
+							CFType = typeList.Where(x => x.Id == "999").FirstOrDefault(),
+							Name = "Recurring Payment",
+						});
+						Budgets[i].AccountStates
+							.Where(x => x.Amount < 0 && x.Account.AccountType.Transactional)
+							.OrderByDescending(x => x.Account.CreditRate)
+							.FirstOrDefault()
+							.Update(-SimulationAssumptions.Amount);
+						Budgets[i].AccountStates
+							.Where(x => x.AccountId == SimulationAssumptions.AccountId)
+							.FirstOrDefault()
+							.Update(SimulationAssumptions.Amount);
+					}
+				}
+			}
 		}
 		/// <summary>
 		/// Looks to te database to source and find a particular Simulation via the Simulation Id
