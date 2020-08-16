@@ -63,6 +63,20 @@ namespace DailyForecaster.Models
 			}
 			return collections;
 		}
+		/// <summary>
+		/// Returns a collection object
+		/// </summary>
+		/// <param name="collectionsId">Collection Id of the object required</param>
+		/// <returns>Returns a collation object</returns>
+		public Collections GetCollections(string collectionsId)
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context
+					.Collections
+					.Find(collectionsId);
+			}
+		}
 		private Collections(string durationType, string name, string userId, int resetDate)
 		{
 			CollectionsId = Guid.NewGuid().ToString();

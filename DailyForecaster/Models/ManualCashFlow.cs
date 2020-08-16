@@ -78,7 +78,13 @@ namespace DailyForecaster.Models
 			UserId = userID;
 			isDeleted = false;
 			ExpenseLocation = el;
-		}		  		
+		}
+		/// <summary>
+		/// Returns a list of Manual Cash Flows with a specific count
+		/// </summary>
+		/// <param name="AccId">The Id of the account in question</param>
+		/// <param name="count">The number of transactions, defaulted to 10</param>
+		/// <returns>A list of Manual Cash Flows with a specific count</returns>
 		public List<ManualCashFlow> GetManualCashFlows(string AccId,int count = 10)
 		{
 			using (FinPlannerContext _context = new FinPlannerContext())

@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200813034537_UpdatedFields")]
+    partial class UpdatedFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -71,9 +73,6 @@ namespace DailyForecaster.Migrations
                     b.Property<double>("NetAmount")
                         .HasColumnType("float");
 
-                    b.Property<string>("SimulationId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<double>("Spread")
                         .HasColumnType("float");
 
@@ -90,8 +89,6 @@ namespace DailyForecaster.Migrations
                     b.HasIndex("CollectionsId");
 
                     b.HasIndex("InstitutionId");
-
-                    b.HasIndex("SimulationId");
 
                     b.ToTable("Account");
                 });
@@ -993,10 +990,6 @@ namespace DailyForecaster.Migrations
                         .HasForeignKey("InstitutionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("DailyForecaster.Models.Simulation", "Simulation")
-                        .WithMany()
-                        .HasForeignKey("SimulationId");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.AccountAmortisation", b =>

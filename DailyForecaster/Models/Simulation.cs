@@ -42,7 +42,7 @@ namespace DailyForecaster.Models
 		/// <summary>
 		/// Saves the current Simulation
 		/// </summary>
-		public string Save()
+		private string Save()
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
@@ -201,31 +201,32 @@ namespace DailyForecaster.Models
 						//=======================================================================================================================================================
 						if(i > 0)
 						{
-							double fees = 0;
-							foreach(Account acc in Collections.Accounts.Where(x=>x.AccountType.Transactional))
-							{
-								fees = fees + acc.MonthlyFee;
-								double debt = acc.AccountLimit - acc.Available;
-								if (debt > 0)
-								{
-									fees = fees + debt * (acc.CreditRate / 12 / 100);
-								}
-							}
-							fees = Math.Round(fees, 2);
-							CFClassification classification = new CFClassification("Expense");
-							CFType typeT = new CFType("Bank Charges");
-							sim.BudgetTransactions.Add(new BudgetTransaction
-							{
-								BudgetId = sim.BudgetId,
-								Automated = true,
-								BudgetTransactionId = Guid.NewGuid().ToString(),
-								CFClassificationId = classification.Id,
-								CFClassification = classification,
-								CFType = typeT,
-								CFTypeId = typeT.Id,
-								Name = "Automated Bank Charges",
-								Amount = fees,
-							});
+							//double fees = 0;
+							//foreach(Account acc in Collections.Accounts.Where(x=>x.AccountType.Transactional))
+							//{
+							//	fees = fees + acc.MonthlyFee;
+							//	double debt = acc.AccountLimit - acc.Available;
+							//	if (debt > 0)
+							//	{
+							//		fees = fees + debt * (acc.CreditRate / 12 / 100);
+							//	}
+							//}
+							//fees = Math.Round(fees, 2);
+							//CFClassification classification = new CFClassification("Expense");
+							//CFType typeT = new CFType("Bank Charges");
+							//sim.BudgetTransactions.Add(new BudgetTransaction
+							//{
+							//	BudgetId = sim.BudgetId,
+							//	Automated = true,
+							//	BudgetTransactionId = Guid.NewGuid().ToString(),
+							//	CFClassificationId = classification.Id,
+							//	CFClassification = classification,
+							//	CFType = typeT,
+							//	CFTypeId = typeT.Id,
+							//	Name = "Automated Bank Charges",
+							//	Amount = fees,
+							//});
+							sim.BudgetTransactions.Add(AddAutomated(sim.BudgetId));
 							sim.AccountStates
 								.Where(x => x.Amount < 0 && x.Account.AccountType.Transactional)
 								.OrderByDescending(x => x.Account.CreditRate)
@@ -237,6 +238,70 @@ namespace DailyForecaster.Models
 					}
 
 					break;
+			}
+		}
+		/// <summary>
+		/// Calculation and addition of the Automated Bank Charges field
+		/// </summary>
+		/// <param name="budgetId">The Id of the budget in question</param>
+		/// <returns>New Budget Transaction with a completed Automated Bank Charges Calculation</returns>
+		private BudgetTransaction AddAutomated(string budgetId)
+		{
+			double fees = 0;
+			foreach (Account acc in Collections.Accounts.Where(x => x.AccountType.Transactional))
+			{
+				fees = fees + acc.MonthlyFee;
+				double debt = acc.AccountLimit - acc.Available;
+				if (debt > 0)
+				{
+					fees = fees + debt * (acc.CreditRate / 12 / 100);
+				}
+			}
+			fees = Math.Round(fees, 2);
+			CFClassification classification = new CFClassification("Expense");
+			CFType typeT = new CFType("Bank Charges");
+			return new BudgetTransaction
+			{
+				BudgetId = budgetId,
+				Automated = true,
+				BudgetTransactionId = Guid.NewGuid().ToString(),
+				CFClassificationId = classification.Id,
+				CFClassification = classification,
+				CFType = typeT,
+				CFTypeId = typeT.Id,
+				Name = "Automated Bank Charges",
+				Amount = fees,
+			};
+		}
+		public void Edit()
+		{
+			Account acc = new Account();
+			Collections.Accounts = acc.GetAccountsSim(CollectionsId, SimulationId);
+			for(int i = 0; i < this.SimulationAssumptions.NumberOfMonths;i++)
+			{
+				BudgetTransaction automated = Budgets[i].BudgetTransactions.Where(x=>x.Automated).FirstOrDefault();
+				Budgets[i].BudgetTransactions.Remove(automated);
+				Budgets[i].BudgetTransactions.Add(AddAutomated(Budgets[i].BudgetId));
+				Budgets[i].AccountStates
+								.Where(x => x.Amount < 0 && x.Account.AccountType.Transactional)
+								.OrderByDescending(x => x.Account.CreditRate)
+								.FirstOrDefault()
+								.Update(Budgets[i].BudgetTransactions.Sum(x => x.Amount * x.CFClassification.Sign));
+			}
+
+		}
+		/// <summary>
+		/// Looks to te database to source and find a particular Simulation via the Simulation Id
+		/// </summary>
+		/// <param name="SimulationId">Id of the simulatiion that is being requested</param>
+		/// <returns>A Simulation for a given Id</returns>
+		private Simulation GetSimulation(string SimulationId)
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context
+					.Simulation
+					.Find(SimulationId);
 			}
 		}
 	}

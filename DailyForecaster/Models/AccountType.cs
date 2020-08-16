@@ -14,6 +14,10 @@ namespace DailyForecaster.Models
 		public bool Transactional { get; set; }
 		public bool Amortised { get; set; }
 		public ICollection<Account> Accounts { get; set; }
+		/// <summary>
+		/// Returns a list of all of the account types
+		/// </summary>
+		/// <returns>A List of all of the account types</returns>
 		public List<AccountType> GetAccountTypes()
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())

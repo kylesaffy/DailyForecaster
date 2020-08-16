@@ -81,12 +81,14 @@ namespace DailyForecaster.Controllers
 			{
 				collectionsId = this.HttpContext.Request.Headers["collectionsId"];
 			}
-			if(authHeader == "A90986C6-B81D-45C7-97E2-B6EEE486A2D0E9BE35C6-36DB-441D-93CE-EF950BA6A282DD2C9CE3-4895-46CA-9307-386BF3391CC1" && route == "BuildSimulation")
+			if(authHeader == "A90986C6-B81D-45C7-97E2-B6EEE486A2D0E9BE35C6-36DB-441D-93CE-EF950BA6A282DD2C9CE3-4895-46CA-9307-386BF3391CC1" && (route == "BuildSimulation" || route == "UpdateSimulation"))
 			{
 				switch (route)
 				{
 					case "BuildSimulation":
 						return BuildSimulation(json.GetRawText(), collectionsId);
+					case "UpdateSimulation":
+						return UpdateSimulation(json.GetRawText());
 				}
 			}
 			return Ok();
@@ -95,6 +97,12 @@ namespace DailyForecaster.Controllers
 		{
 			Account account = new Account();
 			return Ok(account.GetAccounts(collectionsId, false));
+		}
+		private ActionResult UpdateSimulation(string json)
+		{
+			Simulation simulation = JsonConvert.DeserializeObject<Simulation>(json);
+			simulation.Edit();
+			return Ok(simulation);
 		}
 		private ActionResult BuildSimulation(string json,string collectionsId)
 		{

@@ -332,7 +332,14 @@ namespace DailyForecaster.Models
 			{
 				Budget budget = GetBudgetNew(collectionsId);
 				ReportedTransaction transaction = new ReportedTransaction();
-				return transaction.GetTransactions(budget).Where(x => x.CFClassification.Sign == -1).Select(x => x.Amount).Sum();
+				//CFType type = new CFType();
+				//type = type.GetCFList(collectionsId).Where(x => x.Id == "999").FirstOrDefault();
+				List<ReportedTransaction> transactions = transaction.GetTransactions(budget);
+				return transactions
+					.Where(x => x.CFClassification.Sign == -1)
+					.Where(x=>x.CFType.Id != "999")
+					.Select(x => x.Amount)
+					.Sum();
 			}
 			catch
 			{

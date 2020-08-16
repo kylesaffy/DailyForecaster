@@ -45,6 +45,12 @@ namespace DailyForecaster.Models
 		public string AccountId { get; set; }
 		public AutomatedCashFlow()
 		{ }
+		/// <summary>
+		/// Returns a list of the most recent transactions on a specified account of a designated count
+		/// </summary>
+		/// <param name="AccId">The account with which the transactions are associated</param>
+		/// <param name="count">The count of the transactions needed, defaulted to 10</param>
+		/// <returns></returns>
 		public List<AutomatedCashFlow> GetAutomatedCashFlows(string AccId, int count = 10)
 		{
 			using (FinPlannerContext _context = new FinPlannerContext()) {

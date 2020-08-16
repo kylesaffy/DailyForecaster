@@ -18,11 +18,20 @@ namespace DailyForecaster.Models
 		public string WebLink { get; set; }
 		public string Email { get; set; }
 		public string BlobString { get; set; }
-		public List<Institution> GetInstitutions()
+		public bool isDummy { get; set; }
+		/// <summary>
+		/// Retirives a list of institutions from the database
+		/// </summary>
+		/// <param name="dummy">bool on whether dummy institutions are to be included</param>
+		/// <returns>A generic list of instituions that are either of dummy type or not</returns>
+		public List<Institution> GetInstitutions(bool dummy = false)
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
-				return _context.Institution.ToList();
+				return _context
+					.Institution
+					.Where(x => x.isDummy == dummy)
+					.ToList();
 			}
 		}
 	}
