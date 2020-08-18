@@ -38,15 +38,14 @@ namespace DailyForecaster.Controllers
 				accountId = this.HttpContext.Request.Headers["accountId"];
 			}
 			DateTime startDate = DateTime.Now;
-			CultureInfo provider = CultureInfo.InvariantCulture;
-			if (this.HttpContext.Request.Headers["startDate"] != "")
+			if (this.HttpContext.Request.Headers["startDate"].Count() != 0)
 			{
-				startDate = DateTime.ParseExact(this.HttpContext.Request.Headers["startDate"], "dd/mm/yyyy", provider);
+				startDate = DateConvert(this.HttpContext.Request.Headers["startDate"]);
 			}
 			DateTime endDate = DateTime.Now;
-			if (this.HttpContext.Request.Headers["endDate"] != "")
+			if (this.HttpContext.Request.Headers["endDate"].Count() != 0)
 			{
-				endDate = DateTime.ParseExact(this.HttpContext.Request.Headers["endDate"], "dd/mm/yyyy", provider);
+				endDate = DateConvert(this.HttpContext.Request.Headers["endDate"]);
 			}
 			if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
 			{
@@ -113,6 +112,19 @@ namespace DailyForecaster.Controllers
 			return Ok();
 		}
 		/// <summary>
+		/// Converts date in the form of "MM/dd//yyyy" to DateTime
+		/// </summary>
+		/// <param name="date">date string in the form of "MM/dd/yyyy"</param>
+		/// <returns>DateTime</returns>
+		private DateTime DateConvert(string date)
+		{
+			string[] dateParts = date.Split("/");
+			int month = Convert.ToInt32(dateParts[0]);
+			int day = Convert.ToInt32(dateParts[1]);
+			int year = Convert.ToInt32(dateParts[2]);
+			return new DateTime(year,month,day);
+		}
+		/// <summary>
 		/// Get for the reported transactions for a specified account
 		/// </summary>
 		/// <param name="accountId">Id for the account that is being requested</param>
@@ -139,7 +151,9 @@ namespace DailyForecaster.Controllers
 		{
 			SimulationAssumptions assumptions = JsonConvert.DeserializeObject<SimulationAssumptions>(json);
 			Simulation simulation = new Simulation(assumptions, collectionsId);
-			return Ok(simulation.BuildSimulation(assumptions));
+			simulation.BuildSimulation(assumptions);
+			simulation.Scenario();
+			return Ok(simulation);
 		}
 		private async Task<FirebaseToken> validate(string token)
 		{

@@ -71,8 +71,9 @@ namespace DailyForecaster.Models
 		public List<ReportedTransaction> GetTransactions(string accountId,DateTime startDate, DateTime endDate)
 		{
 			Account account = new Account();
-			account =  account.GetAccount(accountId,false);
+			account =  account.GetAccount(accountId,true);
 			List<ReportedTransaction> transactions = account.ReportedTransactions.Where(x => x.DateBooked > startDate && x.DateBooked < endDate).ToList();
+			account.ReportedTransactions = null;
 			foreach (ReportedTransaction t in transactions)
 			{
 				t.AccountId = account.Id;

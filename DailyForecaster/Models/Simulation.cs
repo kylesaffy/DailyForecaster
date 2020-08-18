@@ -236,8 +236,7 @@ namespace DailyForecaster.Models
 						}
 						this.Budgets.Add(sim);
 					}
-
-					break;
+				break;
 			}
 		}
 		/// <summary>
@@ -283,13 +282,13 @@ namespace DailyForecaster.Models
 				Budgets[i].BudgetTransactions.Remove(automated);
 				Budgets[i].BudgetTransactions.Add(AddAutomated(Budgets[i].BudgetId));
 				Budgets[i].AccountStates
-								.Where(x => x.Amount < 0 && x.Account.AccountType.Transactional)
-								.OrderByDescending(x => x.Account.CreditRate)
-								.FirstOrDefault()
-								.Update(Budgets[i].BudgetTransactions.Sum(x => x.Amount * x.CFClassification.Sign));
+					.Where(x => x.Amount < 0 && x.Account.AccountType.Transactional)
+					.OrderByDescending(x => x.Account.CreditRate)
+					.FirstOrDefault()
+					.Update(Budgets[i].BudgetTransactions.Sum(x => x.Amount * x.CFClassification.Sign));
 			}
 		}
-		private void Scenario()
+		public void Scenario()
 		{
 			switch(SimulationAssumptions.Type)
 			{
