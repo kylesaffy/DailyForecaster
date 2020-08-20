@@ -410,6 +410,9 @@ namespace DailyForecaster.Controllers
             {
                 new ClickTracker("BudgetEdit", true, false, "collectionsId " + collectionsId, auth.Identity.Name);
                 Collections collections = new Collections(collectionsId);
+                Budget budget = collections.Budgets.OrderByDescending(x => x.StartDate).FirstOrDefault();
+                collections.Budgets = new List<Budget>();
+                collections.Budgets.Add(budget);
                 return Ok(collections);
             }
             return Ok("");

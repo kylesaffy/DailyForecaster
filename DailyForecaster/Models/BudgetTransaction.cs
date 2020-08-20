@@ -35,7 +35,18 @@ namespace DailyForecaster.Models
 		public CFClassification CFClassification { get; set; }
 		public ICollection<Notes> Notes {get;set;}
 		public bool Automated { get; set; }
+		// public bool Deleted { get; set; }
 		public BudgetTransaction() { }
+		public bool UpdateBudget(List<BudgetTransaction> transactions)
+		{
+			string budgetId = transactions.Select(x => x.BudgetId).FirstOrDefault();
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				List<BudgetTransaction> current = _context.BudgetTransactions.Where(x => x.BudgetId == budgetId).ToList();
+
+			}
+			return true;
+		}
 		/// <summary>
 		/// Returns the amount that is expected to be spent within a particular budget
 		/// </summary>

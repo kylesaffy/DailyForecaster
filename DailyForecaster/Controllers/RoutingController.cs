@@ -26,6 +26,8 @@ namespace DailyForecaster.Controllers
 		{
 			string authHeader = this.HttpContext.Request.Headers["Authorization"];
 			FirebaseToken auth = await validate(authHeader);
+			AspNetUsers users = new AspNetUsers();
+			new ClickTracker(this.HttpContext.Request.Headers["Route"], true, false, "collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString(), users.getUserId(auth.Claims["email"].ToString()));
 			string route = this.HttpContext.Request.Headers["Route"];
 			string collectionsId = "";
 			if (this.HttpContext.Request.Headers["collectionsId"] != "")

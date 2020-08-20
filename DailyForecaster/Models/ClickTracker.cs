@@ -15,6 +15,14 @@ namespace DailyForecaster.Models
 		public string RequestData { get; set; }
 		public string UserId { get; set; }
 		public ClickTracker() { }
+		/// <summary>
+		/// Saves user interaction
+		/// </summary>
+		/// <param name="location">Name of the function being called</param>
+		/// <param name="get">Boolean, Get</param>
+		/// <param name="post">Boolean, Post</param>
+		/// <param name="data">Data passed</param>
+		/// <param name="userId">User that is interaction</param>
 		public ClickTracker(string location, bool get, bool post,string data,string userId)
 		{
 			ClickTrackerId = Guid.NewGuid().ToString();
