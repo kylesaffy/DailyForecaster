@@ -109,11 +109,23 @@ namespace DailyForecaster.Models
 			Account account = new Account();
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
-				account = _context.Account.Find(id);
+				try
+				{
+					account = _context.Account.Find(id);
+				}
+				catch (Exception e)
+				{
+					ExceptionCatcher catcher = new ExceptionCatcher();
+					catcher.Catch(e.Message);
+				}
 			}
 			if (transactions)
 			{
 				account.GetTransactions();
+			}
+			if(account.AccountType == AccountType.GetAccountTypes().Where(x=>x.Name == "Home Loan"))
+			{
+				account.Available = 0;
 			}
 			return account;
 		}
@@ -129,8 +141,8 @@ namespace DailyForecaster.Models
 			//get accounts
 			List<Account> accounts = new List<Account>();
 			//get accountTypes
-			AccountType type = new AccountType();
-			List<AccountType> accountTypes = type.GetAccountTypes();
+			//AccountType type = new AccountType();
+			//List<AccountType> accountTypes = type.GetAccountTypes();
 			foreach (string item in collectionsIds)
 			{
 				accounts.AddRange(GetAccountsEmpty(item));
@@ -144,7 +156,7 @@ namespace DailyForecaster.Models
 				foreach (Account item in accounts)
 				{
 					item.ReportedTransactions = transactions.Where(x => x.AccountId == item.Id).ToList();
-					item.AccountType = accountTypes.Where(x => x.AccountTypeId == item.AccountTypeId).FirstOrDefault();
+					item.AccountType = AccountType.GetAccountTypes().Where(x => x.AccountTypeId == item.AccountTypeId).FirstOrDefault();
 					item.AccountType.Accounts = null;
 				}
 			}
@@ -169,14 +181,14 @@ namespace DailyForecaster.Models
 		}
 		public List<Account> GetAccountsSim(string collectionsId,string simulationId)
 		{
-			AccountType type = new AccountType();
-			List<AccountType> accountTypes = type.GetAccountTypes();
+			//AccountType type = new AccountType();
+			//List<AccountType> accountTypes = type.GetAccountTypes();
 			List<Account> acc = new List<Account>();
 			acc.AddRange(GetAccountsEmpty(collectionsId));
 			acc.AddRange(GetAccountsEmpty(collectionsId, true).Where(x => x.SimulationId == simulationId));
 			foreach(Account item in acc)
 			{
-				item.AccountType = accountTypes.Where(x => x.AccountTypeId == item.AccountTypeId).FirstOrDefault();
+				item.AccountType = AccountType.GetAccountTypes().Where(x => x.AccountTypeId == item.AccountTypeId).FirstOrDefault();
 			}
 			return acc;
 		}
@@ -246,12 +258,12 @@ namespace DailyForecaster.Models
 			List<Account> accounts = GetAccountsEmpty(collectionsId);
 			Institution institution = new Institution();
 			List<Institution> institutions = institution.GetInstitutions();
-			AccountType type = new AccountType();
-			List<AccountType> types = type.GetAccountTypes();
+			//AccountType type = new AccountType();
+			//List<AccountType> types = type.GetAccountTypes();
 			foreach(Account item in accounts)
 			{
 				item.Institution = institutions.Where(x => x.Id == item.InstitutionId).FirstOrDefault();
-				item.AccountType = types.Where(x => x.AccountTypeId == item.AccountTypeId).FirstOrDefault();
+				item.AccountType = AccountType.GetAccountTypes().Where(x => x.AccountTypeId == item.AccountTypeId).FirstOrDefault();
 				if (transactions)
 				{
 					item.GetTransactions();
@@ -268,8 +280,8 @@ namespace DailyForecaster.Models
 			List<Account> accounts = GetAccountsEmpty(collectionsId);
 			Institution institution = new Institution();
 			List<Institution> institutions = institution.GetInstitutions();
-			AccountType type = new AccountType();
-			List<AccountType> types = type.GetAccountTypes();
+			//AccountType type = new AccountType();
+			//List<AccountType> types = type.GetAccountTypes();
 			ManualCashFlow manual = new ManualCashFlow();
 			AutomatedCashFlow automated = new AutomatedCashFlow();
 			Collections collection = new Collections();
@@ -278,7 +290,8 @@ namespace DailyForecaster.Models
 				item.Institution = institutions
 					.Where(x => x.Id == item.InstitutionId)
 					.FirstOrDefault();
-				item.AccountType = types
+				item.AccountType = AccountType
+					.GetAccountTypes()
 					.Where(x => x.AccountTypeId == item.AccountTypeId)
 					.FirstOrDefault();
 				item.AccountType.Accounts = null;

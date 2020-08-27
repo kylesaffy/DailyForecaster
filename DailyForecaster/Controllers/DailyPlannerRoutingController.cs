@@ -191,8 +191,7 @@ namespace DailyForecaster.Controllers
             if (auth.Identity.IsAuthenticated)
             {
                 new ClickTracker("GetAccountType", true, false, "", auth.Identity.Name);
-                AccountType accountType = new AccountType();
-                return Ok(accountType.GetAccountTypes());
+                return Ok(AccountType.GetAccountTypes());
             }
             return Ok("");
         }

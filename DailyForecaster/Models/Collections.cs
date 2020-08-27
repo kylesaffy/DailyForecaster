@@ -361,9 +361,9 @@ namespace DailyForecaster.Models
 				budget.GetBudgetTransacions();
 				using (FinPlannerContext _context = new FinPlannerContext())
 				{
-					if (budget.BudgetTransactions.Where(x => x.CFType.Name == "Bank Charges" && x.Automated == true).Any())
+					if (budget.BudgetTransactions.Where(x => x.CFType.Name == "Bank Charges" && (x.Automated == true || x.Name == "Automated Bank Charges")).Any())
 					{
-						BudgetTransaction transaction = budget.BudgetTransactions.Where(x => x.CFType.Name == "Bank Charges" && x.Automated == true).FirstOrDefault();
+						BudgetTransaction transaction = budget.BudgetTransactions.Where(x => x.CFType.Name == "Bank Charges" && (x.Automated == true || x.Name == "Automated Bank Charges")).FirstOrDefault();
 						transaction.Amount = fees;
 						_context.Entry(transaction).State = EntityState.Modified;
 					}

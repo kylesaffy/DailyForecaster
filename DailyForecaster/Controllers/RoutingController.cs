@@ -61,6 +61,8 @@ namespace DailyForecaster.Controllers
 						return GetAccounts(collectionsId);
 					case "GetReportedTransaction":
 						return GetReportedTransactions(accountId, startDate, endDate);
+					case "GetAccount":
+						return GetAccount(accountId);
 				}
 			}
 			return Ok();
@@ -112,6 +114,15 @@ namespace DailyForecaster.Controllers
 				}
 			}
 			return Ok();
+		}
+		/// <summary>
+		/// Returns a single Account object from an Id
+		/// </summary>
+		/// <param name="accountId">Account Id associated tot he account that is needed</param>
+		/// <returns>Returns a single Account object from an Id</returns>
+		private ActionResult GetAccount(string accountId)
+		{
+			return Ok(new AccountVM(accountId));
 		}
 		/// <summary>
 		/// Converts date in the form of "MM/dd//yyyy" to DateTime

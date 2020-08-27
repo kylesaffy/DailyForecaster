@@ -24,6 +24,7 @@ namespace DailyForecaster.Models
 		public Account Account { get; set; }
 		public DateTime DateBooked { get; set; }
 		public bool Validated { get; set; }
+		public string Date { get; set; }
 		public List<ReportedTransaction> GetTransactions(List<string> accountIds,int count,List<string> collectionsIds)
 		{
 			//get transaction
@@ -78,6 +79,7 @@ namespace DailyForecaster.Models
 			{
 				t.AccountId = account.Id;
 				t.Account = account;
+				t.Date = t.DateBooked.ToString("dd-MM-yyyy");
 			}
 			return transactions;
 		}

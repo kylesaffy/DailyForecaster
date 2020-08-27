@@ -18,7 +18,7 @@ namespace DailyForecaster.Models
 		/// Returns a list of all of the account types
 		/// </summary>
 		/// <returns>A List of all of the account types</returns>
-		public List<AccountType> GetAccountTypes()
+		public static List<AccountType> GetAccountTypes()
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
