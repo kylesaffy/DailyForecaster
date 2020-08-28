@@ -16,6 +16,7 @@ namespace DailyForecaster.Models
 		{
 			Account account = new Account();
 			Account = account.GetAccount(accountId, false);
+			Account.AccountIdentifier = Account.AccountIdentifier.Substring(4);
 			Institution institution = new Institution();
 			Institutions = institution.GetInstitutions();
 			AccountTypes = AccountType.GetAccountTypes();

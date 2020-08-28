@@ -63,6 +63,8 @@ namespace DailyForecaster.Controllers
 						return GetReportedTransactions(accountId, startDate, endDate);
 					case "GetAccount":
 						return GetAccount(accountId);
+					case "GetCollectionsMenu":
+						return GetCollectionsMenu(auth.Claims["email"].ToString());
 				}
 			}
 			return Ok();
@@ -88,6 +90,8 @@ namespace DailyForecaster.Controllers
 						return Ok();
 					case "BuildSimulation":
 						return BuildSimulation(json.GetRawText(),collectionsId);
+					case "AccountChange":
+						return AccountChange(json);
 				}
 			}
 			return Ok();
@@ -114,6 +118,64 @@ namespace DailyForecaster.Controllers
 				}
 			}
 			return Ok();
+		}
+		/// <summary>
+		/// Populates the menu data for Vue FE
+		/// </summary>
+		/// <param name="email">The users email address is needed as an identifier</param>
+		/// <returns>The required data to populate the FE left Menu</returns>
+		private ActionResult GetCollectionsMenu(string email)
+		{
+			Collections collection = new Collections();
+			List<Collections> collections = collection.GetCollections(email, "Index");
+			List<MenuData> menu = new List<MenuData>();
+			List<MenuData> subMenu = new List<MenuData>();
+			List<MenuData> subSubMenu = new List<MenuData>();
+			menu.Add(new MenuData()
+			{
+				Category = true,
+				Title = "Dashboards"
+			});
+			foreach (Collections item in collections)
+			{
+				subSubMenu.Add(new MenuData()
+				{
+					Title = item.Name,
+					Key = item.CollectionsId,
+					Url = "/dashboard/collections"
+				});
+			}
+			subMenu.Add(new MenuData()
+			{
+				Title = "Homepage",
+				Key = "Homepage",
+				Url = "/dashboard/homepage"
+			});
+			subMenu.Add(new MenuData()
+			{
+				Title = "Collections",
+				Key = "Collections",
+				Children = subSubMenu
+			});
+			menu.Add(new MenuData()
+			{
+				Title = "Dashboards",
+				Key = "dashboarrds",
+				Icon = "fe fe-home",
+				Count = 4,
+				Children = subMenu
+			});
+			return Ok(menu);
+		}
+		/// <summary>
+		/// Creates or Updates Account
+		/// </summary>
+		/// <param name="json">Json Element Passed by FE</param>
+		/// <returns>Updated Account Object</returns>
+		private ActionResult AccountChange(JsonElement json)
+		{
+			Account account = JsonConvert.DeserializeObject<Account>(json.GetRawText());
+			return Ok(account.AddAccount());
 		}
 		/// <summary>
 		/// Returns a single Account object from an Id

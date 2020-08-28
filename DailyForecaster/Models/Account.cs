@@ -315,6 +315,38 @@ namespace DailyForecaster.Models
 			}
 			return accounts;
 		}
+		public Account AddAccount()
+		{
+			ReturnModel model = new ReturnModel();
+			this.AccountIdentifier = "xxxx" + this.AccountIdentifier;
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				if (this.Id == null)
+				{
+					this.Id = Guid.NewGuid().ToString();
+					_context.Account.Add(this);
+				}
+				else
+				{
+					Account account1 = _context.Account.Find(this.Id);
+					account1.Update(this);
+					_context.Entry(account1).State = EntityState.Modified;
+				}
+				try
+				{
+					_context.SaveChanges();
+					model.result = true;
+				}
+				catch (Exception e)
+				{
+					model.result = false;
+					model.returnStr = e.Message;
+					ExceptionCatcher catcher = new ExceptionCatcher();
+					catcher.Catch(e.Message);
+				}
+			}
+			return this;
+		}
 		public ReturnModel AddAccount(Account account)
 		{
 			ReturnModel model = new ReturnModel();
@@ -345,7 +377,7 @@ namespace DailyForecaster.Models
 					catcher.Catch(e.Message);
 				}
 			}
-			return model;;
+			return model;
 		}
 		private void Update(Account account)
 		{
