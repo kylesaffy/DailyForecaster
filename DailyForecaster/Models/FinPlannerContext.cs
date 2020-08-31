@@ -43,6 +43,8 @@ namespace DailyForecaster.Models
         public DbSet<FirebaseUser> FirebaseUser { get; set; }
         public DbSet<FirebaseLogin> FirebaseLogin { get; set; }
         public DbSet<AccountState> AccountState { get; set; }
+        public DbSet<AppAreas> AppAreas { get; set; }
+        public DbSet<UserInteraction> UserInteraction { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()

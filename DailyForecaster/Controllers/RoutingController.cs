@@ -58,7 +58,7 @@ namespace DailyForecaster.Controllers
 					case "Index":
 						return Index(auth.Claims["email"].ToString());
 					case "GetAccounts":
-						return GetAccounts(collectionsId);
+						return GetAccounts(collectionsId,auth.Claims["email"].ToString());
 					case "GetReportedTransaction":
 						return GetReportedTransactions(accountId, startDate, endDate);
 					case "GetAccount":
@@ -142,7 +142,7 @@ namespace DailyForecaster.Controllers
 				{
 					Title = item.Name,
 					Key = item.CollectionsId,
-					Url = "/dashboard/collections"
+					// Url = "this.$router.push({ name: 'Collection', params: { collectionsId: " + item.CollectionsId + " } })"
 				});
 			}
 			subMenu.Add(new MenuData()
@@ -159,8 +159,8 @@ namespace DailyForecaster.Controllers
 			});
 			menu.Add(new MenuData()
 			{
-				Title = "Dashboards",
-				Key = "dashboarrds",
+				Title = "Homepage",
+				Key = "Dashboards",
 				Icon = "fe fe-home",
 				Count = 4,
 				Children = subMenu
@@ -211,10 +211,10 @@ namespace DailyForecaster.Controllers
 			ReportedTransaction transaction = new ReportedTransaction();
 			return Ok(transaction.GetTransactions(accountId,startDate,endDate));
 		}
-		private ActionResult GetAccounts(string collectionsId)
+		private ActionResult GetAccounts(string collectionsId, string email)
 		{
 			Account account = new Account();
-			return Ok(account.GetAccounts(collectionsId, false));
+			return Ok(account.GetAccounts(collectionsId, false, email));
 		}
 		private ActionResult UpdateSimulation(string json)
 		{

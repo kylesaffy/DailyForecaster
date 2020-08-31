@@ -36,6 +36,16 @@ namespace DailyForecaster.Models
 		public ICollection<Simulation> Simualtions { get; set; }
 		public Collections() { }
 		/// <summary>
+		/// Returns the first collections Id from the user mapping table
+		/// </summary>
+		/// <param name="userId">Id of the user that the data is being collected for</param>
+		/// <returns>The string of the first collections Id from the user mapping table</returns>
+		public string GetId(string userId)
+		{
+			UserCollectionMapping mapping = new UserCollectionMapping();
+			return mapping.getCollectionIds(userId, "firebase").FirstOrDefault();
+		}
+		/// <summary>
 		/// Exlpicit eager articulated list of collection objects
 		/// </summary>
 		/// <param name="collectionsIds">List of the collection Ids</param>

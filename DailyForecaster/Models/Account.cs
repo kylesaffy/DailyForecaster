@@ -252,9 +252,23 @@ namespace DailyForecaster.Models
 		/// </summary>
 		/// <param name="collectionsId">The collection Id that is being requested</param>
 		/// <param name="transactions">Are transactions to be included</param>
+		/// <param name="email">email address of the user</param>
 		/// <returns>Returns a list of accounts associated to the collection Id</returns>
-		public List<Account> GetAccounts(string collectionsId,bool transactions = true)
+		public List<Account> GetAccounts(string collectionsId,bool transactions = true,string email = "")
 		{
+			if((collectionsId == null || collectionsId == "") && email != "")
+			{
+				UserInteraction userInteraction = new UserInteraction();
+				collectionsId = userInteraction.GetCollectionId(email);
+			}
+			else
+			{
+				if(email != "")
+				{
+					UserInteraction userInteraction = new UserInteraction();
+					userInteraction.CollectionsIncratment(collectionsId, email);
+				}
+			}
 			List<Account> accounts = GetAccountsEmpty(collectionsId);
 			Institution institution = new Institution();
 			List<Institution> institutions = institution.GetInstitutions();
