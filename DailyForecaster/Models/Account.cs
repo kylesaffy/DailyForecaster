@@ -256,7 +256,7 @@ namespace DailyForecaster.Models
 		/// <returns>Returns a list of accounts associated to the collection Id</returns>
 		public List<Account> GetAccounts(string collectionsId,bool transactions = true,string email = "")
 		{
-			if((collectionsId == null || collectionsId == "") && email != "")
+			if((collectionsId == null || collectionsId == "" || collectionsId == "undefined") && email != "")
 			{
 				UserInteraction userInteraction = new UserInteraction();
 				collectionsId = userInteraction.GetCollectionId(email);

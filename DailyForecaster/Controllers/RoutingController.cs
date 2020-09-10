@@ -51,6 +51,11 @@ namespace DailyForecaster.Controllers
 			}
 			if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
 			{
+				FirebaseUser user = new FirebaseUser();
+				if(!user.Exsits(auth.Claims["email"].ToString()))
+				{
+					new FirebaseUser(auth.Claims["email"].ToString(), auth.Uid);
+				}
 				switch (route)
 				{
 					case "UnseenCount":
@@ -65,6 +70,11 @@ namespace DailyForecaster.Controllers
 						return GetAccount(accountId);
 					case "GetCollectionsMenu":
 						return GetCollectionsMenu(auth.Claims["email"].ToString());
+					case "EditBudget":
+						return EditBudget(auth.Claims["email"].ToString(), collectionsId);
+					case "SafeToSpend":
+						return SafeToSpend(auth.Claims["email"].ToString(), collectionsId);
+
 				}
 			}
 			return Ok();
@@ -120,31 +130,41 @@ namespace DailyForecaster.Controllers
 			return Ok();
 		}
 		/// <summary>
+		/// Returns a VM that contains BudgetTransactionComparison, a list of the reportedTransactions and the budget item in question
+		/// </summary>
+		/// <param name="email">Email Address of the user</param>
+		/// <param name="collectionsId">Id of the collection that the user is interacting with</param>
+		/// <returns>A safe to spend object that contains all of the elements that are needed</returns>
+		private ActionResult SafeToSpend(string email, string collectionsId)
+		{
+			SafeToSpendVM vm = new SafeToSpendVM(collectionsId, email);
+			return Ok(vm);
+		}
+		/// <summary>
+		/// Either creates or retrieves a budget object packaged a the only budget in a collection object
+		/// </summary>
+		/// <param name="email">Email address of the user</param>
+		/// <param name="collectionsId">Id of the collection that the user is interacting with</param>
+		/// <returns>A collection object with a single budget object within it</returns>
+		private ActionResult EditBudget(string email, string collectionsId)
+		{
+			BudgetVM vm = new BudgetVM(collectionsId, email);
+			return Ok(vm);
+		}
+		/// <summary>
 		/// Populates the menu data for Vue FE
 		/// </summary>
 		/// <param name="email">The users email address is needed as an identifier</param>
 		/// <returns>The required data to populate the FE left Menu</returns>
 		private ActionResult GetCollectionsMenu(string email)
 		{
-			Collections collection = new Collections();
-			List<Collections> collections = collection.GetCollections(email, "Index");
 			List<MenuData> menu = new List<MenuData>();
 			List<MenuData> subMenu = new List<MenuData>();
-			List<MenuData> subSubMenu = new List<MenuData>();
 			menu.Add(new MenuData()
 			{
 				Category = true,
 				Title = "Dashboards"
 			});
-			foreach (Collections item in collections)
-			{
-				subSubMenu.Add(new MenuData()
-				{
-					Title = item.Name,
-					Key = item.CollectionsId,
-					// Url = "this.$router.push({ name: 'Collection', params: { collectionsId: " + item.CollectionsId + " } })"
-				});
-			}
 			subMenu.Add(new MenuData()
 			{
 				Title = "Homepage",
@@ -155,7 +175,13 @@ namespace DailyForecaster.Controllers
 			{
 				Title = "Collections",
 				Key = "Collections",
-				Children = subSubMenu
+				Url = "/dashboard/collections"
+			});
+			subMenu.Add(new MenuData()
+			{
+				Title = "Budget",
+				Key = "Budget",
+				Url = "/dashboard/budget"
 			});
 			menu.Add(new MenuData()
 			{
@@ -211,10 +237,15 @@ namespace DailyForecaster.Controllers
 			ReportedTransaction transaction = new ReportedTransaction();
 			return Ok(transaction.GetTransactions(accountId,startDate,endDate));
 		}
+		/// <summary>
+		/// Returns a List of accounts in the collection VM associated with a collection and a user email
+		/// </summary>
+		/// <param name="collectionsId">Id of the collection that was requested</param>
+		/// <param name="email">email address of the user</param>
+		/// <returns>Reutrns a collectiuon VM for the user</returns>
 		private ActionResult GetAccounts(string collectionsId, string email)
 		{
-			Account account = new Account();
-			return Ok(account.GetAccounts(collectionsId, false, email));
+			return Ok(new CollectionVM(collectionsId,email));
 		}
 		private ActionResult UpdateSimulation(string json)
 		{

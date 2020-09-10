@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -19,17 +20,24 @@ namespace DailyForecaster.Models
 		static private string ADMIN = "8f1954be-d622-45a1-9bd1-2adbd813a832_ADMIN";
 		public string Id { get; set; }
 		public string loginName { get; set; }
+		public string Key { get; set; }
 		public string CollectionsId { get; set; }
 		[ForeignKey("CollectionsId")]
 		public Collections Collection { get; set; }
 		public YodleeModel() { }
+		/// <summary>
+		/// Either creates and or returns a yodlee model object depending on the instruction passed
+		/// </summary>
+		/// <param name="collectionsId">The Id of the collection</param>
+		/// <param name="instruction">Can either be New or Get</param>
 		public YodleeModel(string collectionsId,string instruction)
 		{
 			if (instruction == "New")
 			{
 				Id = Guid.NewGuid().ToString();
 				loginName = Guid.NewGuid().ToString("N");
-				CollectionsId = collectionsId;	 			
+				CollectionsId = collectionsId;
+				Key = new RSAOpenSsl(2048).ToString();
 				using (FinPlannerContext _context = new FinPlannerContext())
 				{
 					_context.YodleeModel.Add(this);
@@ -42,6 +50,7 @@ namespace DailyForecaster.Models
 				{
 					YodleeModel getM = _context.YodleeModel.Where(x => x.CollectionsId == collectionsId).FirstOrDefault();
 					loginName = getM.loginName;
+					Key = getM.Key;
 				}
 			}
 		}

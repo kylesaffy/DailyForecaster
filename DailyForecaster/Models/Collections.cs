@@ -43,7 +43,14 @@ namespace DailyForecaster.Models
 		public string GetId(string userId)
 		{
 			UserCollectionMapping mapping = new UserCollectionMapping();
-			return mapping.getCollectionIds(userId, "firebase").FirstOrDefault();
+			try
+			{
+				return mapping.getCollectionIds(userId, "firebase").FirstOrDefault();
+			}
+			catch
+			{
+				return mapping.getCollectionIds(userId,"asp").FirstOrDefault();
+			}
 		}
 		/// <summary>
 		/// Exlpicit eager articulated list of collection objects
@@ -145,13 +152,19 @@ namespace DailyForecaster.Models
 		{
 			return GetCollections(userId, "TransactionCount").Select(x => x.Accounts.Select(y => y.AutomatedCashFlows.Where(z => z.Validated == false))).Count();
 		}
-		public List<Collections> GetCollections(string userId, string type)
+		/// <summary>
+		/// Type depenedent list of collections that are returned for a given user
+		/// </summary>
+		/// <param name="email">Email address of the user, can be ""</param>
+		/// <param name="type">The type that is required, "", Index, CollectionsVM</param>
+		/// <returns></returns>
+		public List<Collections> GetCollections(string email, string type)
 		{
 			List<Collections> collections = new List<Collections>();
-			if (userId != "")
+			if (email != "")
 			{
 				AspNetUsers user = new AspNetUsers();
-				userId = user.getUserId(userId);
+				string userId = user.getUserId(email);
 				if (type != "Index")
 				{
 					using (FinPlannerContext _context = new FinPlannerContext())
@@ -178,6 +191,21 @@ namespace DailyForecaster.Models
 									break;
 							}
 						}
+					}
+					return collections;
+				}
+				else if(type == "CollectionsVM" || type == "BudgetVM" || type == "SafeToSpendVM")
+				{
+					using (FinPlannerContext _context = new FinPlannerContext())
+					{
+						List<string> collectionIds = _context.UserCollectionMapping
+							.Where(x => x.Id == userId)
+							.Select(x => x.CollectionsId)
+							.ToList();
+						collections = _context
+							.Collections
+							.Where(col => collectionIds.Contains(col.CollectionsId))
+							.ToList();
 					}
 					return collections;
 				}

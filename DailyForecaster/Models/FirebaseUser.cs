@@ -25,13 +25,30 @@ namespace DailyForecaster.Models
 
 		}
 		/// <summary>
+		/// Tests if user exists
+		/// </summary>
+		/// <param name="email">Email address of the user</param>
+		/// <returns>A bool of the existance of the user</returns>
+		public bool Exsits(string email)
+		{
+			return Any(email);
+		}
+		/// <summary>
 		///  Get function for a single user
 		/// </summary>
 		/// <param name="email">the email address of the user interacting with the system</param>
 		/// <returns>Returns the Id of the user</returns>
 		public string GetFirebaseUser(string email)
 		{
-			return Get(email).FirebaseUserId;
+			try
+			{
+				return Get(email).FirebaseUserId;
+			}
+			catch
+			{
+				AspNetUsers users = new AspNetUsers();
+				return users.getUserId(email);
+			}
 		}
 		//===================================================================================================================
 		//DLA
@@ -54,9 +71,22 @@ namespace DailyForecaster.Models
 		/// <returns>Returns a single instance of a user</returns>
 		private FirebaseUser Get(string email)
 		{
+
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
 				return _context.FirebaseUser.Where(x => x.Email == email).FirstOrDefault();
+			}
+		}
+		/// <summary>
+		/// Tests if user exists in database
+		/// </summary>
+		/// <param name="email">Email address of the user</param>
+		/// <returns>A bool of the existance of the user in the db</returns>
+		private bool Any(string email)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.FirebaseUser.Where(x => x.Email == email).Any();
 			}
 		}
 	}
