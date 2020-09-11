@@ -34,16 +34,39 @@ namespace DailyForecaster.Models
 			}
 			return null;
 		}
-		public async Task<string> GetKey(string collectionId)
+		public async Task<string> GetUserId(string collectionId)
 		{
 			string session = await GetSession();
 			try
 			{
-				YodleeModel yodlee = new YodleeModel()
+				YodleeModel yodlee = new YodleeModel(collectionId, "Get");
+				return yodlee.loginName;
+			}
+			catch
+			{
+				YodleeModel yodlee = new YodleeModel(collectionId, "New");
+				return yodlee.loginName;
 			}
 			return null;
 
 		}
+		public async Task<string> CreateToken(string collectionsId)
+		{
+			long currentTime = DateTimeOffset.Now.ToUnixTimeSeconds();
+			var payload = new Dictionary<string, object>();
+			payload["iss"] = "9510020248";
+			payload["iat"] = currentTime;
+			payload["exp"] = currentTime + 1800;
+			if(collectionsId != null)
+			{
+				payload["sub"] = GetUserId(collectionsId);
+			}
+			RSAParameters resParams;
+			//using(var )
+			return null;
+
+		}
+
 	}
 	public class CoBrandSessionModel
 	{

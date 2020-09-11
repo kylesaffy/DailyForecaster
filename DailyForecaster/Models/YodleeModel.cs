@@ -1,4 +1,5 @@
 ﻿using DailyForecaster.Controllers;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -37,7 +38,7 @@ namespace DailyForecaster.Models
 				Id = Guid.NewGuid().ToString();
 				loginName = Guid.NewGuid().ToString("N");
 				CollectionsId = collectionsId;
-				Key = new RSAOpenSsl(2048).ToString();
+				//Key = new RSAOpenSsl(2048).ToString();
 				using (FinPlannerContext _context = new FinPlannerContext())
 				{
 					_context.YodleeModel.Add(this);
@@ -50,11 +51,19 @@ namespace DailyForecaster.Models
 				{
 					YodleeModel getM = _context.YodleeModel.Where(x => x.CollectionsId == collectionsId).FirstOrDefault();
 					loginName = getM.loginName;
-					Key = getM.Key;
+					//Key = getM.Key;
 				}
 			}
 		}
-		
+		public void Update()
+		{
+			this.Key = new RSAOpenSsl(2048).ToString();
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Entry(this).State = EntityState.Modified;
+				_context.SaveChanges();
+			}
+		}
 		public async Task<string> getToken(string collectionsId, string userId)
 		{
 			YodleeAuthReturn authReturn = new YodleeAuthReturn();

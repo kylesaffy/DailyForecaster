@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -69,6 +70,50 @@ namespace DailyForecaster.Models
 				{
 					return 0;
 				}
+			}
+		}
+		/// <summary>
+		/// Removes a transaction if it already exists in the database
+		/// </summary>
+		public void Delete()
+		{
+			try
+			{
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+
+					BudgetTransaction transaction = _context.BudgetTransactions.Find(this.BudgetTransactionId);
+					_context.Remove(transaction);
+					_context.SaveChanges();
+				}
+			}
+			catch
+			{
+
+			}
+		}
+		/// <summary>
+		/// Saves wither by updating or creating a single BudgetTransaction Object
+		/// </summary>
+		/// <param name="userId">Id of the user creating the transaction</param>
+		public void Save(string userId)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				if (this.BudgetTransactionId == null)
+				{
+					this.BudgetTransactionId = Guid.NewGuid().ToString();
+					this.Automated = false;
+					this.FirebaseUserId = userId;
+					_context.Add(this);
+				}
+				else
+				{
+					BudgetTransaction transaction = _context.BudgetTransactions.Find(this.BudgetTransactionId);
+					transaction = this;
+					_context.Entry(transaction).State = EntityState.Modified;
+				}
+				_context.SaveChanges();
 			}
 		}
 		public List<BudgetTransaction> CreateBudgetTransactions(List<BudgetTransaction> transactions, string BudgetId, string collectionsId)

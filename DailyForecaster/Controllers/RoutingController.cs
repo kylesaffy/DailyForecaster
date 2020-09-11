@@ -102,6 +102,12 @@ namespace DailyForecaster.Controllers
 						return BuildSimulation(json.GetRawText(),collectionsId);
 					case "AccountChange":
 						return AccountChange(json);
+					case "EditBudget":
+						return EditBudget(json);
+					case "BudgetChange":
+						return BudgetChange(json, auth.Uid);
+					case "BudgetTransactionDelete":
+						return BudgetTransactionDelete(json);
 				}
 			}
 			return Ok();
@@ -130,6 +136,29 @@ namespace DailyForecaster.Controllers
 			return Ok();
 		}
 		/// <summary>
+		/// Deletes the object that is passed to it
+		/// </summary>
+		/// <param name="json">The JSON version of the object</param>
+		/// <returns>Ok</returns>
+		private ActionResult BudgetTransactionDelete(JsonElement json)
+		{
+			BudgetTransaction transaction = JsonConvert.DeserializeObject<BudgetTransaction>(json.GetRawText());
+			transaction.Delete();
+			return Ok();
+		}
+		/// <summary>
+		/// Adds or ammends a budget transaction object
+		/// </summary>
+		/// <param name="json">the JSON version of the object</param>
+		/// <param name="userId">The firebase userId</param>
+		/// <returns></returns>
+		private ActionResult BudgetChange(JsonElement json, string userId)
+		{
+			BudgetTransaction transaction = JsonConvert.DeserializeObject<BudgetTransaction>(json.GetRawText());
+			transaction.Save(userId);
+			return Ok(transaction);
+		}
+		/// <summary>
 		/// Returns a VM that contains BudgetTransactionComparison, a list of the reportedTransactions and the budget item in question
 		/// </summary>
 		/// <param name="email">Email Address of the user</param>
@@ -139,6 +168,12 @@ namespace DailyForecaster.Controllers
 		{
 			SafeToSpendVM vm = new SafeToSpendVM(collectionsId, email);
 			return Ok(vm);
+		}
+		private ActionResult EditBudget(JsonElement json)
+		{
+			Collections collection = JsonConvert.DeserializeObject<Collections>(json.GetRawText());
+
+			return Ok();
 		}
 		/// <summary>
 		/// Either creates or retrieves a budget object packaged a the only budget in a collection object
