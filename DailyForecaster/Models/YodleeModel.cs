@@ -57,7 +57,7 @@ namespace DailyForecaster.Models
 		}
 		public void Update()
 		{
-			this.Key = new RSAOpenSsl(2048).ToString();
+			//this.Key = new RSAOpenSsl(2048).ToString();
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
 				_context.Entry(this).State = EntityState.Modified;

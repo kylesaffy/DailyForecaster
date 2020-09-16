@@ -20,6 +20,7 @@ namespace DailyForecaster.Controllers
 	[ApiController]
 	public class RoutingController : ControllerBase
 	{
+		
 		[Route("Get")]
 		[HttpGet]
 		public async Task<ActionResult> Get()

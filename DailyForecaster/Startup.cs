@@ -14,9 +14,6 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Auth;
-using Microsoft.WindowsAzure.Storage.Blob;
 using System.IO;
 using System.Net;
 
