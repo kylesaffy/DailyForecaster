@@ -30,6 +30,7 @@ namespace DailyForecaster.Models
 			//get transaction
 			List<ManualCashFlow> manualCashFlows = new List<ManualCashFlow>();
 			List<AutomatedCashFlow> automatedCashFlows = new List<AutomatedCashFlow>();
+			SplitTransactions split = new SplitTransactions();
 			using (FinPlannerContext _context = new FinPlannerContext())
 			{
 				manualCashFlows = _context
@@ -39,12 +40,12 @@ namespace DailyForecaster.Models
 					.OrderByDescending(x=>x.DateBooked)
 					.Take(count)
 					.ToList();
-				automatedCashFlows = _context
+				automatedCashFlows = split.GetTransactions(_context
 					.AutomatedCashFlows
 					.Where(cf => accountIds.Contains(cf.AccountId))
 					.OrderByDescending(x => x.DateBooked)
 					.Take(count)
-					.ToList();
+					.ToList());
 			}
 			//get type and classification lists
 			CFType type = new CFType();

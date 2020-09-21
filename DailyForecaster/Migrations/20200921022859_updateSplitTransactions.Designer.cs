@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200921022859_updateSplitTransactions")]
+    partial class updateSplitTransactions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -268,9 +270,6 @@ namespace DailyForecaster.Migrations
                     b.Property<double>("Amount")
                         .HasColumnType("float");
 
-                    b.Property<string>("AutomatedCashFlowsId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("CFClassificationId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -289,9 +288,6 @@ namespace DailyForecaster.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("Split")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("Validated")
                         .HasColumnType("bit");
 
@@ -301,8 +297,6 @@ namespace DailyForecaster.Migrations
                     b.HasKey("ID");
 
                     b.HasIndex("AccountId");
-
-                    b.HasIndex("AutomatedCashFlowsId");
 
                     b.HasIndex("CFClassificationId");
 
@@ -1050,9 +1044,6 @@ namespace DailyForecaster.Migrations
                     b.Property<string>("CFTYpeID")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("SplitTransactionsId");
 
                     b.HasIndex("AutomatedCashFlowId");
@@ -1210,10 +1201,6 @@ namespace DailyForecaster.Migrations
                         .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("DailyForecaster.Models.AutomatedCashFlow", "EmbededAutomatedCashFlow")
-                        .WithMany()
-                        .HasForeignKey("AutomatedCashFlowsId");
 
                     b.HasOne("DailyForecaster.Models.CFClassification", "CFClassification")
                         .WithMany()

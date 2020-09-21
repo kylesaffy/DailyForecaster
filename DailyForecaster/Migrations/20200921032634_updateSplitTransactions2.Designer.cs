@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200921032634_updateSplitTransactions2")]
+    partial class updateSplitTransactions2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1047,7 +1049,7 @@ namespace DailyForecaster.Migrations
                     b.Property<string>("AutomatedCashFlowId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("CFTYpeID")
+                    b.Property<string>("CFTYpeId")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
@@ -1057,7 +1059,7 @@ namespace DailyForecaster.Migrations
 
                     b.HasIndex("AutomatedCashFlowId");
 
-                    b.HasIndex("CFTYpeID");
+                    b.HasIndex("CFTYpeId");
 
                     b.ToTable("SplitTransactions");
                 });
@@ -1405,7 +1407,7 @@ namespace DailyForecaster.Migrations
 
                     b.HasOne("DailyForecaster.Models.CFType", "CFType")
                         .WithMany()
-                        .HasForeignKey("CFTYpeID");
+                        .HasForeignKey("CFTYpeId");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.UserCollectionMapping", b =>

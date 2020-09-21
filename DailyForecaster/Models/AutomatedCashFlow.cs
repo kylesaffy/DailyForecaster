@@ -37,7 +37,10 @@ namespace DailyForecaster.Models
 		public string SourceOfExpense { get; set; }
 		public int YodleeId { get; set; }
 		public bool Validated { get; set; }
-
+		public bool Split { get; set; }
+		public string AutomatedCashFlowsId { get; set; }
+		[ForeignKey("AutomatedCashFlowsId")]
+		public AutomatedCashFlow EmbededAutomatedCashFlow { get; set; }
 		public ManualCashFlow ManualCashFlow { get; set; }
 		[ForeignKey("AccountId")]
 		public Account Account { get; set; }
@@ -54,12 +57,13 @@ namespace DailyForecaster.Models
 		public List<AutomatedCashFlow> GetAutomatedCashFlows(string AccId, int count = 10)
 		{
 			using (FinPlannerContext _context = new FinPlannerContext()) {
-				return _context
+				SplitTransactions split = new SplitTransactions();
+				return split.GetTransactions(_context
 					.AutomatedCashFlows
 					.Where(x => x.AccountId == AccId)
 					.OrderByDescending(x=>x.DateBooked)
 					.Take(count)
-					.ToList();
+					.ToList());
 			}
 		}
 		public List<AutomatedCashFlow> GetAutomatedCashFlowsUnseen(List<string> accountsStr)

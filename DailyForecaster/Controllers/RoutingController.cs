@@ -140,6 +140,9 @@ namespace DailyForecaster.Controllers
 							return BudgetChange(json, auth.Uid);
 						case "BudgetTransactionDelete":
 							return BudgetTransactionDelete(json);
+						case "UpdateSplits":
+							return UpdateSplits(json);
+
 					}
 				}
 			}
@@ -174,6 +177,21 @@ namespace DailyForecaster.Controllers
 				}
 			}
 			return Ok();
+		}
+		/// <summary>
+		/// Updates list of transaction splits passed to it with reference to the database version and the version passed
+		/// </summary>
+		/// <param name="json">JSON version of the list of split transactions</param>
+		/// <returns>Updated lsit of split transactions</returns>
+		private ActionResult UpdateSplits(JsonElement json)
+		{
+			List<SplitTransactions> splits = JsonConvert.DeserializeObject<List<SplitTransactions>>(json.GetRawText());
+			List<SplitTransactions> newList = new List<SplitTransactions>();
+			foreach(SplitTransactions item in splits)
+			{
+				newList.Add(item.UpdateSplit());
+			}
+			return Ok(newList);
 		}
 		/// <summary>
 		/// Deletes the object that is passed to it
