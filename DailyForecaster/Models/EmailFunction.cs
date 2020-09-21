@@ -60,6 +60,17 @@ namespace DailyForecaster.Models
 				message.Body = text.Replace("[guest_name]", Name);
 
 			}
+			else if (Subject == "Login")
+			{
+				string text = "";
+				var webRequest = WebRequest.Create(@"https://storageaccountmoney9367.blob.core.windows.net/emailimages/Login.txt");
+				using (var response = webRequest.GetResponse())
+				using (var content = response.GetResponseStream())
+				using (var reader = new StreamReader(content))
+				{
+					text = reader.ReadToEnd();
+				};
+			}
 			else
 			{
 				message.Body = Message;

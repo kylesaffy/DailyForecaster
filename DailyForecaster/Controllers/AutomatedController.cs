@@ -57,9 +57,30 @@ namespace DailyForecaster.Controllers
 			DateTime start = DateTime.Now;
 			AutomatedCashFlow automatedCashFlow = new AutomatedCashFlow();
 			bool result = await automatedCashFlow.UpdateTransactions();
+			automatedCashFlow.TransactionClassifier();
 			DateTime end = DateTime.Now;
 			AutomatedLog log = new AutomatedLog();
 			log.SaveLog(start, end, "UpdateTransactions", result);
+			return Ok(result);
+		}
+		[Route("UserActivitity")]
+		[HttpGet]
+		public async Task<ActionResult> UserActivitity()
+		{
+			DateTime start = DateTime.Now;
+			ClickTracker tracker= new ClickTracker();
+			bool result = false;
+			try
+			{
+				result = await tracker.ActivityTracker();
+			}
+			catch
+			{
+				result = false;
+			}
+			DateTime end = DateTime.Now;
+			AutomatedLog log = new AutomatedLog();
+			log.SaveLog(start, end, "UserActivitity", result);
 			return Ok(result);
 		}
 	}

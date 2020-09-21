@@ -110,7 +110,9 @@ namespace DailyForecaster.Models
 				else
 				{
 					BudgetTransaction transaction = _context.BudgetTransactions.Find(this.BudgetTransactionId);
-					transaction = this;
+					transaction.Amount = this.Amount;
+					transaction.CFTypeId = this.CFTypeId;
+					transaction.Name = this.Name;
 					_context.Entry(transaction).State = EntityState.Modified;
 				}
 				_context.SaveChanges();
@@ -151,7 +153,7 @@ namespace DailyForecaster.Models
 			catch
 			{
 				FirebaseUser user = new FirebaseUser();
-				FirebaseUserId = user.GetFirebaseUser(UserId);
+				FirebaseUserId = user.GetUserId(UserId);
 			}
 			//using (FinPlannerContext _context = new FinPlannerContext())
 			//{

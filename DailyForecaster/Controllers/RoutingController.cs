@@ -19,63 +19,84 @@ namespace DailyForecaster.Controllers
 	[EnableCors("AllowOrigin")]
 	[ApiController]
 	public class RoutingController : ControllerBase
-	{
-		
+	{				
+		[Route("OpenPost")]
+		[HttpPost]
+		public ActionResult OpenPost([FromBody] JsonElement json)
+		{
+			return Ok();
+		}
 		[Route("Get")]
 		[HttpGet]
 		public async Task<ActionResult> Get()
 		{
 			string authHeader = this.HttpContext.Request.Headers["Authorization"];
 			FirebaseToken auth = await validate(authHeader);
-			AspNetUsers users = new AspNetUsers();
-			new ClickTracker(this.HttpContext.Request.Headers["Route"], true, false, "collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString(), users.getUserId(auth.Claims["email"].ToString()));
-			string route = this.HttpContext.Request.Headers["Route"];
-			string collectionsId = "";
-			if (this.HttpContext.Request.Headers["collectionsId"] != "")
+			if (auth != null)
 			{
-				collectionsId = this.HttpContext.Request.Headers["collectionsId"];
-			}
-			string accountId = "";
-			if (this.HttpContext.Request.Headers["accountId"] != "")
-			{
-				accountId = this.HttpContext.Request.Headers["accountId"];
-			}
-			DateTime startDate = DateTime.Now;
-			if (this.HttpContext.Request.Headers["startDate"].Count() != 0)
-			{
-				startDate = DateConvert(this.HttpContext.Request.Headers["startDate"]);
-			}
-			DateTime endDate = DateTime.Now;
-			if (this.HttpContext.Request.Headers["endDate"].Count() != 0)
-			{
-				endDate = DateConvert(this.HttpContext.Request.Headers["endDate"]);
-			}
-			if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
-			{
-				FirebaseUser user = new FirebaseUser();
-				if(!user.Exsits(auth.Claims["email"].ToString()))
+				FirebaseUser firebaseUser = new FirebaseUser();
+				try
 				{
-					new FirebaseUser(auth.Claims["email"].ToString(), auth.Uid);
+					new ClickTracker(this.HttpContext.Request.Headers["Route"]
+						, true,
+						false,
+						"collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString(),
+						firebaseUser.GetUserId(auth.Claims["email"].ToString()),
+						true);
 				}
-				switch (route)
+				catch (Exception e)
 				{
-					case "UnseenCount":
-						return UnseenCount(auth.Claims["email"].ToString());
-					case "Index":
-						return Index(auth.Claims["email"].ToString());
-					case "GetAccounts":
-						return GetAccounts(collectionsId,auth.Claims["email"].ToString());
-					case "GetReportedTransaction":
-						return GetReportedTransactions(accountId, startDate, endDate);
-					case "GetAccount":
-						return GetAccount(accountId);
-					case "GetCollectionsMenu":
-						return GetCollectionsMenu(auth.Claims["email"].ToString());
-					case "EditBudget":
-						return EditBudget(auth.Claims["email"].ToString(), collectionsId);
-					case "SafeToSpend":
-						return SafeToSpend(auth.Claims["email"].ToString(), collectionsId);
+					ExceptionCatcher catcher = new ExceptionCatcher();
+					catcher.Catch(e.Message);
+				}
+				string route = this.HttpContext.Request.Headers["Route"];
+				string collectionsId = "";
+				if (this.HttpContext.Request.Headers["collectionsId"] != "")
+				{
+					collectionsId = this.HttpContext.Request.Headers["collectionsId"];
+				}
+				string accountId = "";
+				if (this.HttpContext.Request.Headers["accountId"] != "")
+				{
+					accountId = this.HttpContext.Request.Headers["accountId"];
+				}
+				DateTime startDate = DateTime.Now;
+				if (this.HttpContext.Request.Headers["startDate"].Count() != 0)
+				{
+					startDate = DateConvert(this.HttpContext.Request.Headers["startDate"]);
+				}
+				DateTime endDate = DateTime.Now;
+				if (this.HttpContext.Request.Headers["endDate"].Count() != 0)
+				{
+					endDate = DateConvert(this.HttpContext.Request.Headers["endDate"]);
+				}		 			
+				if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
+				{
+					FirebaseUser user = new FirebaseUser();
+					if (!user.Exsits(auth.Claims["email"].ToString()))
+					{
+						new FirebaseUser(auth.Claims["email"].ToString(), auth.Uid);
+					}
+					switch (route)
+					{
+						case "UnseenCount":
+							return UnseenCount(auth.Claims["email"].ToString());
+						case "Index":
+							return Index(auth.Claims["email"].ToString());
+						case "GetAccounts":
+							return GetAccounts(collectionsId, auth.Claims["email"].ToString());
+						case "GetReportedTransaction":
+							return GetReportedTransactions(accountId, startDate, endDate);
+						case "GetAccount":
+							return GetAccount(accountId);
+						case "GetCollectionsMenu":
+							return GetCollectionsMenu(auth.Claims["email"].ToString());
+						case "EditBudget":
+							return EditBudget(auth.Claims["email"].ToString(), collectionsId);
+						case "SafeToSpend":
+							return SafeToSpend(auth.Claims["email"].ToString(), collectionsId);
 
+					}
 				}
 			}
 			return Ok();
@@ -92,26 +113,44 @@ namespace DailyForecaster.Controllers
 				collectionsId = this.HttpContext.Request.Headers["collectionsId"];
 			}
 			FirebaseToken auth = await validate(authHeader);
-			if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
+			if (auth != null)
 			{
-				switch (route)
+				FirebaseUser firebaseUser = new FirebaseUser();
+				new ClickTracker(this.HttpContext.Request.Headers["Route"],
+				false,
+				true,
+				"collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString(),
+				firebaseUser.GetUserId(auth.Claims["email"].ToString()) + ", body: " + json,
+				true);
+			
+				if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
 				{
-					case "NewUser":
-						new FirebaseUser(auth.Claims["email"].ToString(), auth.Uid);
-						return Ok();
-					case "BuildSimulation":
-						return BuildSimulation(json.GetRawText(),collectionsId);
-					case "AccountChange":
-						return AccountChange(json);
-					case "EditBudget":
-						return EditBudget(json);
-					case "BudgetChange":
-						return BudgetChange(json, auth.Uid);
-					case "BudgetTransactionDelete":
-						return BudgetTransactionDelete(json);
+					switch (route)
+					{
+						case "NewUser":
+							new FirebaseUser(auth.Claims["email"].ToString(), auth.Uid);
+							return Ok();
+						case "BuildSimulation":
+							return BuildSimulation(json.GetRawText(), collectionsId);
+						case "AccountChange":
+							return AccountChange(json);
+						case "EditBudget":
+							return EditBudget(json);
+						case "BudgetChange":
+							return BudgetChange(json, auth.Uid);
+						case "BudgetTransactionDelete":
+							return BudgetTransactionDelete(json);
+					}
 				}
 			}
 			return Ok();
+		}
+		[Route("Create")]
+		[HttpPost]
+		public async Task<ActionResult> Create([FromBody] JsonElement json)
+		{
+			UserModel model = new UserModel();
+			return Ok(await model.CreateUser(JsonConvert.DeserializeObject<UserModel>(json.GetRawText())));
 		}
 		[Route("PostTest")]
 		[HttpPost]
@@ -297,10 +336,40 @@ namespace DailyForecaster.Controllers
 			simulation.Scenario();
 			return Ok(simulation);
 		}
+		private async Task<string> Verify(string token)
+		{
+			try
+			{
+				// Verify the ID token while checking if the token is revoked by passing checkRevoked
+				// as true.
+				bool checkRevoked = true;
+				var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(
+					token, checkRevoked);
+				// Token is valid and not revoked.
+				return decodedToken.Uid;
+			}
+			catch (Firebase.Auth.FirebaseAuthException ex)
+			{
+				return null;
+			}
+		}
 		private async Task<FirebaseToken> validate(string token)
 		{
-			return await FirebaseAuth.DefaultInstance
+			var auth = await FirebaseAuth.DefaultInstance
 				.VerifyIdTokenAsync(token);
+			if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
+			{
+				string result = await Verify(token);
+				if(result != null)
+				{
+					return auth;
+				}
+				else
+				{
+					return null;
+				}
+			}
+			return null;
 		}
 		private ActionResult Index(string email)
 		{

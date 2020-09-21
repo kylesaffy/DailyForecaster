@@ -1,7 +1,9 @@
-﻿using System;
+﻿using DailyForecaster.Migrations;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 
 namespace DailyForecaster.Models
@@ -52,6 +54,14 @@ namespace DailyForecaster.Models
 					.Where(t => collectionsIds.Contains(t.ClientReference))
 					.ToList()
 					);
+				return type;
+			}
+		}
+		public CFType GetUncategorized()
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				CFType type = _context.CFTypes.Where(x => x.Id == "39a1d903-f4e3-4e4a-986a-604bd8dff20e" && x.Custom == false).FirstOrDefault();
 				return type;
 			}
 		}

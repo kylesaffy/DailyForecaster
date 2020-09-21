@@ -21,7 +21,7 @@ namespace DailyForecaster.Models
 		public string GetCollectionId(string email)
 		{
 			FirebaseUser user = new FirebaseUser();
-			string userId = user.GetFirebaseUser(email);
+			string userId = user.GetUserId(email);
 			AppAreas app = AppAreas.GetAppAreas().Where(x => x.Name == "Collections").FirstOrDefault();
 			try
 			{
@@ -41,7 +41,7 @@ namespace DailyForecaster.Models
 		public void CollectionsIncratment(string collectionsId,string email)
 		{
 			FirebaseUser user = new FirebaseUser();
-			string userId = user.GetFirebaseUser(email);
+			string userId = user.GetUserId(email);
 			AppAreas app = AppAreas.GetAppAreas().Where(x => x.Name == "Collections").FirstOrDefault();
 			Incrament(collectionsId, userId, app);
 		}

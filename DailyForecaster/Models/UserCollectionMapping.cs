@@ -71,7 +71,7 @@ namespace DailyForecaster.Models
 			catch
 			{
 				FirebaseUser user = new FirebaseUser();
-				userId = user.GetFirebaseUser(userId);
+				userId = user.GetUserId(userId);
 			}
 			if (CheckUser(collectionsId, userId))
 			{

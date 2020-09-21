@@ -74,6 +74,40 @@ namespace DailyForecaster.Models
 				return cfs;
 			}	  			
 		}
+		public void TransactionClassifier()
+		{
+			Collections collection = new Collections();
+			CFClassification classification = new CFClassification();
+			CFType type = new CFType();
+			List<Collections> collections = collection.GetCollections("", "");
+			List<CFClassification> classifications = classification.GetList();
+			List<AutomatedCashFlow> collectionCF = new List<AutomatedCashFlow>();
+			List<AutomatedCashFlow> Uncategorized = new List<AutomatedCashFlow>();
+			type = type.GetUncategorized();
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				foreach (Collections item in collections.Where(x => x.Accounts.Any()))
+				{
+					collectionCF = new List<AutomatedCashFlow>();
+					Uncategorized = new List<AutomatedCashFlow>();
+					foreach (Account acc in item.Accounts)
+					{
+						collectionCF.AddRange(_context.AutomatedCashFlows.Where(x => x.Validated && x.CFTypeId != type.Id && x.AccountId == acc.Id).ToList());
+						Uncategorized.AddRange(_context.AutomatedCashFlows.Where(x => x.Validated == false && x.CFTypeId == type.Id && x.AccountId == acc.Id).ToList());
+					}
+					foreach (AutomatedCashFlow cashFlow in Uncategorized)
+					{
+						//Find Exact Matches
+						if (collectionCF.Where(x => x.Validated == true && x.SourceOfExpense == cashFlow.SourceOfExpense).Any())
+						{
+							cashFlow.CFTypeId = collectionCF.Where(x => x.Validated == true && x.SourceOfExpense == cashFlow.SourceOfExpense).Select(x => x.CFTypeId).FirstOrDefault();
+							_context.Entry(cashFlow).State = EntityState.Modified;
+						}
+					}
+				}
+				_context.SaveChanges();
+			}
+		}
 		public List<AutomatedCashFlow> GetAutomatedCashFlows(string AccId,DateTime startDate,DateTime endDate)
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())

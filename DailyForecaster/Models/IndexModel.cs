@@ -29,7 +29,7 @@ namespace DailyForecaster.Models
 			try
 			{
 				FirebaseUser user = new FirebaseUser();
-				userId = user.GetFirebaseUser(email);
+				userId = user.GetUserId(email);
 				collectionIds = mapping.getCollectionIds(userId, "firebase");
 			}
 			catch

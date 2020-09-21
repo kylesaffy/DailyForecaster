@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Security.Cryptography;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,18 +12,45 @@ namespace DailyForecaster.Models
 		public string FirebaseId { get; set; }
 		public string Email { get; set; }
 		public string Phone { get; set; }
+		public string FirstName { get; set; }
+		public string LastName { get; set; }
 		public ICollection<FirebaseLogin> FirebaseLogins { get; set; }
 		public ICollection<BudgetTransaction> BudgetTransactions { get; set; }
 		public ICollection<UserCollectionMapping> UserCollectionMappings { get; set; }
 		public ICollection<Collections> Collections { get; set; }
 		public FirebaseUser() { }
+		/// <summary>
+		/// Returns an exisiting user object
+		/// </summary>
+		/// <param name="userId">MM side userId</param>
+		public FirebaseUser(string userId)
+		{
+			FirebaseUser user = Get(new Guid(userId));
+			FirebaseUserId = user.FirebaseUserId;
+			FirebaseId = user.FirebaseId;
+			Email = user.Email;
+			Phone = user.Phone;
+		}
 		public FirebaseUser(string email, string id)
 		{
 			FirebaseUserId = Guid.NewGuid().ToString();
 			FirebaseId = id;
 			Email = email;
 			Save();
-
+		}
+		/// <summary>
+		/// Create a new user object from server side user creation
+		/// </summary>
+		/// <param name="model">UserModel that is passed to from the front end</param>
+		public FirebaseUser(UserModel model)
+		{
+			FirebaseUserId = Guid.NewGuid().ToString();
+			FirebaseId = model.Uid;
+			Email = model.Email;
+			FirstName = model.FirstName;
+			LastName = model.LastName;
+			Phone = model.PhoneNumber;
+			Save();
 		}
 		/// <summary>
 		/// Tests if user exists
@@ -38,7 +66,7 @@ namespace DailyForecaster.Models
 		/// </summary>
 		/// <param name="email">the email address of the user interacting with the system</param>
 		/// <returns>Returns the Id of the user</returns>
-		public string GetFirebaseUser(string email)
+		public string GetUserId(string email)
 		{
 			try
 			{
@@ -49,6 +77,14 @@ namespace DailyForecaster.Models
 				AspNetUsers users = new AspNetUsers();
 				return users.getUserId(email);
 			}
+		}
+		/// <summary>
+		/// List of all users in the Firebase environment
+		/// </summary>
+		/// <returns>Returns a list of all firebase users</returns>
+		public List<FirebaseUser> GetUserList()
+		{
+			return Get();
 		}
 		//===================================================================================================================
 		//DLA
@@ -65,7 +101,7 @@ namespace DailyForecaster.Models
 			}
 		}
 		/// <summary>
-		/// Data Layer Application for the retrieval of users
+		/// Data Layer Application for the retrieval of users by email
 		/// </summary>
 		/// <param name="email">Email address of the user</param>
 		/// <returns>Returns a single instance of a user</returns>
@@ -74,7 +110,37 @@ namespace DailyForecaster.Models
 
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
-				return _context.FirebaseUser.Where(x => x.Email == email).FirstOrDefault();
+				try
+				{
+					return _context.FirebaseUser.Where(x => x.Email == email).FirstOrDefault();
+				}
+				catch (Exception e)
+				{
+					return null;
+				}
+			}
+		}
+		/// <summary>
+		/// Data Layer Application for the retrieval of users by UserId 
+		/// </summary>
+		/// <param name="userId">UserId of the user</param>
+		/// <returns>Returns a single instance of a user</returns>
+		private FirebaseUser Get(Guid userId)
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.FirebaseUser.Find(userId);
+			}
+		}
+		/// <summary>
+		/// List of all users in the Firebase environment 
+		/// </summary>
+		/// <returns>Returns a list of all firebase users</returns>
+		private List<FirebaseUser> Get()
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.FirebaseUser.ToList();
 			}
 		}
 		/// <summary>

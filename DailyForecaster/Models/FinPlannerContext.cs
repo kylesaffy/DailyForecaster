@@ -45,6 +45,9 @@ namespace DailyForecaster.Models
         public DbSet<AccountState> AccountState { get; set; }
         public DbSet<AppAreas> AppAreas { get; set; }
         public DbSet<UserInteraction> UserInteraction { get; set; }
+        public DbSet<EmailPreferences> EmailPrefernces { get; set; }
+        public DbSet<EmailRecords> EmailRecords { get; set; }
+        public DbSet<LogoffModel> LogoffModel { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()

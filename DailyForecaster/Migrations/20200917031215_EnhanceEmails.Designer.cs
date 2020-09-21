@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20200917031215_EnhanceEmails")]
+    partial class EnhanceEmails
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -557,25 +559,6 @@ namespace DailyForecaster.Migrations
                     b.ToTable("EmailPrefernces");
                 });
 
-            modelBuilder.Entity("DailyForecaster.Models.EmailRecords", b =>
-                {
-                    b.Property<string>("EmailRecordsId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("FirebaseUserId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("InteractionDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Message")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("EmailRecordsId");
-
-                    b.ToTable("EmailRecords");
-                });
-
             modelBuilder.Entity("DailyForecaster.Models.EmailStore", b =>
                 {
                     b.Property<string>("EmailStoreId")
@@ -646,12 +629,6 @@ namespace DailyForecaster.Migrations
                     b.Property<string>("FirebaseId")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("FirstName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastName")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Phone")
                         .HasColumnType("nvarchar(max)");
 
@@ -689,24 +666,6 @@ namespace DailyForecaster.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Institution");
-                });
-
-            modelBuilder.Entity("DailyForecaster.Models.LogoffModel", b =>
-                {
-                    b.Property<string>("LogoffModelId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("DateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("FirebaseUserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("LogoffModelId");
-
-                    b.HasIndex("FirebaseUserId");
-
-                    b.ToTable("LogoffModel");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.ManualCashFlow", b =>
@@ -1254,13 +1213,6 @@ namespace DailyForecaster.Migrations
                 {
                     b.HasOne("DailyForecaster.Models.FirebaseUser", "FirebaseUser")
                         .WithMany("FirebaseLogins")
-                        .HasForeignKey("FirebaseUserId");
-                });
-
-            modelBuilder.Entity("DailyForecaster.Models.LogoffModel", b =>
-                {
-                    b.HasOne("DailyForecaster.Models.FirebaseUser", "FirebaseUser")
-                        .WithMany()
                         .HasForeignKey("FirebaseUserId");
                 });
 
