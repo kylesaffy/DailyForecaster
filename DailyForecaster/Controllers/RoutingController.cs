@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using DailyForecaster.Models;
 using Firebase.Auth;
 using FirebaseAdmin.Auth;
+using Google.Apis.Upload;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -95,7 +96,6 @@ namespace DailyForecaster.Controllers
 							return EditBudget(auth.Claims["email"].ToString(), collectionsId);
 						case "SafeToSpend":
 							return SafeToSpend(auth.Claims["email"].ToString(), collectionsId);
-
 					}
 				}
 			}
@@ -142,7 +142,8 @@ namespace DailyForecaster.Controllers
 							return BudgetTransactionDelete(json);
 						case "UpdateSplits":
 							return UpdateSplits(json);
-
+						case "LoginEmail":
+							return LoginEmail(auth.Claims["email"].ToString());
 					}
 				}
 			}
@@ -177,6 +178,20 @@ namespace DailyForecaster.Controllers
 				}
 			}
 			return Ok();
+		}
+		/// <summary>
+		/// Login in Email notification
+		/// </summary>
+		/// <param name="emailAddress">Email Address of the user</param>
+		/// <returns>Return Model of the outcome of the sending of the email</returns>
+		private ActionResult LoginEmail(string emailAddress)
+		{
+			EmailFunction email = new EmailFunction()
+			{
+				To = emailAddress,
+				Subject = "Login",
+			};
+			return (Ok(email.SendEmail("")));
 		}
 		/// <summary>
 		/// Updates list of transaction splits passed to it with reference to the database version and the version passed
@@ -275,6 +290,12 @@ namespace DailyForecaster.Controllers
 				Title = "Budget",
 				Key = "Budget",
 				Url = "/dashboard/budget"
+			});
+			subMenu.Add(new MenuData()
+			{
+				Title = "Safe To Spend",
+				Key = "SafeToSpend",
+				Url = "/dashboard/SafeToSpend"
 			});
 			menu.Add(new MenuData()
 			{

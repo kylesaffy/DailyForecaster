@@ -21,7 +21,7 @@ namespace DailyForecaster.Models
 			UserInteraction userInteraction = new UserInteraction();
 			if ((collectionsId == null || collectionsId == "" || collectionsId == "undefined") && email != "")
 			{
-				string collectionId = userInteraction.GetCollectionId(email);
+				collectionsId = userInteraction.GetCollectionId(email);
 			}
 			else
 			{

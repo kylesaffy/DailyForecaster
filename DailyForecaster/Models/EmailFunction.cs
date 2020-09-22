@@ -43,7 +43,7 @@ namespace DailyForecaster.Models
 				EnableSsl = true,
 				Timeout = 200000
 			};
-			MailAddress from = new MailAddress(FromEmail, "Admin", System.Text.Encoding.UTF8);
+			MailAddress from = new MailAddress(FromEmail, "Admin", Encoding.UTF8);
 			MailAddress to = new MailAddress(ToEmail);
 			MailMessage message = new MailMessage(from, to);
 			if (Subject == "Confirm your account")
@@ -77,7 +77,7 @@ namespace DailyForecaster.Models
 			}
 			message.Subject = Subject;
 			message.IsBodyHtml = true;
-			message.SubjectEncoding = System.Text.Encoding.UTF8;
+			message.SubjectEncoding = Encoding.UTF8;
 			EmailStore emailStore = new EmailStore() {
 				Body = message.Body,
 				To = to.ToString(),
