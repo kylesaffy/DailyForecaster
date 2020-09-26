@@ -26,6 +26,34 @@ namespace DailyForecaster.Models
 		public bool Simulation { get; set; }
 		public ICollection<AccountState> AccountStates { get; set; }
 		public Budget() { }
+		
+		public Budget( string collectionsId)
+		{
+			Budget budget = GetBudget(collectionsId);
+			BudgetId = budget.BudgetId;
+			StartDate = budget.StartDate;
+			EndDate = budget.EndDate;
+			CollectionId = collectionsId;
+		}
+		public List<Budget> GetBudgets(List<string> collectionIds)
+		{
+			List<Budget> budgets = new List<Budget>();
+			int count = 0;
+			foreach(string item in collectionIds)
+			{
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					budgets.Add(_context
+						.Budget
+						.Where(x => x.CollectionId == item)
+						.OrderByDescending(x => x.EndDate)
+						.FirstOrDefault());
+				}
+				budgets[count].GetBudgetTransacions();
+				count++;
+			}
+			return budgets;
+		}
 		public void GetBudgetTransacions()
 		{
 			using (FinPlannerContext _context = new FinPlannerContext())

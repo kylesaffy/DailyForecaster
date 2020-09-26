@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -9,6 +10,8 @@ namespace DailyForecaster.Models
 	public class ReportedTransaction
 	{
 		public string Id { get; set; }
+		public string CFTypeId { get; set; }
+		[ForeignKey("CFTypeId")]
 		public CFType CFType { get; set; }
 		[Required]
 		public CFClassification CFClassification { get; set; }
@@ -18,6 +21,7 @@ namespace DailyForecaster.Models
 		public DateTime DateCaptured { get; set; }
 		[Required]
 		public string SourceOfExpense { get; set; }
+		public AutomatedCashFlow AutomatedCashFlow { get; set; }
 		public ManualCashFlow ManualCashFlow { get; set; }
 		[Required]
 		public string AccountId { get; set; }
@@ -99,25 +103,25 @@ namespace DailyForecaster.Models
 			foreach (Account item in accounts)
 			{
 				List<ReportedTransaction> transactions = item.ReportedTransactions.Where(x => x.DateBooked > startDate && x.DateBooked < endDate).ToList();
-				foreach(ReportedTransaction t in transactions)
+				foreach (ReportedTransaction t in transactions)
 				{
 					t.AccountId = item.Id;
 					t.Account = item;
 				}
 				reportedTransactions.AddRange(transactions);
 				//AutomatedCashFlow automatedCashFlows = new AutomatedCashFlow();
-				//ManualCashFlow manualCashFlow = new ManualCashFlow();					   				
-				//List<AutomatedCashFlow> auto = automatedCashFlows.GetAutomatedCashFlows(item.Id,startDate,endDate);
-				//List<ManualCashFlow> manual = manualCashFlow.GetManualCashFlows(item.Id,startDate,endDate);
+				//ManualCashFlow manualCashFlow = new ManualCashFlow();
+				//List<AutomatedCashFlow> auto = automatedCashFlows.GetAutomatedCashFlows(item.Id, startDate, endDate);
+				//List<ManualCashFlow> manual = manualCashFlow.GetManualCashFlows(item.Id, startDate, endDate);
 				//manual = manual.Where(x => x.AutomatedCashFlowId == null).ToList();
 				//foreach (AutomatedCashFlow automated in auto)
-				//{			 					
-				//	reportedTransactions.Add(new ReportedTransaction(automated,item));
+				//{
+				//	reportedTransactions.Add(new ReportedTransaction(automated, item));
 				//}
 				//foreach (ManualCashFlow man in manual)
 				//{
-				//	reportedTransactions.Add(new ReportedTransaction(man,item));
-				//} 				
+				//	reportedTransactions.Add(new ReportedTransaction(man, item));
+				//}
 			}
 			foreach(ReportedTransaction item in reportedTransactions)
 			{
@@ -145,7 +149,7 @@ namespace DailyForecaster.Models
 			}
 			return reportedTransactions;
 		}
-		private ReportedTransaction(AutomatedCashFlow auto, Account account)
+		public ReportedTransaction(AutomatedCashFlow auto, Account account)
 		{
 			CFType = new CFType(auto.CFTypeId);
 			CFClassification = new CFClassification(auto.CFClassificationId);
@@ -157,7 +161,7 @@ namespace DailyForecaster.Models
 			Account.AutomatedCashFlows = null;
 			DateBooked = auto.DateBooked;
 			Validated = auto.Validated;
-
+			AutomatedCashFlow = auto;
 		}
 		private ReportedTransaction(AutomatedCashFlow auto,List<CFType> types,List<CFClassification> classifications)
 		{
@@ -169,7 +173,7 @@ namespace DailyForecaster.Models
 			AccountId = auto.AccountId;
 			DateBooked = auto.DateBooked;
 			Validated = auto.Validated;
-
+			AutomatedCashFlow = auto;
 		}
 		private ReportedTransaction(ManualCashFlow manual, List<CFType> types, List<CFClassification> classifications)
 		{
@@ -181,6 +185,7 @@ namespace DailyForecaster.Models
 			AccountId = manual.AccountId;
 			DateBooked = manual.DateBooked;
 			Validated = true;
+			ManualCashFlow = manual;
 		}
 		private ReportedTransaction(ManualCashFlow manual, Account account)
 		{

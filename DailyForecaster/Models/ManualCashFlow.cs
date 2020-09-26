@@ -80,6 +80,25 @@ namespace DailyForecaster.Models
 			ExpenseLocation = el;
 		}
 		/// <summary>
+		/// Returns all of the associated automated cash flows for a collection
+		/// </summary>
+		/// <param name="collectionsId">Id of the collection being queried</param>
+		/// <param name="budget">budget defining the period</param>
+		/// <returns>double of the non transfer sum of the transactions for the month</returns>
+		public double GetSpent(string collectionsId, Budget budget)
+		{
+			DateTime startDate = budget.StartDate.AddDays(-3);
+			DateTime endDate = budget.EndDate.AddDays(3);
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context
+					.ManualCashFlows
+					.Where(x => x.Account.CollectionsId == collectionsId && x.DateBooked > startDate && x.DateBooked < endDate && x.AutomatedCashFlowId == null && x.CFClassification.Sign == -1)
+					.Where(x => x.CFTypeId != "999")
+					.Sum(x => x.Amount);
+			}
+		}
+		/// <summary>
 		/// Returns a list of Manual Cash Flows with a specific count
 		/// </summary>
 		/// <param name="AccId">The Id of the account in question</param>

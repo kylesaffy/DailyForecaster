@@ -125,7 +125,7 @@ namespace DailyForecaster.Models
 			CFClassification = new CFClassification(transaction.CFClassificationId);
 			CFType = new CFType(transaction.CFTypeId);
 			Budgeted = budgeted;
-			Spent = spent;
+			Spent = Math.Round(spent,2);
 			Remaining = Math.Round(budgeted - spent,2);
 			CFClassificationId = transaction.CFClassificationId;
 			CFTypeId = transaction.CFTypeId;
@@ -135,7 +135,7 @@ namespace DailyForecaster.Models
 			CFClassification = transaction.CFClassification;
 			CFType = transaction.CFType;
 			Budgeted = budgeted;
-			Spent = spent;
+			Spent = Math.Round(spent,2);
 			Remaining = Math.Round(budgeted - spent,2);
 			CFClassificationId = transaction.CFClassification.Id;
 			CFTypeId = transaction.CFType.Id;

@@ -9,6 +9,7 @@ namespace DailyForecaster.Models
 	{
 		public List<Collections> Collections { get; set; }
 		public BudgetTransactionComparison BudgetTransactionComparison { get; set; }
+		public List<CFType> CFTypes { get; set; }
 		public SafeToSpendVM() { }
 		/// <summary>
 		/// Safe to Spend VM generation
@@ -29,6 +30,8 @@ namespace DailyForecaster.Models
 			}
 			BudgetTransactionComparison = new BudgetTransactionComparison(collectionsId);
 			Collections = collections.GetCollections(email, "SafeToSpendVM");
+			CFType type = new CFType();
+			CFTypes = type.GetCFList(collectionsId);
 		}
 	}
 }

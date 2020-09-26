@@ -157,7 +157,7 @@ namespace DailyForecaster.Models
 		/// </summary>
 		/// <param name="email">Email address of the user, can be ""</param>
 		/// <param name="type">The type that is required, "", Index, CollectionsVM</param>
-		/// <returns></returns>
+		/// <returns>List of collections objects</returns>
 		public List<Collections> GetCollections(string email, string type)
 		{
 			List<Collections> collections = new List<Collections>();
@@ -178,6 +178,9 @@ namespace DailyForecaster.Models
 							switch (type)
 							{
 								case "Accounts":
+									collections.Add(new Collections(_context.Collections.Find(item), 0, type));
+									break;
+								case "DailyReport":
 									collections.Add(new Collections(_context.Collections.Find(item), 0, type));
 									break;
 								case "TransactionList":

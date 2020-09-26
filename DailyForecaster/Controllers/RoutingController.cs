@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -144,6 +145,8 @@ namespace DailyForecaster.Controllers
 							return UpdateSplits(json);
 						case "LoginEmail":
 							return LoginEmail(auth.Claims["email"].ToString());
+						case "SaveTransaction":
+							return SaveTransaction(json, auth.Uid);
 					}
 				}
 			}
@@ -178,6 +181,29 @@ namespace DailyForecaster.Controllers
 				}
 			}
 			return Ok();
+		}
+		/// <summary>
+		/// Caves changes either to automated cash flows or to budgeted transactions
+		/// </summary>
+		/// <param name="json">the JSON version of the object</param>
+		/// <param name="userId">The firebase userId</param>
+		/// <returns>Updated version of the object</returns>
+		private ActionResult SaveTransaction(JsonElement json,string userId)
+		{
+			try
+			{
+				ReportedTransaction transaction = JsonConvert.DeserializeObject<ReportedTransaction>(json.GetRawText());
+				AutomatedCashFlow flow = transaction.AutomatedCashFlow;
+				flow.CFType = null;
+				flow.CFTypeId = transaction.CFType.Id;
+				flow.SourceOfExpense = transaction.SourceOfExpense;
+				flow = flow.Save(flow);
+				return Ok(new ReportedTransaction(flow, new Account(flow.AccountId)));
+			}
+			catch
+			{
+				return BudgetChange(json, userId);
+			}
 		}
 		/// <summary>
 		/// Login in Email notification

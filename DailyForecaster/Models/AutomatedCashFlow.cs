@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using DailyForecaster.Controllers;
 using DailyForecaster.Migrations;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace DailyForecaster.Models
 {
@@ -46,8 +47,46 @@ namespace DailyForecaster.Models
 		public Account Account { get; set; }
 		[Required]
 		public string AccountId { get; set; }
+		ICollection<ReportedTransaction> ReportedTransactions { get; set; }
 		public AutomatedCashFlow()
-		{ }
+		{ }		
+		/// <summary>
+		/// Saves and returns updated object
+		/// </summary>
+		/// <param name="flow">Object to be saved and updated</param>
+		/// <returns>Updated version of the object that was being saved</returns>
+		public AutomatedCashFlow Save(AutomatedCashFlow flow)
+		{
+			if(flow.ID != null)
+			{
+				flow.Save();
+				return Get(flow.ID);
+			}
+			return null;
+		}
+		/// <summary>
+		/// Retrieve object with specified Id
+		/// </summary>
+		/// <param name="Id">Id of the object needed</param>
+		/// <returns>Single object with ID specified</returns>
+		private AutomatedCashFlow Get(string Id)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.AutomatedCashFlows.Find(Id);
+			}
+		}	
+		/// <summary>
+		/// Save this Object
+		/// </summary>
+		private void Save()
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Entry(this).State = EntityState.Modified;
+				_context.SaveChanges();
+			}
+		}
 		/// <summary>
 		/// Returns a list of the most recent transactions on a specified account of a designated count
 		/// </summary>
@@ -64,6 +103,43 @@ namespace DailyForecaster.Models
 					.OrderByDescending(x=>x.DateBooked)
 					.Take(count)
 					.ToList());
+			}
+		}
+		/// <summary>
+		/// returns a list of transactions within a group of collections for a specified date
+		/// </summary>
+		/// <param name="collectionsId">list of collection ids</param>
+		/// <param name="date">date that the transactions we captured on</param>
+		/// <returns>List of Trasnasctions within a group of collections captured on a specified date</returns>
+		public List<AutomatedCashFlow> Get(List<string> collectionsId,DateTime date)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context
+						.AutomatedCashFlows
+						.Where(flows => collectionsId.Contains(flows.Account.CollectionsId))
+						.Where(x=>x.DateCaptured.Date == date.Date)
+						.ToList();
+			}
+		}
+		/// <summary>
+		/// Returns all of the associated automated cash flows for a collection
+		/// </summary>
+		/// <param name="collectionsId">Id of the collection being queried</param>
+		/// <param name="budget">budget defining the period</param>
+		/// <returns>double of the non transfer sum of the transactions for the month</returns>
+		public double GetSpent(string collectionsId, Budget budget)
+		{
+			DateTime startDate = budget.StartDate.AddDays(-3);
+			DateTime endDate = budget.EndDate.AddDays(3);
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				double amount = _context
+					.AutomatedCashFlows
+					.Where(x => x.Account.CollectionsId == collectionsId && x.DateBooked > startDate &&  x.DateBooked < endDate && x.CFClassification.Sign == -1)
+					.Where(x => x.CFTypeId != "999")
+					.Sum(x=>x.Amount);
+				return amount;
 			}
 		}
 		public List<AutomatedCashFlow> GetAutomatedCashFlowsUnseen(List<string> accountsStr)

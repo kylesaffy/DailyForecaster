@@ -51,7 +51,7 @@ namespace DailyForecaster.Models
 					temp.CollectionsId = item.CollectionsId;
 					temp.Avaialble = account.GetAvaialable(item.CollectionsId);
 					temp.Budgeted = Math.Round(budget.GetBudgetedAmount(item.CollectionsId), 2).ToString("N2");
-					temp.Used = Math.Round(budget.GetSpentAmount(item.CollectionsId), 2).ToString("N2");
+					temp.Used = Math.Round(getSepent(item.CollectionsId), 2).ToString("N2");
 					temp.isShared = mapping.IsShared(item.CollectionsId);
 					model.Add(temp);
 				}
@@ -62,6 +62,13 @@ namespace DailyForecaster.Models
 				}
 			}
 			return model;
+		}
+		public double getSepent(string collectionsId)
+		{
+			Budget budget = new Budget(collectionsId);
+			AutomatedCashFlow automated = new AutomatedCashFlow();
+			ManualCashFlow manual = new ManualCashFlow();
+			return automated.GetSpent(collectionsId,budget) + manual.GetSpent(collectionsId,budget);
 		}
 	}
 }

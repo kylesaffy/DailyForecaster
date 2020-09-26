@@ -17,6 +17,15 @@ namespace DailyForecaster.Models
 		public bool Firebase { get; set; }
 		public ClickTracker() { }
 		/// <summary>
+		/// Retrieve the users latest activity date
+		/// </summary>
+		/// <param name="userId">Id of the user that is being queried</param>
+		/// <returns>DateTime object of the users last activity</returns>
+		public DateTime GetLatest(string userId)
+		{
+			return Get(userId).RecordDateTime;
+		}
+		/// <summary>
 		/// Saves user interaction
 		/// </summary>
 		/// <param name="location">Name of the function being called</param>
