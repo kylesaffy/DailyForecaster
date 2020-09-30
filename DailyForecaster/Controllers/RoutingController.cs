@@ -147,10 +147,24 @@ namespace DailyForecaster.Controllers
 							return LoginEmail(auth.Claims["email"].ToString());
 						case "SaveTransaction":
 							return SaveTransaction(json, auth.Uid);
+						case "CreateCollection":
+							return CreateCollection(json, auth.Uid);
 					}
 				}
 			}
 			return Ok();
+		}
+		[Route("GetTest")]
+		[HttpGet]
+		public ActionResult GetTest()
+		{
+			return Test();
+		}
+		private ActionResult Test()
+		{
+			string collectionsId = "d2dd81a4-3d19-4ea3-9243-da49e6a7e54e";
+			BudgetTransactionComparison comparison = new BudgetTransactionComparison();
+			return Ok(comparison.Get(collectionsId));
 		}
 		[Route("Create")]
 		[HttpPost]
@@ -204,6 +218,12 @@ namespace DailyForecaster.Controllers
 			{
 				return BudgetChange(json, userId);
 			}
+		}
+		private ActionResult CreateCollection(JsonElement json, string userId)
+		{
+			NewCollectionsObj obj = JsonConvert.DeserializeObject<NewCollectionsObj>(json.GetRawText());
+			Collections collections = new Collections();
+			return Ok(collections.CreateCollection(obj,userId));
 		}
 		/// <summary>
 		/// Login in Email notification
@@ -322,6 +342,12 @@ namespace DailyForecaster.Controllers
 				Title = "Safe To Spend",
 				Key = "SafeToSpend",
 				Url = "/dashboard/SafeToSpend"
+			});
+			subMenu.Add(new MenuData()
+			{
+				Title = "New Collection",
+				Key = "NewCollection",
+				Url = "/dashboard/NewCollection"
 			});
 			menu.Add(new MenuData()
 			{

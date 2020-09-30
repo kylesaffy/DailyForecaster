@@ -22,10 +22,18 @@ namespace DailyForecaster.Models
 			List<string> collectionIds = mapping.getCollectionIds(userId, "firebase");
 			//Collections collection = new Collections();
 			//List<Collections> collections = collection.GetEagerList(collectionIds);
-			AutomatedCashFlow automated = new AutomatedCashFlow();
+			//AutomatedCashFlow automated = new AutomatedCashFlow();
 			DateTime dateTime = DateTime.Now;
-			List<AutomatedCashFlow> flows = automated.Get(collectionIds, dateTime);
-			Budget budget = new Budget();
+			List<AutomatedCashFlow> flows = new List<AutomatedCashFlow>();
+			//Budget budget = new Budget();
+			List<BudgetTransactionComparison> comparisons = new List<BudgetTransactionComparison>();
+			foreach (string item in collectionIds)
+			{
+				BudgetTransactionComparison comparison = new BudgetTransactionComparison(item);
+				comparisons.Add(comparison);
+				flows.AddRange(comparison.ReportedTransactions.Where(x => x.DateCaptured == dateTime).Select(x => x.AutomatedCashFlow));
+			}
+
 			//List<Budget> budgets = budget.
 		}
 	}

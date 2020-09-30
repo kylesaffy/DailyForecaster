@@ -88,6 +88,28 @@ namespace DailyForecaster.Models
 			}
 			return transactions;
 		}
+		public List<ReportedTransaction> Get(Budget budget)
+		{
+			DateTime startDate = budget.StartDate.AddDays(-3);
+			DateTime endDate = budget.EndDate.AddDays(3);
+			AutomatedCashFlow automated = new AutomatedCashFlow();
+			List<AutomatedCashFlow> automatedCashFlows = automated.Get(budget);
+			ManualCashFlow manual = new ManualCashFlow();
+			List<ManualCashFlow> manualCashFlows = manual.Get(budget);
+			manualCashFlows = manualCashFlows.Where(x => x.AutomatedCashFlowId == null).ToList();
+			List<ReportedTransaction> reportedTransactions = new List<ReportedTransaction>();
+			Account account = new Account();
+			List<Account> accounts = account.GetAccounts(budget.CollectionId);
+			foreach (AutomatedCashFlow auto in automatedCashFlows)
+			{
+				reportedTransactions.Add(new ReportedTransaction(auto,accounts.Where(x=>x.Id == auto.AccountId).FirstOrDefault()));
+			}
+			foreach (ManualCashFlow man in manualCashFlows)
+			{
+				reportedTransactions.Add(new ReportedTransaction(man, accounts.Where(x => x.Id == man.AccountId).FirstOrDefault()));
+			}
+			return reportedTransactions;
+		}
 		/// <summary>
 		/// Reported transactions for a given period 
 		/// </summary>
@@ -163,6 +185,17 @@ namespace DailyForecaster.Models
 			Validated = auto.Validated;
 			AutomatedCashFlow = auto;
 		}
+		public ReportedTransaction(AutomatedCashFlow auto)
+		{
+			CFType = new CFType(auto.CFTypeId);
+			CFClassification = new CFClassification(auto.CFClassificationId);
+			Amount = auto.Amount;
+			DateCaptured = auto.DateCaptured;
+			SourceOfExpense = auto.SourceOfExpense;
+			DateBooked = auto.DateBooked;
+			Validated = auto.Validated;
+			AutomatedCashFlow = auto;
+		}
 		private ReportedTransaction(AutomatedCashFlow auto,List<CFType> types,List<CFClassification> classifications)
 		{
 			CFType = types.Where(x=>x.Id == auto.CFTypeId).FirstOrDefault();
@@ -197,6 +230,16 @@ namespace DailyForecaster.Models
 			Account = account;
 			Account.ManualCashFlows = null;
 			Account.AutomatedCashFlows = null;
+			DateBooked = manual.DateBooked;
+			Validated = true;
+		}
+		private ReportedTransaction(ManualCashFlow manual)
+		{
+			CFType = new CFType(manual.CFTypeId);
+			CFClassification = new CFClassification(manual.CFClassificationId);
+			Amount = manual.Amount;
+			DateCaptured = manual.DateCaptured;
+			SourceOfExpense = manual.SourceOfExpense;
 			DateBooked = manual.DateBooked;
 			Validated = true;
 		}

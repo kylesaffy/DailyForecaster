@@ -79,6 +79,19 @@ namespace DailyForecaster.Models
 			isDeleted = false;
 			ExpenseLocation = el;
 		}
+		public List<ManualCashFlow> Get(Budget budget)
+		{
+			DateTime start = budget.StartDate.AddDays(-3);
+			DateTime end = budget.EndDate.AddDays(3);
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context
+						.ManualCashFlows
+						.Where(flows => budget.CollectionId.Contains(flows.Account.CollectionsId))
+						.Where(x => x.DateBooked.Date > start.Date && x.DateBooked < end)
+						.ToList();
+			}
+		}
 		/// <summary>
 		/// Returns all of the associated automated cash flows for a collection
 		/// </summary>

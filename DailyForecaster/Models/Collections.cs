@@ -104,6 +104,15 @@ namespace DailyForecaster.Models
 			DateCreated = DateTime.Now;
 			ResetDay = resetDate;
 		}
+		private Collections(NewCollectionsObj obj, string UserId)
+		{
+			CollectionsId = Guid.NewGuid().ToString();
+			Name = obj.name;
+			DurationType = obj.durationType;
+			FirebaseUser = new FirebaseUser(UserId);
+			DateCreated = DateTime.Now;
+			ResetDay = obj.resetDate;
+		}
 		/// <summary>
 		/// Returns a populated collections object
 		/// </summary>
@@ -312,6 +321,34 @@ namespace DailyForecaster.Models
 		public ReturnModel CreateCollection(NewCollectionsObj obj)
 		{
 			Collections col = new Collections(obj.durationType, obj.name, obj.User, obj.resetDate);
+			UserCollectionMapping mapping = new UserCollectionMapping(col.CollectionsId, obj.User);
+			ReturnModel returnModel = new ReturnModel();
+			if (mapping.Id == "999")
+			{
+				returnModel.result = false;
+				return returnModel;
+			}
+			try
+			{
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					_context.Collections.Add(col);
+					_context.UserCollectionMapping.Add(mapping);
+					_context.SaveChanges();
+				}
+				returnModel.result = true;
+				returnModel.returnStr = col.CollectionsId;
+				return returnModel;
+			}
+			catch (Exception e)
+			{
+				returnModel.result = false;
+				return returnModel;
+			}
+		}
+		public ReturnModel CreateCollection(NewCollectionsObj obj, string userId)
+		{
+			Collections col = new Collections(obj,userId);
 			UserCollectionMapping mapping = new UserCollectionMapping(col.CollectionsId, obj.User);
 			ReturnModel returnModel = new ReturnModel();
 			if (mapping.Id == "999")

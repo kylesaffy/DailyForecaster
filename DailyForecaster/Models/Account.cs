@@ -162,6 +162,17 @@ namespace DailyForecaster.Models
 			}
 			return accounts;
 		}
+		public List<Account> GetAccounts(string collectionsId)
+		{
+			List<Account> accounts = new List<Account>();
+			accounts = GetAccountsEmpty(collectionsId, false);
+			List<AccountType> types = AccountType.GetAccountTypes();
+			foreach (Account item in accounts)
+			{
+				item.AccountType = types.Where(x => x.AccountTypeId == item.AccountTypeId).FirstOrDefault();
+			}
+			return accounts;
+		}
 		/// <summary>
 		/// New convention for retrieving Account data
 		/// </summary>
@@ -169,15 +180,16 @@ namespace DailyForecaster.Models
 		/// <param name="dummy">Are dummy accounts to be included</param>
 		/// <returns>List of accounts associated with the collection Id</returns>
 		private List<Account> GetAccountsEmpty(string collectionsIds, bool dummy = false)
-		{
+		{		   			
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
 				return _context
-				  .Account
-				  .Where(x=>x.CollectionsId == collectionsIds)
-				  .Where(x => x.isDummy == dummy)
-				  .ToList();
+					.Account
+					.Where(x=>x.CollectionsId == collectionsIds)
+					.Where(x => x.isDummy == dummy)
+					.ToList();
 			}
+			
 		}
 		public List<Account> GetAccountsSim(string collectionsId,string simulationId)
 		{
