@@ -24,7 +24,7 @@ namespace DailyForecaster.Models
 			comparison.BudgetItem = budget;
 			ReportedTransaction reportedTransaction = new ReportedTransaction();
 			comparison.ReportedTransactions = CleanNonTransactional(reportedTransaction.Get(budget));
-			List<ReportedTransaction> reportedTransactions = comparison.ReportedTransactions;
+			List<ReportedTransaction> reportedTransactions = new List<ReportedTransaction>(comparison.ReportedTransactions.ToArray());
 			List<BudgetTransaction> budgetTransactions = comparison.BudgetItem.BudgetTransactions.ToList();
 			List<TransactionComparison> transactionList = new List<TransactionComparison>();
 			CFType type = new CFType();
@@ -84,52 +84,6 @@ namespace DailyForecaster.Models
 			BudgetItem = comparison.BudgetItem;
 			ReportedTransactions = comparison.ReportedTransactions;
 			TransactionComparisons = comparison.TransactionComparisons;
-			//Budget budget = new Budget(collectionsId);
-			//BudgetTransaction budgetTransaction = new BudgetTransaction();
-			//budget.BudgetTransactions = budgetTransaction.GetBudgetTransactions(budget.BudgetId);
-			//BudgetItem = budget;
-			//ReportedTransaction reportedTransaction = new ReportedTransaction();
-			//ReportedTransactions = CleanNonTransactional(reportedTransaction.Get(budget));
-			//List<ReportedTransaction> reportedTransactions = ReportedTransactions;
-			//List<BudgetTransaction> budgetTransactions = BudgetItem.BudgetTransactions.ToList();
-			//List<TransactionComparison> transactionList = new List<TransactionComparison>();
-			//CFType type = new CFType();
-			//List<CFType> types = type.GetCFList(budget.CollectionId);
-			//CFClassification cf = new CFClassification();
-			//List<CFClassification> classifications = cf.GetList();
-			//foreach(BudgetTransaction item in BudgetItem.BudgetTransactions)
-			//{
-			//	item.CFType = types.Where(x => x.Id == item.CFTypeId).FirstOrDefault();
-			//	item.CFClassification = classifications.Where(x=>x.Id == item.CFClassificationId).FirstOrDefault();
-			//	double spent = ReportedTransactions
-			//		.Where(x => x.CFType.Id == item.CFTypeId && x.CFClassification.Id == item.CFClassificationId)
-			//		.Select(x=>x.Amount)
-			//		.Sum();
-			//	ReportedTransaction transaction = reportedTransactions.Where(x => x.CFType.Id == item.CFTypeId && x.CFClassification.Id == item.CFClassificationId).FirstOrDefault();
-			//	reportedTransactions.Remove(transaction);
-			//	double budgeted = budgetTransactions
-			//		.Where(x => x.CFClassificationId == item.CFClassificationId && x.CFTypeId == item.CFTypeId)
-			//		.Select(x=>x.Amount)
-			//		.Sum();
-			//	transactionList
-			//		.Add(new TransactionComparison(spent, budgeted, item));
-			//}
-			//foreach (ReportedTransaction item in reportedTransactions)
-			//{
-			//	item.CFType = item.CFType;
-			//	item.CFClassification = item.CFClassification;
-			//	double spent = ReportedTransactions
-			//		.Where(x => x.CFType.Id == item.CFType.Id && x.CFClassification.Id == item.CFClassification.Id)
-			//		.Select(x => x.Amount)
-			//		.Sum();
-			//	transactionList
-			//		.Add(new TransactionComparison(spent, 0, item));
-			//}
-			//TransactionComparisons = transactionList
-			//	.GroupBy(p => new { p.CFClassificationId, p.CFTypeId })
-			//	.Select(g => g.First())
-			//	.ToList();
-
 		}
 		public List<ReportedTransaction> CleanNonTransactional(List<ReportedTransaction> reportedTransactions)
 		{

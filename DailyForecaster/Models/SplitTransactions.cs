@@ -11,9 +11,9 @@ namespace DailyForecaster.Models
 	{
 		public string SplitTransactionsId { get; set; }
 		public double Amount { get; set; }
-		[ForeignKey("CFTYpeID")]
-		public CFType CFType { get; set; }
 		public string CFTYpeID { get; set; }
+		[ForeignKey("CFTYpeID")]
+		public CFType CFType { get; set; }			  		
 		public string Name { get; set; }
 		public string AutomatedCashFlowId { get; set; }
 		[ForeignKey("AutomatedCashFlowId")]

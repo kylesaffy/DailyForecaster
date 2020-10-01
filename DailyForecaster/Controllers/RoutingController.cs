@@ -97,6 +97,8 @@ namespace DailyForecaster.Controllers
 							return EditBudget(auth.Claims["email"].ToString(), collectionsId);
 						case "SafeToSpend":
 							return SafeToSpend(auth.Claims["email"].ToString(), collectionsId);
+						case "ShareCollection":
+							return ShareCollection(collectionsId);
 					}
 				}
 			}
@@ -149,6 +151,9 @@ namespace DailyForecaster.Controllers
 							return SaveTransaction(json, auth.Uid);
 						case "CreateCollection":
 							return CreateCollection(json, auth.Uid);
+						case "LinkShare":
+							return LinkShare(json, auth.Uid);
+
 					}
 				}
 			}
@@ -195,6 +200,17 @@ namespace DailyForecaster.Controllers
 				}
 			}
 			return Ok();
+		}
+		private ActionResult LinkShare(JsonElement json,string userId)
+		{
+			CollectionSharing sharing = new CollectionSharing();
+			NewCollectionsObj obj = JsonConvert.DeserializeObject<NewCollectionsObj>(json.GetRawText());
+			obj.User = userId;
+			return Ok(sharing.AddUserToCollection(obj));
+		}
+		private ActionResult ShareCollection(string collectionId)
+		{
+			return Ok(new CollectionSharing(collectionId));
 		}
 		/// <summary>
 		/// Caves changes either to automated cash flows or to budgeted transactions

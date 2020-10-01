@@ -1,4 +1,5 @@
-﻿using Security.Cryptography;
+﻿using Microsoft.Toolkit.Extensions;
+using Security.Cryptography;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,7 +26,15 @@ namespace DailyForecaster.Models
 		/// <param name="userId">MM side userId</param>
 		public FirebaseUser(string userId)
 		{
-			FirebaseUser user = Get(new Guid(userId));
+			FirebaseUser user = new FirebaseUser();
+			try
+			{
+				user = Get(new Guid(userId));
+			}
+			catch
+			{
+				user = Get(userId);
+			}
 			FirebaseUserId = user.FirebaseUserId;
 			FirebaseId = user.FirebaseId;
 			Email = user.Email;
@@ -101,7 +110,7 @@ namespace DailyForecaster.Models
 			}
 		}
 		/// <summary>
-		/// Data Layer Application for the retrieval of users by email
+		/// Data Layer Application for the retrieval of users by email or Id
 		/// </summary>
 		/// <param name="email">Email address of the user</param>
 		/// <returns>Returns a single instance of a user</returns>
@@ -112,7 +121,14 @@ namespace DailyForecaster.Models
 			{
 				try
 				{
-					return _context.FirebaseUser.Where(x => x.Email == email).FirstOrDefault();
+					if (email.IsEmail())
+					{
+						return _context.FirebaseUser.Where(x => x.Email == email).FirstOrDefault();
+					}
+					else
+					{
+						return _context.FirebaseUser.Where(x => x.FirebaseId == email).FirstOrDefault();
+					}
 				}
 				catch (Exception e)
 				{
@@ -127,6 +143,7 @@ namespace DailyForecaster.Models
 		/// <returns>Returns a single instance of a user</returns>
 		private FirebaseUser Get(Guid userId)
 		{
+
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
 				return _context.FirebaseUser.Find(userId);

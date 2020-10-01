@@ -15,6 +15,10 @@
     <Compile Remove="Migrations\20200805065541_collectionsFirebase.Designer.cs" />
     <Compile Remove="Migrations\20200805070016_collectionsFirebase.cs" />
     <Compile Remove="Migrations\20200805070016_collectionsFirebase.Designer.cs" />
+    <Compile Remove="Migrations\20200930044208_mappingCorrection1.cs" />
+    <Compile Remove="Migrations\20200930044208_mappingCorrection1.Designer.cs" />
+    <Compile Remove="Migrations\20200930045406_mappingCorrection3.cs" />
+    <Compile Remove="Migrations\20200930045406_mappingCorrection3.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,6 +38,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration.AzureKeyVault" Version="3.1.6" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Toolkit" Version="6.1.1" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.6.0" />
     <PackageReference Include="System.Security.Cryptography.OpenSsl" Version="4.7.0" />

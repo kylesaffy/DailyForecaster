@@ -25,9 +25,6 @@ namespace DailyForecaster.Models
 		public DateTime DateCreated { get; set; }
 		[ForeignKey("AspNetUsers")]
 		public string UserCreated { get; set; }
-		[ForeignKey("FirebaseUserId")]
-		public string FirebaseUserId { get; set; }
-		public FirebaseUser FirebaseUser { get; set; }
 		public int ResetDay { get; set; }
 		public AspNetUsers AspNetUsers { get; set; }
 		public ICollection<UserCollectionMapping> UserCollectionMappings { get; set; }
@@ -109,7 +106,7 @@ namespace DailyForecaster.Models
 			CollectionsId = Guid.NewGuid().ToString();
 			Name = obj.name;
 			DurationType = obj.durationType;
-			FirebaseUser = new FirebaseUser(UserId);
+			// FirebaseUserId = new FirebaseUser(UserId).FirebaseUserId;
 			DateCreated = DateTime.Now;
 			ResetDay = obj.resetDate;
 		}
@@ -211,7 +208,7 @@ namespace DailyForecaster.Models
 					using (FinPlannerContext _context = new FinPlannerContext())
 					{
 						List<string> collectionIds = _context.UserCollectionMapping
-							.Where(x => x.Id == userId)
+							.Where(x => x.FirebaseUserId == userId)
 							.Select(x => x.CollectionsId)
 							.ToList();
 						collections = _context
@@ -348,8 +345,16 @@ namespace DailyForecaster.Models
 		}
 		public ReturnModel CreateCollection(NewCollectionsObj obj, string userId)
 		{
+			UserCollectionMapping mapping = new UserCollectionMapping();
 			Collections col = new Collections(obj,userId);
-			UserCollectionMapping mapping = new UserCollectionMapping(col.CollectionsId, obj.User);
+			if (obj.User != null)
+			{
+				mapping = new UserCollectionMapping(col.CollectionsId, obj.User);
+			}
+			else
+			{
+				mapping = new UserCollectionMapping(col.CollectionsId, userId);
+			}
 			ReturnModel returnModel = new ReturnModel();
 			if (mapping.Id == "999")
 			{
