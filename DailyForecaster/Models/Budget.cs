@@ -26,8 +26,8 @@ namespace DailyForecaster.Models
 		public bool Simulation { get; set; }
 		public ICollection<AccountState> AccountStates { get; set; }
 		public Budget() { }
-		
-		public Budget( string collectionsId)
+
+		public Budget(string collectionsId)
 		{
 			Budget budget = GetBudget(collectionsId);
 			BudgetId = budget.BudgetId;
@@ -39,7 +39,7 @@ namespace DailyForecaster.Models
 		{
 			List<Budget> budgets = new List<Budget>();
 			int count = 0;
-			foreach(string item in collectionIds)
+			foreach (string item in collectionIds)
 			{
 				using (FinPlannerContext _context = new FinPlannerContext())
 				{
@@ -64,7 +64,7 @@ namespace DailyForecaster.Models
 			List<CFClassification> classifications = classification.GetList();
 			CFType type = new CFType();
 			List<CFType> types = type.GetCFList(this.CollectionId);
-			foreach(BudgetTransaction item in BudgetTransactions)
+			foreach (BudgetTransaction item in BudgetTransactions)
 			{
 				item.CFClassification = classifications.Where(x => x.Id == item.CFClassificationId).FirstOrDefault();
 				item.CFType = types.Where(x => x.Id == item.CFTypeId).FirstOrDefault();
@@ -92,7 +92,7 @@ namespace DailyForecaster.Models
 					}
 				}
 			}
-			switch(collection.DurationType)
+			switch (collection.DurationType)
 			{
 				case "Month":
 					end = start.AddMonths(1);
@@ -107,7 +107,7 @@ namespace DailyForecaster.Models
 			budgets.Add(new Budget(collection.CollectionsId, start, end, false));
 			return budgets;
 		}
-		public Budget(string collectionsId, DateTime startDate, DateTime endDate,bool simulation)
+		public Budget(string collectionsId, DateTime startDate, DateTime endDate, bool simulation)
 		{
 			BudgetId = Guid.NewGuid().ToString();
 			StartDate = startDate;
@@ -120,7 +120,7 @@ namespace DailyForecaster.Models
 			using (FinPlannerContext _context = new FinPlannerContext())
 			{
 				int cnt = _context.Budget.Where(x => x.CollectionId == collectionId).Count();
-				if(cnt > 0)
+				if (cnt > 0)
 				{
 					return true;
 				}
@@ -132,7 +132,7 @@ namespace DailyForecaster.Models
 		}
 		public bool Edit(NewBudgetObj obj)
 		{
-			using(FinPlannerContext _context = new FinPlannerContext())
+			using (FinPlannerContext _context = new FinPlannerContext())
 			{
 				Budget budget = _context.Budget.Find(obj.BudgetId);
 				List<BudgetTransaction> transactions = _context.BudgetTransactions.Where(x => x.BudgetId == obj.BudgetId).ToList();
@@ -140,12 +140,12 @@ namespace DailyForecaster.Models
 				List<BudgetTransaction> newList = new List<BudgetTransaction>();
 				BudgetTransaction b = new BudgetTransaction();
 				bool check = false;
-				foreach(BudgetTransaction item in obj.BudgetTransactions)
+				foreach (BudgetTransaction item in obj.BudgetTransactions)
 				{
 					check = false;
-					foreach(BudgetTransaction ex in transactions)
+					foreach (BudgetTransaction ex in transactions)
 					{
-						if(item.CFClassificationId == ex.CFClassificationId && item.CFTypeId == ex.CFTypeId)
+						if (item.CFClassificationId == ex.CFClassificationId && item.CFTypeId == ex.CFTypeId)
 						{
 							check = true;
 							ex.Amount = item.Amount;
@@ -153,19 +153,19 @@ namespace DailyForecaster.Models
 							break;
 						}
 					}
-					if(!check)
+					if (!check)
 					{
 						newList.Add(item);
 					}
 				}
-				newList = b.CreateBudgetTransactions(newList,obj.BudgetId,budget.CollectionId);
+				newList = b.CreateBudgetTransactions(newList, obj.BudgetId, budget.CollectionId);
 				_context.AddRange(newList);
 				try
 				{
 					_context.SaveChanges();
 					return true;
 				}
-				catch(Exception e)
+				catch (Exception e)
 				{
 					return false;
 				}
@@ -188,16 +188,16 @@ namespace DailyForecaster.Models
 					int dayofweek = (int)StartDate.DayOfWeek;
 					int difference = Math.Abs(dayofweek - col.ResetDay);
 					StartDate = StartDate.AddDays(-difference);
-					EndDate = StartDate.AddDays(7); 
+					EndDate = StartDate.AddDays(7);
 					break;
 				case "Month":
 					int day = StartDate.Day;
-					if(day == 0)
+					if (day == 0)
 					{
 						StartDate = new DateTime(StartDate.Year, StartDate.Month, 1).AddMonths(1);
 						StartDate = StartDate.AddDays(-1);
 					}
-					else if(day >= col.ResetDay)
+					else if (day >= col.ResetDay)
 					{
 						StartDate = new DateTime(StartDate.Year, StartDate.Month, col.ResetDay);
 					}
@@ -205,7 +205,7 @@ namespace DailyForecaster.Models
 					{
 						StartDate = new DateTime(StartDate.Year, StartDate.Month - 1, col.ResetDay);
 					}
-					if(col.ResetDay == 28)
+					if (col.ResetDay == 28)
 					{
 						StartDate = new DateTime(StartDate.Year, StartDate.Month, 1).AddMonths(1);
 						StartDate = StartDate.AddDays(-1);
@@ -215,16 +215,16 @@ namespace DailyForecaster.Models
 			}
 			if (DateCheck(collectionId, EndDate))
 			{
-				
+
 				Budget budget = new Budget(collectionId, StartDate, EndDate, false);
 				BudgetTransaction t = new BudgetTransaction();
-				List<BudgetTransaction> list = t.CreateBudgetTransactions(transactions,budget.BudgetId,budget.CollectionId);
+				List<BudgetTransaction> list = t.CreateBudgetTransactions(transactions, budget.BudgetId, budget.CollectionId);
 				try
 				{
 					using (FinPlannerContext _context = new FinPlannerContext())
 					{
 						_context.Budget.Add(budget);
-						foreach(BudgetTransaction item in list)
+						foreach (BudgetTransaction item in list)
 						{
 							_context.BudgetTransactions.Add(item);
 						}
@@ -232,7 +232,7 @@ namespace DailyForecaster.Models
 					}
 					return true;
 				}
-				catch(Exception e)
+				catch (Exception e)
 				{
 					return false;
 				}
@@ -247,17 +247,17 @@ namespace DailyForecaster.Models
 					try
 					{
 						List<BudgetTransaction> budgetTransactions = budgetTransaction.GetBudgetTransactions(budget.BudgetId);
-					
-						foreach(BudgetTransaction item in transactions)
+
+						foreach (BudgetTransaction item in transactions)
 						{
 							//does it exist?
 							bool exists = budgetTransactions
 								.Where(x => x.BudgetTransactionId == item.BudgetTransactionId)
 								.Any();
 							//does not exist
-							if(!exists)
+							if (!exists)
 							{
-								_context.BudgetTransactions.Add(new BudgetTransaction(item, budget.BudgetId,budget.CollectionId));
+								_context.BudgetTransactions.Add(new BudgetTransaction(item, budget.BudgetId, budget.CollectionId));
 							}
 							//does exist
 							else
@@ -266,7 +266,7 @@ namespace DailyForecaster.Models
 										.BudgetTransactions
 										.Find(item.BudgetTransactionId);
 								double amount = budgetTransactions
-									.Where(x=>x.BudgetTransactionId == item.BudgetTransactionId)
+									.Where(x => x.BudgetTransactionId == item.BudgetTransactionId)
 									.Select(x => x.Amount)
 									.FirstOrDefault();
 								string name = budgetTransactions
@@ -284,10 +284,10 @@ namespace DailyForecaster.Models
 								}
 								//if name is different
 								if (name != item.Name)
-								{ 
+								{
 									newT.Name = item.Name;
 								}
-								if(typeId != item.CFTypeId)
+								if (typeId != item.CFTypeId)
 								{
 									newT.CFTypeId = item.CFTypeId;
 								}
@@ -298,11 +298,11 @@ namespace DailyForecaster.Models
 							}
 						}
 						//remove deleted items
-						foreach(BudgetTransaction item in budgetTransactions)
+						foreach (BudgetTransaction item in budgetTransactions)
 						{
 							//is it in the list
 							bool check = transactions.Where(x => x.BudgetTransactionId == item.BudgetTransactionId).Any();
-							if(!check)
+							if (!check)
 							{
 								_context.BudgetTransactions.Remove(item);
 							}
@@ -324,7 +324,7 @@ namespace DailyForecaster.Models
 			using (FinPlannerContext _context = new FinPlannerContext())
 			{
 				int count = _context.Budget.Where(x => x.CollectionId == collectionsId && x.StartDate < endDate).Count();
-				if(count > 0)
+				if (count > 0)
 				{
 					return false;
 				}
@@ -365,7 +365,7 @@ namespace DailyForecaster.Models
 				List<ReportedTransaction> transactions = transaction.GetTransactions(budget);
 				return transactions
 					.Where(x => x.CFClassification.Sign == -1)
-					.Where(x=>x.CFType.Id != "999")
+					.Where(x => x.CFType.Id != "999")
 					.Select(x => x.Amount)
 					.Sum();
 			}
@@ -387,8 +387,8 @@ namespace DailyForecaster.Models
 				BudgetTransaction transaction = new BudgetTransaction();
 				return transaction.ExpectedExpenses(Id);
 			}
-			catch 
-			{ 
+			catch
+			{
 				return 0;
 			}
 		}
@@ -399,7 +399,7 @@ namespace DailyForecaster.Models
 		/// <returns>Returns a budget object associated with the Collection</returns>
 		public Budget GetBudgetNew(string collectionsId)
 		{
-			using(FinPlannerContext _context = new FinPlannerContext())
+			using (FinPlannerContext _context = new FinPlannerContext())
 			{
 				return _context
 					.Budget
@@ -413,25 +413,25 @@ namespace DailyForecaster.Models
 		{
 			Budget budget = new Budget();
 			Collections collection = new Collections(collectionsId);
-			if(collection.Budgets.Count() != 0)
+			if (collection.Budgets.Count() != 0)
 			{
 				budget = collection
 					.Budgets
-					.Where(x=>x.Simulation == false)
+					.Where(x => x.Simulation == false)
 					.OrderByDescending(x => x.EndDate)
 					.First();
 				budget.Collection = null;
-			}			
+			}
 			return budget;
 		}
 		public List<Budget> GetBudgets(string collectionsId)
 		{
-			using(FinPlannerContext _context = new FinPlannerContext())
+			using (FinPlannerContext _context = new FinPlannerContext())
 			{
 				return _context
 					.Budget
 					.Where(x => x.CollectionId == collectionsId)
-					.Where(x=>x.Simulation == false)
+					.Where(x => x.Simulation == false)
 					.ToList();
 			}
 		}
@@ -459,7 +459,7 @@ namespace DailyForecaster.Models
 					break;
 				case "Month":
 					DateTime resetDate = new DateTime(currentDate.Year, currentDate.Month, collection.ResetDay);
-					if(currentDate > resetDate)
+					if (currentDate > resetDate)
 					{
 						currentDate = resetDate;
 					}
@@ -472,7 +472,7 @@ namespace DailyForecaster.Models
 						budget = _context
 							.Budget
 							.Where(x => x.CollectionId == collectionId && x.StartDate == currentDate)
-							.Where(x=>x.Simulation == false)
+							.Where(x => x.Simulation == false)
 							.FirstOrDefault();
 					}
 					break;
@@ -531,7 +531,7 @@ namespace DailyForecaster.Models
 				StartDate = StartDate,
 				EndDate = endDate
 			};
-			foreach(BudgetTransaction item in budgetTransactions)
+			foreach (BudgetTransaction item in budgetTransactions)
 			{
 				newBudgetTransactions.Add(new BudgetTransaction
 				{
@@ -545,14 +545,14 @@ namespace DailyForecaster.Models
 					Notes = item.Notes
 				});
 			}
-			using(FinPlannerContext _context = new FinPlannerContext())
+			using (FinPlannerContext _context = new FinPlannerContext())
 			{
 				_context.Budget.Add(newBudget);
 				_context.BudgetTransactions.AddRange(newBudgetTransactions);
 				_context.SaveChanges();
 			}
 		}
-		
+
 		private Budget getSingle(string collectionsId)
 		{
 			Collections collections = new Collections(collectionsId);
@@ -560,6 +560,33 @@ namespace DailyForecaster.Models
 			BudgetTransaction budget1 = new BudgetTransaction();
 			budget.BudgetTransactions = budget1.GetBudgetTransactions(budget.BudgetId);
 			return budget;
+		}
+		public void Delete(string collectionsId)
+		{
+			List<Budget> budgets = new List<Budget>();
+			budgets = GetBudegts(collectionsId);
+			BudgetTransaction transaction = new BudgetTransaction();
+			foreach (Budget item in budgets)
+			{
+				transaction.Delete(item.BudgetId);
+				item.Delete();
+			}
+		}
+		private List<Budget> GetBudegts(string collectionId)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.Budget.Where(x => x.CollectionId == collectionId).ToList();
+			}
+		}
+		private void Delete()
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Remove(this);
+				_context.SaveChanges();
+
+			}
 		}
 	}
 	public class NewBudgetObj

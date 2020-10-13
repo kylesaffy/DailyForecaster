@@ -22,6 +22,35 @@ namespace DailyForecaster.Models
 		public string AccountId { get; set; }
 		[ForeignKey("AccountId")]
 		public Account Account { get; set; }
+		public void Delete(string AccountId)
+		{
+			List<AccountChange> accounts = new List<AccountChange>();
+			accounts = GetAccounts(AccountId, true);
+			foreach (AccountChange item in accounts)
+			{
+				item.Delete();
+			}
+		}
+		private List<AccountChange> GetAccounts(string accountId, bool ans)
+		{
+			if (ans)
+			{
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					return _context.AccountChange.Where(x => x.AccountId == accountId).ToList();
+				}
+			}
+			return null;
+		}
+		private void Delete()
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Remove(this);
+				_context.SaveChanges();
+
+			}
+		}
 		public void AddAccountChange(ManualCashFlow flow)
 		{
 			AccountChange change = new AccountChange();

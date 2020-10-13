@@ -19,10 +19,10 @@ namespace DailyForecaster.Models
 		{
             UserRecordArgs args = new UserRecordArgs()
             {
-                Email = "user@example.com",
+                Email = model.Email,
                 EmailVerified = false,
-                PhoneNumber = "+11234567890",
-                Password = "secretPassword",
+                PhoneNumber = model.PhoneNumber,
+                Password = model.Password,
                 DisplayName = model.FirstName + " " + model.LastName,
             };
             UserRecord userRecord = await FirebaseAuth.DefaultInstance.CreateUserAsync(args);

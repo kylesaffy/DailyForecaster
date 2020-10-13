@@ -12,6 +12,7 @@ namespace DailyForecaster.Models
 		public string Name { get; set; }
 		[Required]
 		public bool Transactional { get; set; }
+		public bool Bank { get; set; }
 		public bool Amortised { get; set; }
 		public ICollection<Account> Accounts { get; set; }
 		/// <summary>

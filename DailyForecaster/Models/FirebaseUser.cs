@@ -143,10 +143,10 @@ namespace DailyForecaster.Models
 		/// <returns>Returns a single instance of a user</returns>
 		private FirebaseUser Get(Guid userId)
 		{
-
+			string UserId = userId.ToString();
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
-				return _context.FirebaseUser.Find(userId);
+				return _context.FirebaseUser.Find(UserId);
 			}
 		}
 		/// <summary>

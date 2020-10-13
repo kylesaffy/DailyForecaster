@@ -1,4 +1,5 @@
 ﻿using DailyForecaster.Controllers;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -51,6 +52,47 @@ namespace DailyForecaster.Models
 		[ForeignKey("SimulationId")]
 		public Simulation Simulation { get; set; }
 		public Account() { }
+		public void Delete(string collectionsId)
+		{
+			List<Account> accounts = new List<Account>();
+			accounts = GetAccounts(collectionsId, true);
+			AccountChange change = new AccountChange();
+			AutomatedCashFlow aFlows = new AutomatedCashFlow();
+			AccountBalance balance = new AccountBalance();
+			AccountState state = new AccountState();
+			ManualCashFlow mFlow = new ManualCashFlow();
+			AccountAmortisation amortisation = new AccountAmortisation();
+			foreach (Account item in accounts)
+			{
+				change.Delete(item.Id);
+				aFlows.Delete(item.Id);
+				balance.Delete(item.Id);
+				state.Delete(item.Id);
+				mFlow.Delete(item.Id);
+				amortisation.Delete(item.Id);
+				item.Delete();
+			}
+		}
+		private List<Account> GetAccounts(string collectionId,bool ans)
+		{
+			if (ans)
+			{
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					return _context.Account.Where(x => x.CollectionsId == collectionId).ToList();
+				}
+			}
+			return null;
+		}
+		private void Delete()
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Remove(this);
+				_context.SaveChanges();
+
+			}
+		}
 		/// <summary>
 		/// Available amount on all acounts within a collection
 		/// </summary>
@@ -167,9 +209,12 @@ namespace DailyForecaster.Models
 			List<Account> accounts = new List<Account>();
 			accounts = GetAccountsEmpty(collectionsId, false);
 			List<AccountType> types = AccountType.GetAccountTypes();
+			Institution institution = new Institution();
+			List<Institution> institutions = institution.GetInstitutions(); 
 			foreach (Account item in accounts)
 			{
 				item.AccountType = types.Where(x => x.AccountTypeId == item.AccountTypeId).FirstOrDefault();
+				item.Institution = institutions.Where(x => x.Id == item.InstitutionId).FirstOrDefault();
 			}
 			return accounts;
 		}

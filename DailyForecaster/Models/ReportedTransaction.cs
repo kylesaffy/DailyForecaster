@@ -244,5 +244,36 @@ namespace DailyForecaster.Models
 			Validated = true;
 		}
 		public ReportedTransaction() { }
+		/// <summary>
+		/// Deep copy of Reported Transaction List
+		/// </summary>
+		/// <param name="transactions">List of transactions to be copied</param>
+		/// <param name="types">List of CFTypes</param>
+		/// <param name="classifications">List of CFClassifications</param>
+		/// <returns>Deep copy of Reported Transactions List</returns>
+		public List<ReportedTransaction> Clone(List<ReportedTransaction> transactions, List<CFType> types, List<CFClassification> classifications)
+		{
+			List<ReportedTransaction> reportedTransactions = new List<ReportedTransaction>();
+			foreach(ReportedTransaction item in transactions)
+			{
+				reportedTransactions.Add(new ReportedTransaction(item, types, classifications));
+			}
+			return reportedTransactions;
+		}
+		private ReportedTransaction(ReportedTransaction reportedTransaction, List<CFType> types, List<CFClassification> classifications)
+		{
+			CFClassification = classifications.Where(x => x.Id == reportedTransaction.AutomatedCashFlow.CFClassificationId).FirstOrDefault();
+			CFType = types.Where(x => x.Id == reportedTransaction.AutomatedCashFlow.CFTypeId).FirstOrDefault();
+			Amount = reportedTransaction.Amount;
+			DateBooked = reportedTransaction.DateBooked;
+			DateCaptured = reportedTransaction.DateCaptured;
+			SourceOfExpense = reportedTransaction.SourceOfExpense;
+			AutomatedCashFlow = reportedTransaction.AutomatedCashFlow;
+			ManualCashFlow = reportedTransaction.ManualCashFlow;
+			Account = reportedTransaction.Account;
+			AccountId = reportedTransaction.AccountId;
+			Validated = reportedTransaction.Validated;
+			Date = reportedTransaction.Date;
+		}
 	}
 }

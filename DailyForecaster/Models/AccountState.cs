@@ -17,6 +17,35 @@ namespace DailyForecaster.Models
 		public Account Account { get; set; }
 		public double Amount { get; set; }
 		public AccountState() { }
+		public void Delete(string AccountId)
+		{
+			List<AccountState> accounts = new List<AccountState>();
+			accounts = GetAccounts(AccountId, true);
+			foreach (AccountState item in accounts)
+			{
+				item.Delete();
+			}
+		}
+		private List<AccountState> GetAccounts(string accountId, bool ans)
+		{
+			if (ans)
+			{
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					return _context.AccountState.Where(x => x.AccountId == accountId).ToList();
+				}
+			}
+			return null;
+		}
+		private void Delete()
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Remove(this);
+				_context.SaveChanges();
+
+			}
+		}
 		/// <summary>
 		/// Instantiates an account state object as of a first instance of a simulation build
 		/// </summary>

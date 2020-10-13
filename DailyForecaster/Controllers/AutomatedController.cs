@@ -83,5 +83,29 @@ namespace DailyForecaster.Controllers
 			log.SaveLog(start, end, "UserActivitity", result);
 			return Ok(result);
 		}
+		[Route("RunAmort")]
+		[HttpGet]
+		public ActionResult RunAmort()
+		{
+			Account account = new Account("e8db523a-8391-4264-86a3-5dfa47870a34");
+			AccountAmortisation amortisation = new AccountAmortisation();
+			return Ok(amortisation.CalculateMonthly(account));
+		}
+		[Route("DailyGrind")]
+		public ActionResult DailyGrind()
+		{
+			FirebaseUser firebaseUser = new FirebaseUser();
+			List<FirebaseUser> users = firebaseUser.GetUserList();
+			ReturnModel model = new ReturnModel() { result = true };
+			EmailFunction email = new EmailFunction();
+			foreach(FirebaseUser item in users)
+			{
+				if(model.result)
+				{
+					model = email.DailyEmailSend(item.FirebaseUserId);
+				}
+			}
+			return Ok(model);
+		}
 	}
 }

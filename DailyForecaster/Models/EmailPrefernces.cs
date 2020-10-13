@@ -17,5 +17,16 @@ namespace DailyForecaster.Models
 		public string InteractionRecord { get; set; }
 		public bool LoginNotification { get; set; }
 		public bool DailyCommunication { get; set; }
+		//public bool GetDailyEmail(string userId)
+		//{
+
+		//}
+		//private EmailPreferences Get(string userId)
+		//{
+		//	using(FinPlannerContext _context = new FinPlannerContext())
+		//	{
+		//		return _context.EmailPrefernces()
+		//	}
+		//}
 	}
 }

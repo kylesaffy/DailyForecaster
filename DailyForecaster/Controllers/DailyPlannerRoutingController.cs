@@ -238,7 +238,7 @@ namespace DailyForecaster.Controllers
             {
                 new ClickTracker("SaveManualCashFlow", false, true, json.GetRawText(), auth.Identity.Name);
                 ManualCashFlow obj = JsonConvert.DeserializeObject<ManualCashFlow>(json.GetRawText());
-                return Ok(obj.Save());
+                return Ok(obj.Save(obj));
             }
             return Ok("");
         }

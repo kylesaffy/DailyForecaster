@@ -33,6 +33,36 @@ namespace DailyForecaster.Models
 				return new ReturnModel() { result = false, returnStr = e.Message };
 			}
 		}
+		public ReturnModel DailyEmailSend(string userId)
+		{
+			try
+			{
+				DailyReporting daily = new DailyReporting(userId);
+
+				string text = "";
+				var webRequest = WebRequest.Create(@"https://storageaccountmoney9367.blob.core.windows.net/emailimages/imported-from-beefreeio.html");
+				using (var response = webRequest.GetResponse())
+				using (var content = response.GetResponseStream())
+				using (var reader = new StreamReader(content))
+				{
+					text = reader.ReadToEnd();
+				};
+				//message.Body = text.Replace("[guest_name]", Name);
+				string transactionsStr = "";
+				foreach(AutomatedCashFlow item in daily.AutomatedCashFlows)
+				{
+					transactionsStr = transactionsStr + "</br> :R " + item.Amount.ToString("N2") + " " + item.SourceOfExpense + " " + item.CFType.Name;
+				}
+				text = text.Replace("{transactions}", transactionsStr);
+				text = text.Replace("{Last Login}", daily.LastInteraction.ToShortDateString());
+				SendEmail(daily.Email, text, "Your Daily Grind", daily.FirstName);
+				return new ReturnModel() { result = true };
+			}
+			catch (Exception e)
+			{
+				return new ReturnModel() { result = false, returnStr = e.Message };
+			}
+		}
 		private void SendEmail(string ToEmail, string Message, string Subject,string Name)
 		{
 			SmtpClient client = new SmtpClient(SMTPServer, port)

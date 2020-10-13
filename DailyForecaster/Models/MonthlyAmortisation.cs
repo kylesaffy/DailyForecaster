@@ -19,7 +19,65 @@ namespace DailyForecaster.Models
 		public double Capital { get; set; }
 		public double Additional { get; set; }
 		public double Close { get; set; }
-		
+		public void Delete(string AccountId)
+		{
+			List<MonthlyAmortisation> accounts = new List<MonthlyAmortisation>();
+			accounts = GetAccounts(AccountId, true);
+			foreach (MonthlyAmortisation item in accounts)
+			{
+				item.Delete();
+			}
+		}
+		private List<MonthlyAmortisation> GetAccounts(string accountId, bool ans)
+		{
+			if (ans)
+			{
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					return _context.MonthlyAmortisation.Where(x => x.AccountAmortisationId == accountId).ToList();
+				}
+			}
+			return null;
+		}
+		private void Delete()
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Remove(this);
+				_context.SaveChanges();
+
+			}
+		}
+		public List<MonthlyAmortisation> Calculate(Account account, PaymentModel payment, AccountAmortisation amortisation)
+		{
+			DateTime end = account.Maturity;
+			DateTime start = DateTime.Now;
+			start = new DateTime(start.Year, start.Month, end.Day);
+			List<MonthlyAmortisation> monthlies = new List<MonthlyAmortisation>();
+			double amount = account.Available;
+			for (int i = 0; end.Date > start.AddMonths(i).Date; i++)
+			{
+				MonthlyAmortisation monthly = new MonthlyAmortisation
+				{
+					MonthlyAmortisationId = Guid.NewGuid().ToString(),
+					AccountAmortisationId = amortisation.AccountAmortisationId,
+					Date = start.AddMonths(i),
+					Open = amount
+				};
+				monthly.Interest = amount * (account.CreditRate / 12 / 100);
+				monthly.Payment = payment.CostOfLoan;
+				monthly.Capital = monthly.Payment - monthly.Interest;
+				monthly.Additional = payment.AdditionalLoan;
+				monthly.Close = amount - monthly.Capital - monthly.Additional;
+				monthlies.Add(monthly);
+				amount = monthly.Close;
+				if (amount < 0)
+				{
+					break;
+				}
+			}
+			return monthlies;
+		}
 		public void Create(Account account, PaymentModel payment, AccountAmortisation amortisation)
 		{
 			DateTime end = account.Maturity;

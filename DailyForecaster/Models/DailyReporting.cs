@@ -10,6 +10,8 @@ namespace DailyForecaster.Models
 		public DateTime LastInteraction { get; set; }
 		public string FirstName { get; set; }
 		public string Email { get; set; }
+		public List<AutomatedCashFlow> AutomatedCashFlows { get; set; }
+
 		public DailyReporting() { }
 		public DailyReporting(string userId)
 		{
@@ -20,12 +22,8 @@ namespace DailyForecaster.Models
 			Email = user.Email;
 			UserCollectionMapping mapping = new UserCollectionMapping();
 			List<string> collectionIds = mapping.getCollectionIds(userId, "firebase");
-			//Collections collection = new Collections();
-			//List<Collections> collections = collection.GetEagerList(collectionIds);
-			//AutomatedCashFlow automated = new AutomatedCashFlow();
 			DateTime dateTime = DateTime.Now;
 			List<AutomatedCashFlow> flows = new List<AutomatedCashFlow>();
-			//Budget budget = new Budget();
 			List<BudgetTransactionComparison> comparisons = new List<BudgetTransactionComparison>();
 			foreach (string item in collectionIds)
 			{
@@ -33,8 +31,7 @@ namespace DailyForecaster.Models
 				comparisons.Add(comparison);
 				flows.AddRange(comparison.ReportedTransactions.Where(x => x.DateCaptured == dateTime).Select(x => x.AutomatedCashFlow));
 			}
-
-			//List<Budget> budgets = budget.
+			AutomatedCashFlows = flows;
 		}
 	}
 }

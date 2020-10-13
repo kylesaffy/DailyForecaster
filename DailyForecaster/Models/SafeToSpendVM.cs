@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Org.BouncyCastle.Math.EC.Rfc7748;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,6 +11,7 @@ namespace DailyForecaster.Models
 		public List<Collections> Collections { get; set; }
 		public BudgetTransactionComparison BudgetTransactionComparison { get; set; }
 		public List<CFType> CFTypes { get; set; }
+		public string Name { get; set; }
 		public SafeToSpendVM() { }
 		/// <summary>
 		/// Safe to Spend VM generation
@@ -32,6 +34,7 @@ namespace DailyForecaster.Models
 			Collections = collections.GetCollections(email, "SafeToSpendVM");
 			CFType type = new CFType();
 			CFTypes = type.GetCFList(collectionsId);
+			Name = Collections.Where(x => x.CollectionsId == collectionsId).Select(x=>x.Name).FirstOrDefault();
 		}
 	}
 }

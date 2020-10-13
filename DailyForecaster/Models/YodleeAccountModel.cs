@@ -11,6 +11,7 @@ namespace DailyForecaster.Models
 {
 	public class YodleeAccountModel
 	{
+		//static private string url = "https://stage.api.yodlee.uk/ysl/";
 		static private string url = "https://development.api.yodlee.com/ysl";
 		public List<YodleeAccountLevel>	account { get; set; }
 		public async Task<List<YodleeAccountLevel>> GetYodleeAccounts(string collectionsId)
@@ -28,6 +29,26 @@ namespace DailyForecaster.Models
 				accounts = JsonConvert.DeserializeObject<YodleeAccountModel>(str);
 			}
 			return accounts.account;
+		}
+		public async Task<bool>	DeleteAllAccounts(string id)
+		{
+			YodleeModel yodlee = new YodleeModel();
+			string token = await yodlee.getToken(id, "");
+			List<YodleeAccountLevel> providers = await GetYodleeAccounts(id);
+			bool result = true;
+			foreach (YodleeAccountLevel provider in providers.Distinct())
+			{
+				HttpClient client = new HttpClient();
+				client.DefaultRequestHeaders.Add("Api-Version", "1.1");
+				client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+				HttpResponseMessage response = await client.DeleteAsync(url + "/Accounts/" + provider.id);
+				if (!response.IsSuccessStatusCode)
+				{
+					result = false;
+					break;
+				}
+			}
+			return result;
 		}
 		public async Task<bool> UpdateYodlee()
 		{

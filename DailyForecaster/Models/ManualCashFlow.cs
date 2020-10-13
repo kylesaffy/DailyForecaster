@@ -65,6 +65,25 @@ namespace DailyForecaster.Models
 			Description = flow.Description;
 			ExpenseLocation = flow.ExpenseLocation;
 		}
+		public ManualCashFlow(ManualCashFlow flow, string email)
+		{
+			FirebaseUser users = new FirebaseUser();
+			CFTypeId = flow.CFTypeId;
+			CFClassificationId = flow.CFClassificationId;
+			Amount = flow.Amount;
+			DateBooked = flow.DateBooked;
+			DateCaptured = DateTime.Now;
+			SourceOfExpense = flow.SourceOfExpense;
+			Expected = flow.Expected;
+			Id = Guid.NewGuid().ToString();
+			UserId = users.GetUserId(email);
+			isDeleted = false;
+			ExpenseLocation = flow.ExpenseLocation;
+			AccountId = flow.AccountId;
+			Description = flow.Description;
+			ExpenseLocation = flow.ExpenseLocation;
+			Save();
+		}
 		public ManualCashFlow(CFType cfId, CFClassification cfClass, double amount, DateTime dateBooked, string source, string userID, bool exp, string el)
 		{
 			CFType = cfId;
@@ -90,6 +109,35 @@ namespace DailyForecaster.Models
 						.Where(flows => budget.CollectionId.Contains(flows.Account.CollectionsId))
 						.Where(x => x.DateBooked.Date > start.Date && x.DateBooked < end)
 						.ToList();
+			}
+		}
+		public void Delete(string AccountId)
+		{
+			List<ManualCashFlow> accounts = new List<ManualCashFlow>();
+			accounts = GetAccounts(AccountId, true);
+			foreach (ManualCashFlow item in accounts)
+			{
+				item.Delete();
+			}
+		}
+		private List<ManualCashFlow> GetAccounts(string accountId, bool ans)
+		{
+			if (ans)
+			{
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					return _context.ManualCashFlows.Where(x => x.AccountId == accountId).ToList();
+				}
+			}
+			return null;
+		}
+		private void Delete()
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Remove(this);
+				_context.SaveChanges();
+
 			}
 		}
 		/// <summary>
@@ -198,13 +246,29 @@ namespace DailyForecaster.Models
 				DateCaptured = DateTime.Now,
 				AccountId = obj.TransferFrom,
 			};
-			to.Save();
-			from.Save();
+			to.Save(to);
+			from.Save(from);
 			return new ReturnModel() { result = true };
 		}
-		public ReturnModel Save()
+		private void Save()
 		{
-			ManualCashFlow flow = new ManualCashFlow(this);
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Add(this);
+				try
+				{
+					_context.SaveChanges();
+				}
+				catch (Exception e)
+				{
+					ExceptionCatcher catcher = new ExceptionCatcher();
+					catcher.Catch(e.Message);
+				}
+			}
+		}
+		public ReturnModel Save(ManualCashFlow man)
+		{
+			ManualCashFlow flow = new ManualCashFlow(man);
 			ReturnModel returnModel = new ReturnModel();
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{

@@ -9,7 +9,10 @@ namespace DailyForecaster.Models
 	{
 		public List<Collections> Collections { get; set; }
 		public List<Account> Accounts { get; set; }
+		public List<Institution> Institutions { get; set; }
+		public List<AccountType> AccountTypes { get; set; }
 		public string Name { get; set; }
+		public string Id { get; set; }
 		public CollectionVM () { }
 		/// <summary>
 		/// Collections VM generation
@@ -26,8 +29,10 @@ namespace DailyForecaster.Models
 				UserInteraction userInteraction = new UserInteraction();
 				Collections collection = new Collections();
 				string collectionId = userInteraction.GetCollectionId(email);
-				Name = collection.GetCollections(collectionId).Name;
+				collection = collection.GetCollections(collectionId);
 				Accounts = account.GetAccounts(collectionsId, false, email);
+				Id = collection.CollectionsId;
+				Name = collection.Name;
 			}
 			else
 			{
@@ -37,9 +42,14 @@ namespace DailyForecaster.Models
 					Collections collection = new Collections();
 					UserInteraction userInteraction = new UserInteraction();
 					userInteraction.CollectionsIncratment(collectionsId, email);
-					Name = collection.GetCollections(collectionsId).Name;
+					collection = collection.GetCollections(collectionsId);
+					Id = collection.CollectionsId;
+					Name = collection.Name;
 				}
 			}
+			Institution institution = new Institution();
+			Institutions = institution.GetInstitutions();
+			AccountTypes = AccountType.GetAccountTypes();
 		}
 	}
 }

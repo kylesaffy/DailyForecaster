@@ -19,6 +19,35 @@ namespace DailyForecaster.Models
 		[ForeignKey("AutomatedCashFlowId")]
 		public AutomatedCashFlow AutomatedCashFlow { get; set; }
 		public SplitTransactions() { }
+		public void Delete(string AccountId)
+		{
+			List<SplitTransactions> accounts = new List<SplitTransactions>();
+			accounts = GetAccounts(AccountId, true);
+			foreach (SplitTransactions item in accounts)
+			{
+				item.Delete();
+			}
+		}
+		private List<SplitTransactions> GetAccounts(string accountId, bool ans)
+		{
+			if (ans)
+			{
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					return _context.SplitTransactions.Where(x => x.AutomatedCashFlowId == accountId).ToList();
+				}
+			}
+			return null;
+		}
+		private void Delete()
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Remove(this);
+				_context.SaveChanges();
+
+			}
+		}
 		/// <summary>
 		/// Modifies the data appropriately, either by adding it to the DB or updating it on the DB 
 		/// </summary>

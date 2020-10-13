@@ -42,6 +42,10 @@ namespace DailyForecaster.Models
 				CFClassification classification = new CFClassification();
 				AutomatedCashFlows = automatedCash
 					.GetAutomatedCashFlowsUnseen(accountsStr);
+				foreach(AutomatedCashFlow item in AutomatedCashFlows)
+				{
+					item.Account = Accounts.Where(x => x.Id == item.AccountId).FirstOrDefault();
+				}
 				ManualCashFlows = manualCash
 					.GetManualCahFlowsUnseen(accountsStr);
 				CFTypes = type

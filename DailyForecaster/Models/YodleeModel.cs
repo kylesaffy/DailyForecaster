@@ -15,7 +15,7 @@ namespace DailyForecaster.Models
 {
 	public class YodleeModel
 	{
-		static private string url = "https://development.api.yodlee.com/ysl";
+		static private string url = "https://stage.api.yodlee.uk/ysl/";
 		static private string ClientID = "vXEJJjy2aVQUIdIZqAAKqIw7QPyo73DO";
 		static private string secret = "1cRBWjCGGxEsrTbL";
 		static private string ADMIN = "8f1954be-d622-45a1-9bd1-2adbd813a832_ADMIN";
@@ -152,7 +152,7 @@ namespace DailyForecaster.Models
 		private async Task<YodleeAuthReturn> GetAdminAuth()
 		{
 			YodleeAuthReturn authReturn = new YodleeAuthReturn();
-			authReturn = await authReturn.GetToken(ADMIN);
+			authReturn = await authReturn.GetToken("");
 			return authReturn;
 		}
 		private class YodleeAuthReturn
@@ -161,28 +161,35 @@ namespace DailyForecaster.Models
 			public YodleeAuthReturn() { }
 			public async Task<YodleeAuthReturn> GetToken(string loginName)
 			{
-				HttpClient client = new HttpClient();
-				client.DefaultRequestHeaders.Add("loginName", loginName);
-				client.DefaultRequestHeaders.Add("Api-Version", "1.1");
-				var dict = new Dictionary<string, string>();
-				dict.Add("clientId", ClientID);
-				dict.Add("secret", secret);
-				dict.Add("Content-Type", "application/x-www-form-urlencoded");
-				var content = new FormUrlEncodedContent(dict);
-				HttpResponseMessage response = await client.PostAsync(url + "/auth/token",content);
-				if (response.IsSuccessStatusCode)
-				{
-					string tokenStr = await response.Content.ReadAsStringAsync();
-					YodleeAuthReturn responseToken = JsonConvert.DeserializeObject<YodleeAuthReturn>(tokenStr);
-					return responseToken;
-				}
-				else
-				{
-					string tokenStr = await response.Content.ReadAsStringAsync();
-					ExceptionCatcher exceptionCatcher = new ExceptionCatcher();
-					exceptionCatcher.Catch(tokenStr);
-				}
-				return null;
+				YodleeTokenGenerator tokenGenerator = new YodleeTokenGenerator();
+				string token = tokenGenerator.CreateToken(loginName);
+				YodleeAuthReturn authReturn = new YodleeAuthReturn();
+				YodleeToken yodleeToken = new YodleeToken();
+				yodleeToken.accessToken = token;
+				authReturn.token = yodleeToken;
+				return authReturn;
+				//HttpClient client = new HttpClient();
+				//client.DefaultRequestHeaders.Add("loginName", loginName);
+				//client.DefaultRequestHeaders.Add("Api-Version", "1.1");
+				//var dict = new Dictionary<string, string>();
+				//dict.Add("clientId", ClientID);
+				//dict.Add("secret", secret);
+				//dict.Add("Content-Type", "application/x-www-form-urlencoded");
+				//var content = new FormUrlEncodedContent(dict);
+				//HttpResponseMessage response = await client.PostAsync(url + "/auth/token", content);
+				//if (response.IsSuccessStatusCode)
+				//{
+				//	string tokenStr = await response.Content.ReadAsStringAsync();
+				//	YodleeAuthReturn responseToken = JsonConvert.DeserializeObject<YodleeAuthReturn>(tokenStr);
+				//	return responseToken;
+				//}
+				//else
+				//{
+				//	string tokenStr = await response.Content.ReadAsStringAsync();
+				//	ExceptionCatcher exceptionCatcher = new ExceptionCatcher();
+				//	exceptionCatcher.Catch(tokenStr);
+				//}
+				//return null;
 			}
 			
 		}

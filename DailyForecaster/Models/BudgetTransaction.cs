@@ -36,6 +36,34 @@ namespace DailyForecaster.Models
 		public CFClassification CFClassification { get; set; }
 		public ICollection<Notes> Notes {get;set;}
 		public bool Automated { get; set; }
+		public void Delete(string BudgetId)
+		{
+			List<BudgetTransaction> budgets = new List<BudgetTransaction>();
+			budgets = GetBudegtTransactions(BudgetId);
+			foreach (BudgetTransaction item in budgets)
+			{
+				item.Delete(true);
+			}
+		}
+		private List<BudgetTransaction> GetBudegtTransactions(string budgetId)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.BudgetTransactions.Where(x => x.BudgetId == budgetId).ToList();
+			}
+		}
+		private void Delete(bool ans)
+		{
+			if (ans)
+			{
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					_context.Remove(this);
+					_context.SaveChanges();
+
+				}
+			}
+		}
 		// public bool Deleted { get; set; }
 		public BudgetTransaction() { }
 		public bool UpdateBudget(List<BudgetTransaction> transactions)

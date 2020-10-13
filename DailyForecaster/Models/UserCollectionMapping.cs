@@ -21,6 +21,7 @@ namespace DailyForecaster.Models
 		public string FirebaseUserId { get; set; }
 		[ForeignKey("FirebaseUserId")]
 		public FirebaseUser FirebaseUser { get; set; }
+		public bool IsDelete { get; set; }
 		public UserCollectionMapping() { }
 		/// <summary>
 		/// Checks if the collection is linked to more than one user
@@ -55,7 +56,7 @@ namespace DailyForecaster.Models
 				case "asp":
 					using (FinPlannerContext _context = new FinPlannerContext())
 					{
-						return _context.UserCollectionMapping.Where(x => x.Id == userId).Select(x => x.CollectionsId).ToList();
+						return _context.UserCollectionMapping.Where(x => x.Id == userId).Where(x=>x.IsDelete == false).Select(x => x.CollectionsId).ToList();
 					}
 				default:
 					return null;
@@ -158,6 +159,33 @@ namespace DailyForecaster.Models
 				}
 			}
 			return ans;
+		}
+		public void Delete(string collectionsId)
+		{
+			List<UserCollectionMapping> mapping = new List<UserCollectionMapping>();
+			mapping = GetCollection(collectionsId);
+			foreach (UserCollectionMapping item in mapping)
+			{
+				item.Delete();
+			}
+		}
+		private List<UserCollectionMapping> GetCollection(string collectionId)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context
+					.UserCollectionMapping
+					.Where(x => x.CollectionsId == collectionId)
+					.ToList();
+			}
+		}
+		private void Delete()
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Remove(this);
+				_context.SaveChanges();
+			}
 		}
 	}
 }

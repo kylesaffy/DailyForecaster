@@ -99,10 +99,48 @@ namespace DailyForecaster.Controllers
 							return SafeToSpend(auth.Claims["email"].ToString(), collectionsId);
 						case "ShareCollection":
 							return ShareCollection(collectionsId);
+						case "ManualCashFlows":
+							return ManualCashFlows(auth.Claims["email"].ToString(), collectionsId);
+						case "GetUnseenTransactions":
+							return GetUnseenTransactions(auth.Claims["email"].ToString());
+
 					}
 				}
 			}
 			return Ok();
+		}
+		[Route("Delete")]
+		[HttpDelete]
+		public async Task<ActionResult> Delete()
+		{
+			string authHeader = this.HttpContext.Request.Headers["Authorization"];
+			string route = this.HttpContext.Request.Headers["Route"];
+			string collectionsId = "";
+			if (this.HttpContext.Request.Headers["collectionsId"] != "")
+			{
+				collectionsId = this.HttpContext.Request.Headers["collectionsId"];
+			}
+			FirebaseToken auth = await validate(authHeader);
+			if (auth != null)
+			{
+				FirebaseUser firebaseUser = new FirebaseUser();
+				new ClickTracker(this.HttpContext.Request.Headers["Route"],
+				false,
+				true,
+				"collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString(),
+				firebaseUser.GetUserId(auth.Claims["email"].ToString()),
+				true);
+
+				if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
+				{
+					switch (route)
+					{
+						case "DeleteCollection":
+							return DeleteCollection(collectionsId);
+					}
+				}
+			}
+			return null;
 		}
 		[Route("Post")]
 		[HttpPost]
@@ -153,6 +191,8 @@ namespace DailyForecaster.Controllers
 							return CreateCollection(json, auth.Uid);
 						case "LinkShare":
 							return LinkShare(json, auth.Uid);
+						case "ManualCashFlows":
+							return ManualCashFlows(json, auth.Claims["email"].ToString());
 
 					}
 				}
@@ -201,6 +241,23 @@ namespace DailyForecaster.Controllers
 			}
 			return Ok();
 		}
+		public ActionResult GetUnseenTransactions(string email)
+		{
+			return Ok(new UnseenModel(email));
+		}
+		private ActionResult ManualCashFlows(JsonElement json, string email)
+		{
+			return Ok(new ManualCashFlow(JsonConvert.DeserializeObject<ManualCashFlow>(json.GetRawText()),email));
+		}
+		private ActionResult ManualCashFlows(string email, string collectionsId)
+		{
+			return Ok(new ManualCashFlowsVM(collectionsId, email));
+		}
+		private ActionResult DeleteCollection(string collectionId)
+		{
+			Collections collections = new Collections();
+			return Ok(collections.Delete(collectionId));
+		}
 		private ActionResult LinkShare(JsonElement json,string userId)
 		{
 			CollectionSharing sharing = new CollectionSharing();
@@ -223,12 +280,21 @@ namespace DailyForecaster.Controllers
 			try
 			{
 				ReportedTransaction transaction = JsonConvert.DeserializeObject<ReportedTransaction>(json.GetRawText());
-				AutomatedCashFlow flow = transaction.AutomatedCashFlow;
-				flow.CFType = null;
-				flow.CFTypeId = transaction.CFType.Id;
-				flow.SourceOfExpense = transaction.SourceOfExpense;
-				flow = flow.Save(flow);
-				return Ok(new ReportedTransaction(flow, new Account(flow.AccountId)));
+				if (transaction.AutomatedCashFlow != null)
+				{
+					AutomatedCashFlow flow = transaction.AutomatedCashFlow;
+					flow.CFType = null;
+					flow.CFTypeId = transaction.CFType.Id;
+					flow.SourceOfExpense = transaction.SourceOfExpense;
+					flow = flow.Save(flow);
+					return Ok(new ReportedTransaction(flow, new Account(flow.AccountId)));
+				}
+				else
+				{
+					AutomatedCashFlow automated = JsonConvert.DeserializeObject<AutomatedCashFlow>(json.GetRawText());
+					automated.Save(automated);
+					return Ok();
+				}
 			}
 			catch
 			{
@@ -365,6 +431,12 @@ namespace DailyForecaster.Controllers
 				Key = "NewCollection",
 				Url = "/dashboard/NewCollection"
 			});
+			subMenu.Add(new MenuData()
+			{
+				Title = "Manual Transaction",
+				Key = "ManualTransactions",
+				Url = "/dashboard/ManualTransactions"
+			});
 			menu.Add(new MenuData()
 			{
 				Title = "Homepage",
@@ -382,8 +454,17 @@ namespace DailyForecaster.Controllers
 		/// <returns>Updated Account Object</returns>
 		private ActionResult AccountChange(JsonElement json)
 		{
-			Account account = JsonConvert.DeserializeObject<Account>(json.GetRawText());
-			return Ok(account.AddAccount());
+			try
+			{
+				Account account = JsonConvert.DeserializeObject<Account>(json.GetRawText());
+				return Ok(account.AddAccount());
+			}
+			catch (Exception e)
+			{
+				ExceptionCatcher catcher = new ExceptionCatcher();
+				catcher.Catch(e.Message);
+				return Ok();
+			}
 		}
 		/// <summary>
 		/// Returns a single Account object from an Id

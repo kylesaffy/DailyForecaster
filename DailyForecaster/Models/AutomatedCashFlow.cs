@@ -49,7 +49,38 @@ namespace DailyForecaster.Models
 		public string AccountId { get; set; }
 		ICollection<ReportedTransaction> ReportedTransactions { get; set; }
 		public AutomatedCashFlow()
-		{ }		
+		{ }
+		public void Delete(string AccountId)
+		{
+			List<AutomatedCashFlow> flows = new List<AutomatedCashFlow>();
+			flows = GetAutomatedCashFlows(AccountId, true);
+			SplitTransactions transaction = new SplitTransactions();
+			foreach (AutomatedCashFlow item in flows)
+			{
+				transaction.Delete(item.AutomatedCashFlowsId);
+				item.Delete();
+			}
+		}
+		private List<AutomatedCashFlow> GetAutomatedCashFlows(string AccountId, bool ans)
+		{
+			if (ans)
+			{
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					return _context.AutomatedCashFlows.Where(x => x.AccountId == AccountId).ToList();
+				}
+			}
+			return null;
+		}
+		private void Delete()
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Remove(this);
+				_context.SaveChanges();
+
+			}
+		}
 		/// <summary>
 		/// Saves and returns updated object
 		/// </summary>

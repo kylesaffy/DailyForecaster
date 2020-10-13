@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Composition;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using DailyForecaster.Controllers;
@@ -76,6 +77,34 @@ namespace DailyForecaster.Models
 				}
 			}
 			return collections;
+		}
+		public ReturnModel Delete(string collectionsId)
+		{
+			try
+			{
+				UserCollectionMapping mapping = new UserCollectionMapping();
+				mapping.Delete(collectionsId);
+				Budget budget = new Budget();
+				budget.Delete(collectionsId);
+				Account account = new Account();
+				account.Delete(collectionsId);
+				Collections collection = new Collections();
+				collection = GetCollections(collectionsId);
+				collection.Delete();
+				return new ReturnModel() { result = true };
+			}
+			catch (Exception e)
+			{
+				return new ReturnModel() { result = false, returnStr = e.StackTrace };
+			}
+		}
+		private void Delete()
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Remove(this);
+				_context.SaveChanges();
+			}
 		}
 		/// <summary>
 		/// Returns a collection object
@@ -169,9 +198,14 @@ namespace DailyForecaster.Models
 			List<Collections> collections = new List<Collections>();
 			if (email != "")
 			{
-				AspNetUsers user = new AspNetUsers();
-				string userId = user.getUserId(email);
-				if (type != "Index")
+				FirebaseUser user = new FirebaseUser();
+				string userId = user.GetUserId(email);
+				if (type == "Index")
+				{
+					AspNetUsers user1 = new AspNetUsers();
+					userId = user1.getUserId(email);
+				}
+				if (type != "Index" && !(type == "CollectionsVM" || type == "BudgetVM" || type == "SafeToSpendVM" || type == "ManualCashFlowsVM"))
 				{
 					using (FinPlannerContext _context = new FinPlannerContext())
 					{
@@ -203,7 +237,7 @@ namespace DailyForecaster.Models
 					}
 					return collections;
 				}
-				else if(type == "CollectionsVM" || type == "BudgetVM" || type == "SafeToSpendVM")
+				else if(type == "CollectionsVM" || type == "BudgetVM" || type == "SafeToSpendVM" || type == "ManualCashFlowsVM")
 				{
 					using (FinPlannerContext _context = new FinPlannerContext())
 					{
