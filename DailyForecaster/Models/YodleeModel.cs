@@ -15,7 +15,7 @@ namespace DailyForecaster.Models
 {
 	public class YodleeModel
 	{
-		static private string url = "https://stage.api.yodlee.uk/ysl/";
+		static private string url = "https://stage.api.yodlee.uk/ysl";
 		static private string ClientID = "vXEJJjy2aVQUIdIZqAAKqIw7QPyo73DO";
 		static private string secret = "1cRBWjCGGxEsrTbL";
 		static private string ADMIN = "8f1954be-d622-45a1-9bd1-2adbd813a832_ADMIN";
@@ -117,7 +117,7 @@ namespace DailyForecaster.Models
 				{
 					yodleeModel = new YodleeModel(collectionsId, "Get");
 				}
-				AspNetUsers user = new AspNetUsers();
+				FirebaseUser user = new FirebaseUser();
 				UserNames userNames = user.getNames(userId);
 				RegisterModel registerModel = new RegisterModel(yodleeModel.loginName, userNames);
 
@@ -125,7 +125,7 @@ namespace DailyForecaster.Models
 				client.DefaultRequestHeaders.Add("Api-Version", "1.1"); 
 				client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.token.accessToken);
 				StringContent content = new StringContent(JsonConvert.SerializeObject(registerModel), Encoding.UTF8, "application/json");
-				HttpResponseMessage response = await client.PostAsync(url + "/auth/register", content);
+				HttpResponseMessage response = await client.PostAsync(url + "/user/register", content);
 				if (response.IsSuccessStatusCode)
 				{
 					YodleeAuthReturn authReturn = new YodleeAuthReturn();
@@ -162,7 +162,7 @@ namespace DailyForecaster.Models
 			public async Task<YodleeAuthReturn> GetToken(string loginName)
 			{
 				YodleeTokenGenerator tokenGenerator = new YodleeTokenGenerator();
-				string token = tokenGenerator.CreateToken(loginName);
+				string token = await tokenGenerator.CreateToken(loginName);
 				YodleeAuthReturn authReturn = new YodleeAuthReturn();
 				YodleeToken yodleeToken = new YodleeToken();
 				yodleeToken.accessToken = token;

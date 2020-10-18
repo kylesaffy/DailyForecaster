@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using DailyForecaster.Models;
@@ -103,45 +104,47 @@ namespace DailyForecaster.Controllers
 							return ManualCashFlows(auth.Claims["email"].ToString(), collectionsId);
 						case "GetUnseenTransactions":
 							return GetUnseenTransactions(auth.Claims["email"].ToString());
+						case "GetYodleeToken":
+							return await GetYodleeToken(collectionsId, auth.Uid);
 
 					}
 				}
 			}
 			return Ok();
 		}
-		[Route("Delete")]
-		[HttpDelete]
-		public async Task<ActionResult> Delete()
-		{
-			string authHeader = this.HttpContext.Request.Headers["Authorization"];
-			string route = this.HttpContext.Request.Headers["Route"];
-			string collectionsId = "";
-			if (this.HttpContext.Request.Headers["collectionsId"] != "")
-			{
-				collectionsId = this.HttpContext.Request.Headers["collectionsId"];
-			}
-			FirebaseToken auth = await validate(authHeader);
-			if (auth != null)
-			{
-				FirebaseUser firebaseUser = new FirebaseUser();
-				new ClickTracker(this.HttpContext.Request.Headers["Route"],
-				false,
-				true,
-				"collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString(),
-				firebaseUser.GetUserId(auth.Claims["email"].ToString()),
-				true);
+		//[Route("Delete")]
+		//[HttpDelete]
+		//public async Task<ActionResult> Delete()
+		//{
+		//	string authHeader = this.HttpContext.Request.Headers["Authorization"];
+		//	string route = this.HttpContext.Request.Headers["Route"];
+		//	string collectionsId = "";
+		//	if (this.HttpContext.Request.Headers["collectionsId"] != "")
+		//	{
+		//		collectionsId = this.HttpContext.Request.Headers["collectionsId"];
+		//	}
+		//	FirebaseToken auth = await validate(authHeader);
+		//	if (auth != null)
+		//	{
+		//		FirebaseUser firebaseUser = new FirebaseUser();
+		//		new ClickTracker(this.HttpContext.Request.Headers["Route"],
+		//		false,
+		//		true,
+		//		"collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString(),
+		//		firebaseUser.GetUserId(auth.Claims["email"].ToString()),
+		//		true);
 
-				if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
-				{
-					switch (route)
-					{
-						case "DeleteCollection":
-							return DeleteCollection(collectionsId);
-					}
-				}
-			}
-			return null;
-		}
+		//		if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
+		//		{
+		//			switch (route)
+		//			{
+		//				case "DeleteCollection":
+		//					return DeleteCollection(collectionsId);
+		//			}
+		//		}
+		//	}
+		//	return null;
+		//}
 		[Route("Post")]
 		[HttpPost]
 		public async Task<ActionResult> Post([FromBody] JsonElement json)
@@ -241,9 +244,16 @@ namespace DailyForecaster.Controllers
 			}
 			return Ok();
 		}
+
 		public ActionResult GetUnseenTransactions(string email)
 		{
 			return Ok(new UnseenModel(email));
+		}
+		private async Task<ActionResult> GetYodleeToken(string collectionsId,string uid)
+		{
+			YodleeModel yodleeModel = new YodleeModel();
+			string token = await yodleeModel.getToken(collectionsId, uid);
+			return Ok(token);
 		}
 		private ActionResult ManualCashFlows(JsonElement json, string email)
 		{
@@ -355,9 +365,22 @@ namespace DailyForecaster.Controllers
 		/// <returns></returns>
 		private ActionResult BudgetChange(JsonElement json, string userId)
 		{
-			BudgetTransaction transaction = JsonConvert.DeserializeObject<BudgetTransaction>(json.GetRawText());
-			transaction.Save(userId);
-			return Ok(transaction);
+			try
+			{
+				BudgetTransaction transaction = JsonConvert.DeserializeObject<BudgetTransaction>(json.GetRawText());
+				transaction.Save(userId);
+				return Ok(transaction);
+			}
+			catch (Exception e)
+			{
+				ExceptionCatcher catcher = new ExceptionCatcher();
+				catcher.Catch(e.Message);
+				if(e.InnerException != null)
+				{
+					catcher.Catch(e.InnerException.Message);
+				}
+				return Ok();
+			}
 		}
 		/// <summary>
 		/// Returns a VM that contains BudgetTransactionComparison, a list of the reportedTransactions and the budget item in question
@@ -436,6 +459,12 @@ namespace DailyForecaster.Controllers
 				Title = "Manual Transaction",
 				Key = "ManualTransactions",
 				Url = "/dashboard/ManualTransactions"
+			});
+			subMenu.Add(new MenuData()
+			{
+				Title = "Add Account",
+				Key = "AddAccounts",
+				Url = "/dashboard/AddAccount"
 			});
 			menu.Add(new MenuData()
 			{

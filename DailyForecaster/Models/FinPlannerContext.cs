@@ -49,6 +49,12 @@ namespace DailyForecaster.Models
         public DbSet<EmailRecords> EmailRecords { get; set; }
         public DbSet<LogoffModel> LogoffModel { get; set; }
         public DbSet<SplitTransactions> SplitTransactions { get; set; }
+        public DbSet<ProductClassModel> ProductClassModel { get; set; }
+        public DbSet<ProductsModel> ProductsModel { get; set; }
+        public DbSet<ItemisedProducts> ItemisedProducts { get; set; }
+        public DbSet<RetailMerchants> RetailMerchants { get; set; }
+        public DbSet<RetailBranches> RetailBranches { get; set; }
+        public DbSet<ExpenseModel> ExpenseModels { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()

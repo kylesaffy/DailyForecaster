@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20201017103708_expensemodels")]
+    partial class expensemodels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -739,14 +741,14 @@ namespace DailyForecaster.Migrations
                     b.Property<double>("Amount")
                         .HasColumnType("float");
 
-                    b.Property<string>("ExpenseModelId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<int>("NumberOfProducts")
                         .HasColumnType("int");
 
-                    b.Property<string>("ProductsModelId")
+                    b.Property<string>("Products")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProductsId")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Savings")
                         .HasColumnType("float");
@@ -756,9 +758,7 @@ namespace DailyForecaster.Migrations
 
                     b.HasKey("ItemisedProductsId");
 
-                    b.HasIndex("ExpenseModelId");
-
-                    b.HasIndex("ProductsModelId");
+                    b.HasIndex("Products");
 
                     b.ToTable("ItemisedProducts");
                 });
@@ -1469,13 +1469,9 @@ namespace DailyForecaster.Migrations
 
             modelBuilder.Entity("DailyForecaster.Models.ItemisedProducts", b =>
                 {
-                    b.HasOne("DailyForecaster.Models.ExpenseModel", null)
-                        .WithMany("ItemisedProducts")
-                        .HasForeignKey("ExpenseModelId");
-
                     b.HasOne("DailyForecaster.Models.ProductsModel", "ProductsModel")
                         .WithMany()
-                        .HasForeignKey("ProductsModelId");
+                        .HasForeignKey("Products");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.LogoffModel", b =>

@@ -11,8 +11,8 @@ namespace DailyForecaster.Models
 {
 	public class YodleeAccountModel
 	{
-		//static private string url = "https://stage.api.yodlee.uk/ysl/";
-		static private string url = "https://development.api.yodlee.com/ysl";
+		static private string url = "https://stage.api.yodlee.uk/ysl";
+		//static private string url = "https://development.api.yodlee.com/ysl";
 		public List<YodleeAccountLevel>	account { get; set; }
 		public async Task<List<YodleeAccountLevel>> GetYodleeAccounts(string collectionsId)
 		{

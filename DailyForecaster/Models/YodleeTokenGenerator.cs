@@ -20,26 +20,32 @@ namespace DailyForecaster.Models
 {
 	public class YodleeTokenGenerator
 	{
-		public string CreateToken(string collectionsId)
+		private static string url = "https://stage.api.yodlee.uk/ysl/";
+		public async Task<string> CreateToken(string loginName)
 		{
-			//RSACryptoServiceProvider RSA = new RSACryptoServiceProvider(2048);
-			//string str = RSA.ToXmlString(true);
-			//var privKey = RSA.ExportParameters(true);
-			//var pub = RSA.ExportParameters(false);
+			//Generate key pair
+			RSACryptoServiceProvider RSA = new RSACryptoServiceProvider(2048);
+			var rsaKeyPair = DotNetUtilities.GetRsaKeyPair(RSA);
+			var writer = new StringWriter();
+			var pemWriter = new PemWriter(writer);
+			pemWriter.WriteObject(rsaKeyPair.Public);
+			//pemWriter.WriteObject(rsaKeyPair.Private);
+			string publicKey = writer.ToString();
+			string issuerId = await getKey(publicKey);
 			long currentTime = DateTimeOffset.Now.ToUnixTimeSeconds();
 			var payload = new Dictionary<string, object>();
-			payload["iss"] = "9510020248";
+			payload["iss"] = issuerId;
 			payload["iat"] = currentTime;
 			payload["exp"] = currentTime + 1800;
-			if (collectionsId != null && collectionsId != "")
+			if (loginName != null && loginName != "")
 			{
-				payload["sub"] = GetUserId(collectionsId);
+				payload["sub"] = loginName;
 			}
 			RSAParameters rsaParams;
-			//using var fs = new FileStream("https://storageaccountmoney9367.blob.core.windows.net/cloud-store/privateKey.txt", FileMode.Open, FileAccess.Read);
-			HttpWebRequest req = (HttpWebRequest)WebRequest.Create("https://storageaccountmoney9367.blob.core.windows.net/cloud-store/privateKey.pem");
-			HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
-			using (var streamReader = new StreamReader(resp.GetResponseStream()))
+			writer = new StringWriter();
+			pemWriter = new PemWriter(writer);
+			pemWriter.WriteObject(rsaKeyPair.Private);
+			using (var streamReader = new StringReader(writer.ToString()))
 			//string path = @"C:\privateKey.pem";
 			//var file = new FileInfo(path);
 			//using (var streamReader = file.OpenText())
@@ -50,30 +56,55 @@ namespace DailyForecaster.Models
 
 				AsymmetricCipherKeyPair keyPair;
 
-				keyPair = (AsymmetricCipherKeyPair)new PemReader(streamReader).ReadObject();
-
-				privkey = (RsaPrivateCrtKeyParameters)keyPair.Private;
-
-				//Object obj = pemReader.ReadObject();
-				//if (obj != null)
-				//{
-				//	privkey = (RsaPrivateCrtKeyParameters)obj;
-				//}
-				rsaParams = DotNetUtilities.ToRSAParameters(privkey);
-			}
-			using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
-			{
-				rsa.ImportParameters(rsaParams);
 				try
 				{
-					string jwt = Jose.JWT.Encode(payload, rsa, Jose.JwsAlgorithm.RS512);
-					return jwt;
+					var pem = new PemReader(streamReader);
+					var o = pem.ReadObject();
+					keyPair = (AsymmetricCipherKeyPair)o;
+					//privkey = (RsaPrivateCrtKeyParameters)o;
+
+					privkey = (RsaPrivateCrtKeyParameters)keyPair.Private;
+
+					rsaParams = DotNetUtilities.ToRSAParameters(privkey);
+					using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+					{
+						rsa.ImportParameters(rsaParams);
+						try
+						{
+							string jwt = Jose.JWT.Encode(payload, rsa, Jose.JwsAlgorithm.RS512);
+							return jwt;
+						}
+						catch (Exception e)
+						{
+							return e.InnerException.Message;
+						}
+					}
 				}
-				catch(Exception e)
+				catch (Exception e)
 				{
-					return e.InnerException.Message;
-				}
+					ExceptionCatcher catcher = new ExceptionCatcher();
+					catcher.Catch(e.Message);
+					return null;
+				} 				
 			}
+			
+		}
+		private async Task<string> getKey(string key)
+		{
+			var byteArray = Encoding.ASCII.GetBytes(coBrand.cobrandLogin + ":" + coBrand.cobrandPassword);
+			HttpClient client = new HttpClient();
+			client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+			client.DefaultRequestHeaders.Add("Cobrand-Name", "private-moneyminders-stage");
+			client.DefaultRequestHeaders.Add("Api-Version", "1.1");
+			StringContent content = new StringContent(JsonConvert.SerializeObject(new APIKey() { publicKey = key }), Encoding.UTF8, "application/json");
+			HttpResponseMessage response = await client.PostAsync(url + "/auth/apiKey", content);
+			if(response.IsSuccessStatusCode)
+			{
+				string tokenStr = await response.Content.ReadAsStringAsync();
+				APIKeyModel responseToken = JsonConvert.DeserializeObject<APIKeyModel>(tokenStr);
+				return responseToken.apiKey[0].key;
+			}
+			return null;
 		}
 		public async Task<string> GetUserId(string collectionId)
 		{
@@ -94,6 +125,13 @@ namespace DailyForecaster.Models
 		private static string url = "https://stage.api.yodlee.uk/ysl/";
 		public async Task<string> GetSession()
 		{
+			HttpWebRequest req = (HttpWebRequest)WebRequest.Create("https://storageaccountmoney9367.blob.core.windows.net/cloud-store/privateKey.pem");
+			HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
+			string key = "";
+			using (var streamReader = new StreamReader(resp.GetResponseStream()))
+			{
+				key = await streamReader.ReadToEndAsync();
+			}  				
 			HttpClient client = new HttpClient();
 			client.DefaultRequestHeaders.Add("Cobrand-Name", "private-moneyminders-stage");
 			client.DefaultRequestHeaders.Add("Api-Version", "1.1");
@@ -183,4 +221,20 @@ namespace DailyForecaster.Models
 		public static string cobrandLogin = "moneyminders-stage";
 		public static string cobrandPassword = "HYS@kggcb56784";
 	}
+	public class APIKey
+	{
+		public string publicKey { get; set; }
+	}
+	public class YodleeAPIKey
+	{
+		public string expiresIn { get; set; }
+		public string createdDate { get; set; }
+		public string publicKey { get; set; }
+		public string key { get; set; }
+	}
+	public class APIKeyModel
+	{
+		public List<YodleeAPIKey> apiKey { get; set; }
+	}
+
 }

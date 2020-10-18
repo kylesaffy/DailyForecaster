@@ -145,6 +145,8 @@ namespace DailyForecaster.Models
 				}
 				_context.SaveChanges();
 			}
+			this.CFClassification = new CFClassification(this.CFClassificationId);
+			this.CFType = new CFType(this.CFTypeId);
 		}
 		public List<BudgetTransaction> CreateBudgetTransactions(List<BudgetTransaction> transactions, string BudgetId, string collectionsId)
 		{

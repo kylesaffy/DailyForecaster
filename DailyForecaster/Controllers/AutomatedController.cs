@@ -107,5 +107,13 @@ namespace DailyForecaster.Controllers
 			}
 			return Ok(model);
 		}
+		[Route("RunReaderCall")]
+		[HttpGet]
+		public async Task<ActionResult> RunReaderCall(string url)
+		{
+			ExpenseModel reader = new ExpenseModel();
+			reader = await reader.Create(url);
+			return Ok(reader);
+		}
 	}
 }

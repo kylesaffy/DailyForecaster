@@ -10,7 +10,7 @@ namespace DailyForecaster.Models
 	public class YodleeTransactionType
 	{
 		public List<YodleeTransactionCategory> transactionCategory { get; set; }
-		static private string url = "https://stage.api.yodlee.uk/ysl/";
+		static private string url = "https://stage.api.yodlee.uk/ysl";
 		public async Task<List<YodleeTransactionCategory>> GetYodleeTransactions(string token)
 		{
 			YodleeTransactionType yodleeCat = new YodleeTransactionType();

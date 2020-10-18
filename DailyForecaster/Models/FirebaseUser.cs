@@ -40,6 +40,16 @@ namespace DailyForecaster.Models
 			Email = user.Email;
 			Phone = user.Phone;
 		}
+		public UserNames getNames(string userId)
+		{
+			FirebaseUser user = Get(userId);
+			return new UserNames()
+			{ 
+				first = user.FirstName,
+				last = user.LastName
+			};
+
+		}
 		public FirebaseUser(string email, string id)
 		{
 			FirebaseUserId = Guid.NewGuid().ToString();
