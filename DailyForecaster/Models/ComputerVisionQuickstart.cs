@@ -84,7 +84,10 @@ namespace DailyForecaster.Models
 			Console.WriteLine();
 
 			// Read text from URL
-			var textHeaders = await client.ReadAsync(urlFile, language: "en");
+			try
+			{
+				var textHeaders = await client.ReadAsync(urlFile, language: "en");
+			
 			// After the request, get the operation location (operation ID)
 			string operationLocation = textHeaders.OperationLocation;
 			Thread.Sleep(2000);
@@ -119,7 +122,14 @@ namespace DailyForecaster.Models
 				}
 			}
 			Console.WriteLine();
-			return txtOutput; 
+			return txtOutput;
+			}
+			catch (Exception e)
+			{
+				ExceptionCatcher catcher = new ExceptionCatcher();
+				catcher.Catch(e.Message);
+				return null;
+			}
 		}
 	}
 }

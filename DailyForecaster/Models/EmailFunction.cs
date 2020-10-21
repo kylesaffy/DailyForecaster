@@ -33,6 +33,21 @@ namespace DailyForecaster.Models
 				return new ReturnModel() { result = false, returnStr = e.Message };
 			}
 		}
+		public void EmailError(string type, string url  = null, string product = null)
+		{
+			string to = "kylesaffy@moneyminders.co.za";
+			string body = "";
+			if (url != null)
+			{
+				body = "There was an error with the reading following url:" + Environment.NewLine + url;
+			}
+			else
+			{
+				body = "There was an error with the reading following product: " + Environment.NewLine + product;
+			}
+			string subject = "Error with reading of slip of type: " + type;
+			//SendEmail(to, body, subject, "Kyle");
+		}
 		public ReturnModel DailyEmailSend(string userId)
 		{
 			try

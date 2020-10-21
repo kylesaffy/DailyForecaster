@@ -11,7 +11,7 @@ namespace DailyForecaster.Models
 {
 	public class YodleeAccountModel
 	{
-		static private string url = "https://stage.api.yodlee.uk/ysl";
+		static private string url = "https://api.yodlee.uk/ysl";
 		//static private string url = "https://development.api.yodlee.com/ysl";
 		public List<YodleeAccountLevel>	account { get; set; }
 		public async Task<List<YodleeAccountLevel>> GetYodleeAccounts(string collectionsId)
@@ -64,17 +64,20 @@ namespace DailyForecaster.Models
 					return result;
 				}
 				string token = await yodlee.getToken(id, "");
-				List<string> providers = await GetProviders(token);
-				foreach(string provider in providers.Distinct())
+				if (token != null)
 				{
-					HttpClient client = new HttpClient();
-					client.DefaultRequestHeaders.Add("Api-Version", "1.1");
-					client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-					HttpResponseMessage response = await client.PutAsync(url + "/providerAccounts?providerAccountIds=" + provider,new StringContent(""));
-					if(!response.IsSuccessStatusCode)
+					List<string> providers = await GetProviders(token);
+					foreach (string provider in providers.Distinct())
 					{
-						result = false;
-						break;
+						HttpClient client = new HttpClient();
+						client.DefaultRequestHeaders.Add("Api-Version", "1.1");
+						client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+						HttpResponseMessage response = await client.PutAsync(url + "/providerAccounts?providerAccountIds=" + provider, new StringContent(""));
+						if (!response.IsSuccessStatusCode)
+						{
+							result = false;
+							break;
+						}
 					}
 				}
 			}
@@ -98,6 +101,13 @@ namespace DailyForecaster.Models
 						providers.Add(item.providerAccountId.ToString());
 					}
 				}
+			}
+			else
+			{
+				string str = await response.Content.ReadAsStringAsync();
+				YodleeError error = JsonConvert.DeserializeObject<YodleeError>(str);
+				ExceptionCatcher catcher = new ExceptionCatcher();
+				catcher.Catch(error.errorMessage);
 			}
 			return providers;
 		}
@@ -142,5 +152,11 @@ namespace DailyForecaster.Models
 		public DateTime lastUpdated { get; set; }
 		public DateTime lastUpdateAttempt { get; set; }
 		public DateTime nextUpdateScheduled { get; set; }
+	}
+	public class YodleeError
+	{
+		public string errorCode { get; set; }
+		public string errorMessage { get; set; }
+		public string referenceCode { get; set; }
 	}
 }

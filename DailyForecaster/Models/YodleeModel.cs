@@ -15,7 +15,7 @@ namespace DailyForecaster.Models
 {
 	public class YodleeModel
 	{
-		static private string url = "https://stage.api.yodlee.uk/ysl";
+		static private string url = "https://api.yodlee.uk/ysl";
 		static private string ClientID = "vXEJJjy2aVQUIdIZqAAKqIw7QPyo73DO";
 		static private string secret = "1cRBWjCGGxEsrTbL";
 		static private string ADMIN = "8f1954be-d622-45a1-9bd1-2adbd813a832_ADMIN";

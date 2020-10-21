@@ -368,6 +368,7 @@ namespace DailyForecaster.Controllers
 			try
 			{
 				BudgetTransaction transaction = JsonConvert.DeserializeObject<BudgetTransaction>(json.GetRawText());
+				transaction.Budget = null;
 				transaction.Save(userId);
 				return Ok(transaction);
 			}

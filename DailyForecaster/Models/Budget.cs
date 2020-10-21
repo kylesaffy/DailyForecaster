@@ -114,6 +114,15 @@ namespace DailyForecaster.Models
 			CollectionId = collectionsId;
 			EndDate = endDate;
 			Simulation = simulation;
+			Save();
+		}
+		private void Save()
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Add(this);
+				_context.SaveChanges();
+			}
 		}
 		public bool BudgetCheck(string collectionId)
 		{

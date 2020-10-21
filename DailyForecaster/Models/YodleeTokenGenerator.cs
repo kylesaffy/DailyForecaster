@@ -20,17 +20,24 @@ namespace DailyForecaster.Models
 {
 	public class YodleeTokenGenerator
 	{
-		private static string url = "https://stage.api.yodlee.uk/ysl/";
+		private static string url = "https://api.yodlee.uk/ysl/";
 		public async Task<string> CreateToken(string loginName)
 		{
 			//Generate key pair
-			RSACryptoServiceProvider RSA = new RSACryptoServiceProvider(2048);
-			var rsaKeyPair = DotNetUtilities.GetRsaKeyPair(RSA);
-			var writer = new StringWriter();
-			var pemWriter = new PemWriter(writer);
-			pemWriter.WriteObject(rsaKeyPair.Public);
+			//RSACryptoServiceProvider RSA = new RSACryptoServiceProvider(2048);
+			//var rsaKeyPair = DotNetUtilities.GetRsaKeyPair(RSA);
+			//var writer = new StringWriter();
+			//var pemWriter = new PemWriter(writer);
+			//pemWriter.WriteObject(rsaKeyPair.Public);
 			//pemWriter.WriteObject(rsaKeyPair.Private);
-			string publicKey = writer.ToString();
+			HttpWebRequest req = (HttpWebRequest)WebRequest.Create("https://storageaccountmoney9367.blob.core.windows.net/cloud-store/publicKey.pem");
+			HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
+			string key = "";
+			using (var streamReader = new StreamReader(resp.GetResponseStream()))
+			{
+				key = await streamReader.ReadToEndAsync();
+			}  				
+			string publicKey = key;
 			string issuerId = await getKey(publicKey);
 			long currentTime = DateTimeOffset.Now.ToUnixTimeSeconds();
 			var payload = new Dictionary<string, object>();
@@ -41,14 +48,21 @@ namespace DailyForecaster.Models
 			{
 				payload["sub"] = loginName;
 			}
+			req = (HttpWebRequest)WebRequest.Create("https://storageaccountmoney9367.blob.core.windows.net/cloud-store/privateKey.pem");
+			resp = (HttpWebResponse)req.GetResponse();
+			//string privKey = "";
+			//using (var streamReader = new StreamReader(resp.GetResponseStream()))
+			//{
+			//	privKey = await streamReader.ReadToEndAsync();
+			//}
 			RSAParameters rsaParams;
-			writer = new StringWriter();
-			pemWriter = new PemWriter(writer);
-			pemWriter.WriteObject(rsaKeyPair.Private);
-			using (var streamReader = new StringReader(writer.ToString()))
+			//writer = new StringWriter();
+			//pemWriter = new PemWriter(writer);
+			//pemWriter.WriteObject(rsaKeyPair.Private);
+			//using (var streamReader = new StringReader(writer.ToString()))
 			//string path = @"C:\privateKey.pem";
 			//var file = new FileInfo(path);
-			//using (var streamReader = file.OpenText())
+			using (var streamReader = new StreamReader(resp.GetResponseStream()))
 			{
 				var pemReader = new PemReader(streamReader);
 
@@ -60,10 +74,10 @@ namespace DailyForecaster.Models
 				{
 					var pem = new PemReader(streamReader);
 					var o = pem.ReadObject();
-					keyPair = (AsymmetricCipherKeyPair)o;
-					//privkey = (RsaPrivateCrtKeyParameters)o;
+					//keyPair = (AsymmetricCipherKeyPair)o;
+					privkey = (RsaPrivateCrtKeyParameters)o;
 
-					privkey = (RsaPrivateCrtKeyParameters)keyPair.Private;
+					//privkey = (RsaPrivateCrtKeyParameters)keyPair.Private;
 
 					rsaParams = DotNetUtilities.ToRSAParameters(privkey);
 					using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
@@ -91,13 +105,20 @@ namespace DailyForecaster.Models
 		}
 		private async Task<string> getKey(string key)
 		{
-			var byteArray = Encoding.ASCII.GetBytes(coBrand.cobrandLogin + ":" + coBrand.cobrandPassword);
+			YodleeSessionGenerator sessionGenerator = new YodleeSessionGenerator();
+			string session = await sessionGenerator.GetSession();
 			HttpClient client = new HttpClient();
-			client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
-			client.DefaultRequestHeaders.Add("Cobrand-Name", "private-moneyminders-stage");
+			client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", "cobSession=" + session);
+			client.DefaultRequestHeaders.Add("Cobrand-Name", "moneyminders");
 			client.DefaultRequestHeaders.Add("Api-Version", "1.1");
 			StringContent content = new StringContent(JsonConvert.SerializeObject(new APIKey() { publicKey = key }), Encoding.UTF8, "application/json");
-			HttpResponseMessage response = await client.PostAsync(url + "/auth/apiKey", content);
+			var request = new HttpRequestMessage
+			{
+				Method = HttpMethod.Get,
+				RequestUri = new Uri(url + "/auth/apiKey"),
+				Content = content
+			};
+			HttpResponseMessage response = await client.SendAsync(request).ConfigureAwait(false);
 			if(response.IsSuccessStatusCode)
 			{
 				string tokenStr = await response.Content.ReadAsStringAsync();
@@ -122,10 +143,10 @@ namespace DailyForecaster.Models
 	}
 	public class YodleeSessionGenerator
 	{
-		private static string url = "https://stage.api.yodlee.uk/ysl/";
+		private static string url = "https://api.yodlee.uk/ysl/";
 		public async Task<string> GetSession()
 		{
-			HttpWebRequest req = (HttpWebRequest)WebRequest.Create("https://storageaccountmoney9367.blob.core.windows.net/cloud-store/privateKey.pem");
+			HttpWebRequest req = (HttpWebRequest)WebRequest.Create("https://storageaccountmoney9367.blob.core.windows.net/cloud-store/publicKey.pem");
 			HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
 			string key = "";
 			using (var streamReader = new StreamReader(resp.GetResponseStream()))
@@ -133,9 +154,12 @@ namespace DailyForecaster.Models
 				key = await streamReader.ReadToEndAsync();
 			}  				
 			HttpClient client = new HttpClient();
-			client.DefaultRequestHeaders.Add("Cobrand-Name", "private-moneyminders-stage");
-			client.DefaultRequestHeaders.Add("Api-Version", "1.1");
-			StringContent content = new StringContent(JsonConvert.SerializeObject(CoBrandModel.ModelReturn()), Encoding.UTF8, "application/json");
+			CoBrandModel model = CoBrandModel.ModelReturn();
+			client.DefaultRequestHeaders.Add("Cobrand-Name", "moneyminders");
+			var byteArray = Encoding.ASCII.GetBytes(model.cobrand.cobrandLogin + ":" + model.cobrand.cobrandPassword);
+			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+			client.DefaultRequestHeaders.Add("Api-Version", "1.1");				
+			StringContent content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
 			HttpResponseMessage response = await client.PostAsync(url + "/cobrand/login", content);
 			if(response.IsSuccessStatusCode)
 			{
@@ -194,7 +218,7 @@ namespace DailyForecaster.Models
 	}
 	public class CoBrandSessionModel
 	{
-		public int cobrandId { get; set; }
+		public long cobrandId { get; set; }
 		public string applicationId { get; set; }
 		public string locale { get; set; }
 		public YodleeSession session { get; set; }
@@ -218,8 +242,8 @@ namespace DailyForecaster.Models
 	}
 	public class coBrand
 	{
-		public static string cobrandLogin = "moneyminders-stage";
-		public static string cobrandPassword = "HYS@kggcb56784";
+		public string cobrandLogin = "moneyminders";
+		public string cobrandPassword = "GRDT@ytjhgg9872";
 	}
 	public class APIKey
 	{

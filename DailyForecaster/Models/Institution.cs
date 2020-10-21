@@ -19,6 +19,7 @@ namespace DailyForecaster.Models
 		public string Email { get; set; }
 		public string BlobString { get; set; }
 		public bool isDummy { get; set; }
+		public long ProviderId { get; set; }
 		/// <summary>
 		/// Retirives a list of institutions from the database
 		/// </summary>

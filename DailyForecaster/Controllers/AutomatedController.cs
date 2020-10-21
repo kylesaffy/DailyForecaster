@@ -115,5 +115,13 @@ namespace DailyForecaster.Controllers
 			reader = await reader.Create(url);
 			return Ok(reader);
 		}
+		[Route("Reader")]
+		[HttpGet]
+		public async Task<ActionResult> Reader(string url)
+		{
+			RunReader reader = new RunReader();
+			reader = await reader.GetRunReader(url);
+			return Ok(reader);
+		}
 	}
 }
