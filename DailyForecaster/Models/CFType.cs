@@ -10,7 +10,9 @@ namespace DailyForecaster.Models
 {
 	/// <summary>
 	/// This is the name of the cash flow type as well as whether or not this is a a custom or default
-	/// </summary>
+	/// </summary>	  
+	/// 
+	[Serializable]
 	public class CFType
 	{
 		[Required]
@@ -24,6 +26,17 @@ namespace DailyForecaster.Models
 		public int YodleeSGId { get; set; }
 		public bool Infaltion { get; set; }
 		public virtual ICollection<BudgetTransaction> BudgetTransactions { get; set; }
+		/// <summary>
+		/// Returns non-custom List
+		/// </summary>
+		/// <returns>CFType list with only non-custom types</returns>
+		public List<CFType> GetCFList()
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.CFTypes.Where(x =>x.Custom == false).OrderBy(x => x.Name).ToList();
+			}
+		}
 		/// <summary>
 		/// Returns a list of CFTYpes for that collection
 		/// </summary>

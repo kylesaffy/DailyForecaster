@@ -78,7 +78,7 @@ namespace DailyForecaster.Models
 				try
 				{
 					double spent = 0;
-					if (item.CFType.Name != "Bank Charges")
+					if (item.CFType.Name != "Bank Charges" && item.CFType.Name != "Home Loan" && item.CFType.Name != "Loans")
 					{
 						spent = comparison
 							.ReportedTransactions
@@ -220,14 +220,14 @@ namespace DailyForecaster.Models
 				item.Amount = item.Amount * -1;
 			}
 			// convert transfer to non tranasactional items to payments
-			foreach (ReportedTransaction item in copy.Where(x=>x.Account.AccountType.Transactional && x.CFClassification.Sign == -1 && x.CFType.Id == "999"))
+			// foreach (ReportedTransaction item in copy.Where(x=>x.Account.AccountType.Transactional && x.CFClassification.Sign == -1 && x.CFType.Id == "999"))
+			foreach (ReportedTransaction item in copy.Where(x=>x.CFType.Id == "999"))
 			{
 				List<ReportedTransaction> transactions = reportedTransactions.Where(x => x.Amount == item.Amount).ToList();
-				if (reportedTransactions.Where(x => x.CFType.Id == "999" && (x.Account.AccountType.Transactional == false || ((x.Account.AccountType.Name == "Home Loan" || x.Account.AccountType.Name == "Revolving Loan") && x.CFClassification.Sign == 1)) && x.Amount == item.Amount).Any())
+				if (reportedTransactions.Where(x => x.CFType.Id == "999" && (x.Account.AccountType.Transactional == false || ((x.Account.AccountType.Name == "Home Loan" || x.Account.AccountType.Name == "Revolving Loan") && x.CFClassification.Sign == item.CFClassification.Sign*-1)) && x.Amount == item.Amount).Any())
 				{
-					ReportedTransaction transaction = transactions.Where(x => x.CFType.Id == "999" && (x.Account.AccountType.Transactional == false || ((x.Account.AccountType.Name == "Home Loan" || x.Account.AccountType.Name == "Revolving Loan") && x.CFClassification.Sign == 1)) && x.Amount == item.Amount).FirstOrDefault();
-					if (transaction != null)
-					{
+					foreach(ReportedTransaction transaction in transactions.Where(x => x.CFType.Id == "999" && (x.Account.AccountType.Transactional == false || ((x.Account.AccountType.Name == "Home Loan" || x.Account.AccountType.Name == "Revolving Loan") && x.CFClassification.Sign == item.CFClassification.Sign * -1)) && x.Amount == item.Amount))
+					{ 
 						switch (transaction.Account.AccountType.Name)
 						{
 							case "Personal Loan":

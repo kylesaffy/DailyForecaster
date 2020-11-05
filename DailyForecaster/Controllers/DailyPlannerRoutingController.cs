@@ -585,6 +585,7 @@ namespace DailyForecaster.Controllers
 	public class ReturnModel {
         public bool result { get; set; }
         public string returnStr { get; set; }
+        public List<ItemisedProducts> products { get; set; }
     }
 
 }

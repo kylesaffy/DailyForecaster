@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace DailyForecaster.Models
 {
+	[Serializable]
 	public class ProductsModel
 	{
 		public string ProductsModelId { get; set; }
@@ -20,14 +21,16 @@ namespace DailyForecaster.Models
 		/// <returns>a complete ProductsModel</returns>
 		public ProductsModel Get(string id)
 		{
+
 			ProductClassModel productClass = new ProductClassModel();
 			ProductsModel product = new ProductsModel();
-			using(FinPlannerContext _context = new FinPlannerContext())
+			using (FinPlannerContext _context = new FinPlannerContext())
 			{
 				product = _context.ProductsModel.Find(id);
 			}
 			product.ProductClassModel = productClass.Get(product.ProductClassModelId);
 			return product;
+
 		}
 	}
 }

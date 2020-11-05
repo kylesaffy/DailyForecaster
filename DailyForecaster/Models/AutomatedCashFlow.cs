@@ -302,7 +302,7 @@ namespace DailyForecaster.Models
 			//Get Static Lists
 			List<Collections> collections = collection.GetCollections("", "");
 			List<CFClassification> classifications = classification.GetList();
-
+			bool check = true;
 			foreach (Collections item in collections.Where(x => x.Accounts.Any()))
 			{
 				AutomateReturnList returnList = new AutomateReturnList();
@@ -312,86 +312,100 @@ namespace DailyForecaster.Models
 
 					YodleeModel yodlee = new YodleeModel();
 					string token = await yodlee.getToken(item.CollectionsId, "");
-					List<YodleeTransactionLevel> transactions = await transactionModel.GetYodleeTransactions(item.CollectionsId,token);
-					if (transactions != null)
+					if (token != null)
 					{
-						DateTime smallest = transactions.Select(x => x.transactionDate).Min();
-						if (smallest > DateTime.MinValue)
+						List<YodleeTransactionLevel> transactions = await transactionModel.GetYodleeTransactions(item.CollectionsId, token);
+						if (transactions != null)
 						{
-							smallest = smallest.AddDays(-3);
-						}
-						List<CFType> yodleeTypes = await transactionType.YodleeTransform(token, item.CollectionsId);
-						foreach (Account account in item.Accounts.Where(x => x.YodleeId != 0))
-						{
-							Account tempAccount = account;
-							List<ManualCashFlow> manualFlows = manualCash.GetManualCashFlows(account.Id);
-							foreach (ManualCashFlow m in manualFlows)
+							DateTime smallest = transactions.Select(x => x.transactionDate).Min();
+							if (smallest > DateTime.MinValue)
 							{
-								m.CFClassification = classifications.Where(x => x.Id == m.CFClassificationId).FirstOrDefault();
+								smallest = smallest.AddDays(-3);
 							}
-							account.AutomatedCashFlows = automatedCashFlow.GetAutomatedCashFlows(account.Id, smallest, DateTime.Now.AddDays(1));
-							foreach (YodleeTransactionLevel transaction in transactions.Where(x => x.accountId == account.YodleeId))
+							List<CFType> yodleeTypes = await transactionType.YodleeTransform(token, item.CollectionsId);
+							foreach (Account account in item.Accounts.Where(x => x.YodleeId != 0))
 							{
-								if (!account.AutomatedCashFlows.Where(x => x.YodleeId == transaction.id).Any())
+								Account tempAccount = account;
+								List<ManualCashFlow> manualFlows = manualCash.GetManualCashFlows(account.Id);
+								foreach (ManualCashFlow m in manualFlows)
 								{
-									ManualCashFlow manualCashFlow = manualFlows
-										.Where(x => x.AutomatedCashFlowId == null)
-										.Where(x => x.Amount == transaction.amount.amount && x.CFClassification.Name.ToLower() == transaction.categoryType.ToLower() && x.DateBooked > transaction.transactionDate.AddDays(-2) && x.DateBooked < transaction.transactionDate.AddDays(5))
-										.FirstOrDefault();
-									try
+									m.CFClassification = classifications.Where(x => x.Id == m.CFClassificationId).FirstOrDefault();
+								}
+								account.AutomatedCashFlows = automatedCashFlow.GetAutomatedCashFlows(account.Id, smallest, DateTime.Now.AddDays(1));
+								foreach (YodleeTransactionLevel transaction in transactions.Where(x => x.accountId == account.YodleeId))
+								{
+									check = true;
+									if (account.Institution.ProviderId == 10607762 && GetSource(transaction).Length > 29)
 									{
-										returnList.automateReturns.Add(AddTransaction(transaction, account.Id, yodleeTypes, manualCashFlow, classifications, tempAccount));
+										if (GetSource(transaction).Substring(0, 29).ToLower() == "outstanding card authorisation".Substring(0, 29))
+										{
+											check = false;
+										}
 									}
-									catch (Exception e)
+									if (check)
 									{
-										ExceptionCatcher catcher = new ExceptionCatcher();
-										catcher.Catch(e.Message + ";" + JsonConvert.SerializeObject(transaction) + ";" + JsonConvert.SerializeObject(manualCashFlow) + "");
+										if (!account.AutomatedCashFlows.Where(x => x.YodleeId == transaction.id).Any())
+										{
+											ManualCashFlow manualCashFlow = manualFlows
+												.Where(x => x.AutomatedCashFlowId == null)
+												.Where(x => x.Amount == transaction.amount.amount && x.CFClassification.Name.ToLower() == transaction.categoryType.ToLower() && x.DateBooked > transaction.transactionDate.AddDays(-2) && x.DateBooked < transaction.transactionDate.AddDays(5))
+												.FirstOrDefault();
+											try
+											{
+												returnList.automateReturns.Add(AddTransaction(transaction, account.Id, yodleeTypes, manualCashFlow, classifications, tempAccount));
+											}
+											catch (Exception e)
+											{
+												ExceptionCatcher catcher = new ExceptionCatcher();
+												catcher.Catch(e.Message + ";" + JsonConvert.SerializeObject(transaction) + ";" + JsonConvert.SerializeObject(manualCashFlow) + "");
+											}
+											if (manualCashFlow != null)
+											{
+												manualFlows.Remove(manualCashFlow);
+											}
+										}
 									}
-									if (manualCashFlow != null)
+								}
+								//item.Accounts.Where(x=>x.Id == account.Id).FirstOrDefault() = tempAccount;
+							}
+							try
+							{
+								List<AccountChange> accChangeList = new List<AccountChange>();
+								List<AutomatedCashFlow> cashFlows = new List<AutomatedCashFlow>();
+								List<ManualCashFlow> manualCashFlows = new List<ManualCashFlow>();
+								//ac 
+								foreach (AutomateReturn returnItem in returnList.automateReturns)
+								{
+									if (returnItem.AccountChange.AccountChangeId != "")
 									{
-										manualFlows.Remove(manualCashFlow);
+										returnItem.AccountChange.Account = null;
+										returnItem.AccountChange.AutomatedCashFlow = null;
+										accChangeList.Add(returnItem.AccountChange);
+									}
+									returnItem.AutomatedCashFlow.Account = null;
+									returnItem.AutomatedCashFlow.CFClassification = null;
+									cashFlows.Add(returnItem.AutomatedCashFlow);
+									if (returnItem.ManualCashFlow.Id != "")
+									{
+										manualCashFlows.Add(returnItem.ManualCashFlow);
 									}
 								}
+								using (FinPlannerContext _context = new FinPlannerContext())
+								{
+									_context.AccountChange.AddRange(accChangeList);
+									_context.AutomatedCashFlows.AddRange(cashFlows);
+									foreach (ManualCashFlow manual in manualCashFlows)
+									{
+										_context.Entry(manual).State = EntityState.Modified;
+									}
+									_context.SaveChanges();
+								}
 							}
-							//item.Accounts.Where(x=>x.Id == account.Id).FirstOrDefault() = tempAccount;
-						}
-						try
-						{
-							List<AccountChange> accChangeList = new List<AccountChange>();
-							List<AutomatedCashFlow> cashFlows = new List<AutomatedCashFlow>();
-							List<ManualCashFlow> manualCashFlows = new List<ManualCashFlow>();
-							//ac 
-							foreach (AutomateReturn returnItem in returnList.automateReturns)
+							catch (Exception e)
 							{
-								if (returnItem.AccountChange.AccountChangeId != "")
-								{
-									returnItem.AccountChange.Account = null;
-									returnItem.AccountChange.AutomatedCashFlow = null;
-									accChangeList.Add(returnItem.AccountChange);
-								}
-								returnItem.AutomatedCashFlow.Account = null;
-								returnItem.AutomatedCashFlow.CFClassification = null;
-								cashFlows.Add(returnItem.AutomatedCashFlow);
-								if (returnItem.ManualCashFlow.Id != "")
-								{
-									manualCashFlows.Add(returnItem.ManualCashFlow);
-								}
+								ExceptionCatcher catcher = new ExceptionCatcher();
+								catcher.Catch(e.Message);
 							}
-							using (FinPlannerContext _context = new FinPlannerContext())
-							{
-								_context.AccountChange.AddRange(accChangeList);
-								_context.AutomatedCashFlows.AddRange(cashFlows);
-								foreach (ManualCashFlow manual in manualCashFlows)
-								{
-									_context.Entry(manual).State = EntityState.Modified;
-								}
-								_context.SaveChanges();
-							}
-						}
-						catch (Exception e)
-						{
-							ExceptionCatcher catcher = new ExceptionCatcher();
-							catcher.Catch(e.Message);
 						}
 					}
 				}

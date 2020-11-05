@@ -19,14 +19,17 @@ namespace DailyForecaster.Models
 			YodleeAccountModel accounts = new YodleeAccountModel();
 			YodleeModel yodlee = new YodleeModel();
 			string token = await yodlee.getToken(collectionsId, "");
-			HttpClient client = new HttpClient();
-			client.DefaultRequestHeaders.Add("Api-Version", "1.1");
-			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-			HttpResponseMessage response = await client.GetAsync(url + "/accounts");
-			if (response.IsSuccessStatusCode)
+			if (token != null)
 			{
-				string str = await response.Content.ReadAsStringAsync();
-				accounts = JsonConvert.DeserializeObject<YodleeAccountModel>(str);
+				HttpClient client = new HttpClient();
+				client.DefaultRequestHeaders.Add("Api-Version", "1.1");
+				client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+				HttpResponseMessage response = await client.GetAsync(url + "/accounts");
+				if (response.IsSuccessStatusCode)
+				{
+					string str = await response.Content.ReadAsStringAsync();
+					accounts = JsonConvert.DeserializeObject<YodleeAccountModel>(str);
+				}
 			}
 			return accounts.account;
 		}

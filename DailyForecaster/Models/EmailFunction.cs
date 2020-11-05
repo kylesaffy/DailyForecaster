@@ -64,12 +64,25 @@ namespace DailyForecaster.Models
 				};
 				//message.Body = text.Replace("[guest_name]", Name);
 				string transactionsStr = "";
-				foreach(AutomatedCashFlow item in daily.AutomatedCashFlows)
+				CFType type = new CFType();
+				List<CFType> types = type.GetCFList(daily.CollectionIds);
+				if (daily.AutomatedCashFlows.Count > 0)
 				{
-					transactionsStr = transactionsStr + "</br> :R " + item.Amount.ToString("N2") + " " + item.SourceOfExpense + " " + item.CFType.Name;
+					foreach (AutomatedCashFlow item in daily.AutomatedCashFlows)
+					{
+						item.CFType = types.Where(x => x.Id == item.CFTypeId).FirstOrDefault();
+						transactionsStr = transactionsStr + "</br></br><p><b>Source</b>: " + item.SourceOfExpense + " - <b>Category</b> " + item.CFType.Name + " - <b>R</b> " + item.Amount.ToString("N2") + "</p>";
+					}
+				}
+				else
+				{
+					transactionsStr = "No new transactions were picked up";
 				}
 				text = text.Replace("{transactions}", transactionsStr);
-				text = text.Replace("{Last Login}", daily.LastInteraction.ToShortDateString());
+				text = text.Replace("{Last Login}", daily.LastInteraction.ToLongDateString());
+				text = text.Replace("{Title}", daily.DailyTip.Header);
+				text = text.Replace("{Body}", daily.DailyTip.Quote);
+				text = text.Replace("{motivational}", daily.DailyMotivational.URL);
 				SendEmail(daily.Email, text, "Your Daily Grind", daily.FirstName);
 				return new ReturnModel() { result = true };
 			}

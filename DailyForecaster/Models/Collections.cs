@@ -377,7 +377,7 @@ namespace DailyForecaster.Models
 				return returnModel;
 			}
 		}
-		public ReturnModel CreateCollection(NewCollectionsObj obj, string userId)
+		public ReturnModel CreateCollection(NewCollectionsObj obj, string userId, string email)
 		{
 			UserCollectionMapping mapping = new UserCollectionMapping();
 			Collections col = new Collections(obj,userId);
@@ -405,6 +405,8 @@ namespace DailyForecaster.Models
 				}
 				returnModel.result = true;
 				returnModel.returnStr = col.CollectionsId;
+				UserInteraction interaction = new UserInteraction();
+				interaction.CollectionsIncratment(col.CollectionsId, email);
 				return returnModel;
 			}
 			catch (Exception e)

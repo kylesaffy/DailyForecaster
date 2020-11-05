@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using DailyForecaster.Models;
@@ -13,6 +15,10 @@ using Google.Apis.Upload;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Microsoft.Rest;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
 using FirebaseAuth = FirebaseAdmin.Auth.FirebaseAuth;
 
@@ -22,7 +28,14 @@ namespace DailyForecaster.Controllers
 	[EnableCors("AllowOrigin")]
 	[ApiController]
 	public class RoutingController : ControllerBase
-	{				
+	{
+		private readonly IOptions<MyConfig> config;
+
+		//public BlobStorageController(IOptions<MyConfig> config)
+		//{
+		//	this.config = config;
+		//}
+
 		[Route("OpenPost")]
 		[HttpPost]
 		public ActionResult OpenPost([FromBody] JsonElement json)
@@ -72,7 +85,7 @@ namespace DailyForecaster.Controllers
 				if (this.HttpContext.Request.Headers["endDate"].Count() != 0)
 				{
 					endDate = DateConvert(this.HttpContext.Request.Headers["endDate"]);
-				}		 			
+				}
 				if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
 				{
 					FirebaseUser user = new FirebaseUser();
@@ -83,7 +96,7 @@ namespace DailyForecaster.Controllers
 					switch (route)
 					{
 						case "UnseenCount":
-							return UnseenCount(auth.Claims["email"].ToString());
+							return UnseenCount(auth.Uid);
 						case "Index":
 							return Index(auth.Claims["email"].ToString());
 						case "GetAccounts":
@@ -106,7 +119,10 @@ namespace DailyForecaster.Controllers
 							return GetUnseenTransactions(auth.Claims["email"].ToString());
 						case "GetYodleeToken":
 							return await GetYodleeToken(collectionsId, auth.Uid);
-
+						case "GetUser":
+							return GetUser(auth.Uid);
+						case "SmartHelp":
+							return SmartHelp(auth.Uid);
 					}
 				}
 			}
@@ -152,9 +168,14 @@ namespace DailyForecaster.Controllers
 			string authHeader = this.HttpContext.Request.Headers["Authorization"];
 			string route = this.HttpContext.Request.Headers["Route"];
 			string collectionsId = "";
-			if(this.HttpContext.Request.Headers["collectionsId"] != "")
+			if (this.HttpContext.Request.Headers["collectionsId"] != "")
 			{
 				collectionsId = this.HttpContext.Request.Headers["collectionsId"];
+			}
+			string accountId = "";
+			if (this.HttpContext.Request.Headers["accountId"] != "")
+			{
+				accountId = this.HttpContext.Request.Headers["accountId"];
 			}
 			FirebaseToken auth = await validate(authHeader);
 			if (auth != null)
@@ -166,7 +187,7 @@ namespace DailyForecaster.Controllers
 				"collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString(),
 				firebaseUser.GetUserId(auth.Claims["email"].ToString()) + ", body: " + json,
 				true);
-			
+
 				if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
 				{
 					switch (route)
@@ -191,16 +212,110 @@ namespace DailyForecaster.Controllers
 						case "SaveTransaction":
 							return SaveTransaction(json, auth.Uid);
 						case "CreateCollection":
-							return CreateCollection(json, auth.Uid);
+							return CreateCollection(json, auth.Uid, auth.Claims["email"].ToString());
 						case "LinkShare":
 							return LinkShare(json, auth.Uid);
 						case "ManualCashFlows":
 							return ManualCashFlows(json, auth.Claims["email"].ToString());
+						case "UpdateUser":
+							return UpdateUser(json, auth.Uid);
+						case "NewCFType":
+							return NewCFType(json,collectionsId);
 
 					}
 				}
 			}
 			return Ok();
+		}
+		[Route("PostFile")]
+		[HttpPost]
+		public async Task<IActionResult> PostFile()
+		{
+			string authHeader = this.HttpContext.Request.Headers["Authorization"];
+			string route = this.HttpContext.Request.Headers["Route"];
+			string collectionsId = "";
+			if (this.HttpContext.Request.Headers["collectionsId"] != "")
+			{
+				collectionsId = this.HttpContext.Request.Headers["collectionsId"];
+			}
+			string accountId = "";
+			if (this.HttpContext.Request.Headers["accountId"] != "")
+			{
+				accountId = this.HttpContext.Request.Headers["accountId"];
+			}
+			FirebaseToken auth = await validate(authHeader);
+			if (auth != null)
+			{
+				FirebaseUser firebaseUser = new FirebaseUser();
+				new ClickTracker(this.HttpContext.Request.Headers["Route"],
+				false,
+				true,
+				"collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString(),
+				firebaseUser.GetUserId(auth.Claims["email"].ToString()),
+				true);
+
+				if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
+				{
+					switch (route)
+					{
+						case "InvoiceUpload":
+							var files = Request.Form.Files[0];
+							try
+							{
+								if (CloudStorageAccount.TryParse("DefaultEndpointsProtocol=https;AccountName=storageaccountmoney9367;AccountKey=AtoBz3bP/esi7HTyWqg3ySyGgoIolYp376gYMjKlsaiwqNaOaORIjHSUL0RqoXw0Il4epqjP31j/LkXwZLb+PQ==;EndpointSuffix=core.windows.net", out CloudStorageAccount storageAccount))
+								{
+									CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
+									CloudBlobContainer container = blobClient.GetContainerReference("invoices");
+									CloudBlockBlob blockBlob = container.GetBlockBlobReference(files.FileName);
+									await blockBlob.UploadFromStreamAsync(files.OpenReadStream());
+									string loc = "https://storageaccountmoney9367.blob.core.windows.net/invoices/" + files.FileName;
+									ExpenseModel model = new ExpenseModel();
+									ReturnModel returnModel = await model.Build(loc, accountId, auth.Uid);
+									return Ok(true);
+								}
+								else
+								{
+									return Ok(false);
+								}
+							}
+							catch(Exception e)
+							{
+								ExceptionCatcher catcher = new ExceptionCatcher();
+								//catcher.Catch(e.Message);
+								return Ok(false);
+							}
+						case "UploadProfileImage":
+							var file = Request.Form.Files[0];
+							try
+							{
+								if (CloudStorageAccount.TryParse("DefaultEndpointsProtocol=https;AccountName=storageaccountmoney9367;AccountKey=3XosEFLMi9B0r4V03Krn0d1yb6Ecwj6SJm8FcwzckmI9FOwUDG0/ZgPx0ZkXgkEFyh+CuiZqGZ3WJOmVnqRMxg==;EndpointSuffix=core.windows.net", out CloudStorageAccount storageAccount))
+								{
+									CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
+									CloudBlobContainer container = blobClient.GetContainerReference("profileimage");
+									string name = Guid.NewGuid().ToString();
+									CloudBlockBlob blockBlob = container.GetBlockBlobReference(name);
+									await blockBlob.UploadFromStreamAsync(file.OpenReadStream());
+									FirebaseUser user = new FirebaseUser();
+									user = user.GetUser(auth.Uid);
+									user.Update(name, user);
+									return Ok(true);
+								}
+								else
+								{
+									return Ok(false);
+								}
+							}
+							catch (Exception e)
+							{
+								ExceptionCatcher catcher = new ExceptionCatcher();
+								//catcher.Catch(e.Message);
+								return Ok(false);
+							}
+					}
+				}
+			}
+			return Ok();
+			
 		}
 		[Route("GetTest")]
 		[HttpGet]
@@ -232,7 +347,7 @@ namespace DailyForecaster.Controllers
 			{
 				collectionsId = this.HttpContext.Request.Headers["collectionsId"];
 			}
-			if(authHeader == "A90986C6-B81D-45C7-97E2-B6EEE486A2D0E9BE35C6-36DB-441D-93CE-EF950BA6A282DD2C9CE3-4895-46CA-9307-386BF3391CC1" && (route == "BuildSimulation" || route == "UpdateSimulation"))
+			if (authHeader == "A90986C6-B81D-45C7-97E2-B6EEE486A2D0E9BE35C6-36DB-441D-93CE-EF950BA6A282DD2C9CE3-4895-46CA-9307-386BF3391CC1" && (route == "BuildSimulation" || route == "UpdateSimulation"))
 			{
 				switch (route)
 				{
@@ -248,6 +363,27 @@ namespace DailyForecaster.Controllers
 		public ActionResult GetUnseenTransactions(string email)
 		{
 			return Ok(new UnseenModel(email));
+		}
+		private ActionResult NewCFType(JsonElement json, string collectionsId)
+		{
+			CFType type = new CFType();
+			type.CreateCFType(collectionsId, JsonConvert.DeserializeObject<Newcftype>(json.GetRawText()).NewCFType);
+			return Ok(type.GetCFList(collectionsId));
+		}
+		private ActionResult SmartHelp(string uid)
+		{
+			return Ok(new SmartHelper(uid));
+		}
+		private ActionResult UpdateUser(JsonElement json, string uid)
+		{
+			FirebaseUser user = JsonConvert.DeserializeObject<FirebaseUser>(json.GetRawText());
+			user.Update(uid, user);
+			return Ok();
+		}
+		private ActionResult GetUser(string uid)
+		{
+			FirebaseUser user = new FirebaseUser();
+			return Ok(user.GetUser(uid));
 		}
 		private async Task<ActionResult> GetYodleeToken(string collectionsId,string uid)
 		{
@@ -311,11 +447,11 @@ namespace DailyForecaster.Controllers
 				return BudgetChange(json, userId);
 			}
 		}
-		private ActionResult CreateCollection(JsonElement json, string userId)
+		private ActionResult CreateCollection(JsonElement json, string userId, string email)
 		{
 			NewCollectionsObj obj = JsonConvert.DeserializeObject<NewCollectionsObj>(json.GetRawText());
 			Collections collections = new Collections();
-			return Ok(collections.CreateCollection(obj,userId));
+			return Ok(collections.CreateCollection(obj,userId,email));
 		}
 		/// <summary>
 		/// Login in Email notification
@@ -391,8 +527,18 @@ namespace DailyForecaster.Controllers
 		/// <returns>A safe to spend object that contains all of the elements that are needed</returns>
 		private ActionResult SafeToSpend(string email, string collectionsId)
 		{
-			SafeToSpendVM vm = new SafeToSpendVM(collectionsId, email);
-			return Ok(vm);
+			try
+			{
+				SafeToSpendVM vm = new SafeToSpendVM(collectionsId, email);
+				return Ok(vm);
+			}
+			catch (Exception e)
+			{
+				ExceptionCatcher catcher = new ExceptionCatcher();
+				catcher.Catch(e.Message);
+				return Ok();
+			}
+			
 		}
 		private ActionResult EditBudget(JsonElement json)
 		{
@@ -467,12 +613,17 @@ namespace DailyForecaster.Controllers
 				Key = "AddAccounts",
 				Url = "/dashboard/AddAccount"
 			});
+			subMenu.Add(new MenuData()
+			{
+				Title = "Automated Link",
+				Key = "AutomatedLink",
+				Url = "/dashboard/AutomatedLink"
+			});
 			menu.Add(new MenuData()
 			{
-				Title = "Homepage",
+				Title = "Budget Dashboard",
 				Key = "Dashboards",
 				Icon = "fe fe-home",
-				Count = 4,
 				Children = subMenu
 			});
 			return Ok(menu);
@@ -594,33 +745,13 @@ namespace DailyForecaster.Controllers
 			IndexModel model = new IndexModel();
 			return Ok(model.GetModel(email));
 		}
-		private ActionResult UnseenCount(string email)
+		private ActionResult UnseenCount(string uid)
 		{
-			int count = 0;
-			AspNetUsers users = new AspNetUsers();
-			string id = users.getUserId(email);
-			using (FinPlannerContext _context = new FinPlannerContext())
-			{
-				List<string> collections = _context
-					.UserCollectionMapping
-					.Where(x => x.Id == id)
-					.Select(x => x.CollectionsId)
-					.ToList();
-				List<string> accounts = _context
-					.Account
-					.Where(Acc => collections.Contains(Acc.CollectionsId))
-					.Select(x => x.Id)
-					.ToList();
-				foreach (string item in accounts)
-				{
-					count = count + _context
-						.AutomatedCashFlows
-						.Where(auto => item.Contains(auto.AccountId))
-						.Where(x => x.Validated == false)
-						.Count();
-				}
-				return Ok(count);
-			}
+			return Ok(new UserProfileModel(uid));
 		}
+	}
+	class Newcftype
+	{
+		public string NewCFType { get; set; }
 	}
 }

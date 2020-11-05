@@ -15,6 +15,7 @@ namespace DailyForecaster.Models
 		public string Phone { get; set; }
 		public string FirstName { get; set; }
 		public string LastName { get; set; }
+		public string ProfileImage { get; set; }
 		public ICollection<FirebaseLogin> FirebaseLogins { get; set; }
 		public ICollection<BudgetTransaction> BudgetTransactions { get; set; }
 		public ICollection<UserCollectionMapping> UserCollectionMappings { get; set; }
@@ -39,6 +40,14 @@ namespace DailyForecaster.Models
 			FirebaseId = user.FirebaseId;
 			Email = user.Email;
 			Phone = user.Phone;
+			ProfileImage = user.ProfileImage;
+		}
+		public FirebaseUser GetUser(string uid)
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.FirebaseUser.Where(x => x.FirebaseId == uid).FirstOrDefault();
+			}
 		}
 		public UserNames getNames(string userId)
 		{
@@ -71,6 +80,22 @@ namespace DailyForecaster.Models
 			Phone = model.PhoneNumber;
 			Save();
 		}
+		public void Update(string uid,FirebaseUser user)
+		{
+			FirebaseUser old = GetUser(uid);
+			old.FirstName = user.FirstName;
+			old.LastName = user.LastName;
+			old.Phone = user.Phone;
+			old.ProfileImage = user.ProfileImage;
+			old.Update();
+		}
+		public void Update(string ImageLoc, string uid)
+		{
+			FirebaseUser user = GetUser(uid);
+			user.ProfileImage = ImageLoc;
+			Update(uid, user);
+		}
+
 		/// <summary>
 		/// Tests if user exists
 		/// </summary>
@@ -116,6 +141,14 @@ namespace DailyForecaster.Models
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
 				_context.Add(this);
+				_context.SaveChanges();
+			}
+		}
+		private void Update()
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Entry(this).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
 				_context.SaveChanges();
 			}
 		}

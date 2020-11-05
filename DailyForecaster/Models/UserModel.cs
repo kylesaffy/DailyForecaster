@@ -15,6 +15,7 @@ namespace DailyForecaster.Models
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Uid { get; set; }
+        public string ProfileImage { get; set; }
         public async Task<bool> CreateUser(UserModel model)
 		{
             UserRecordArgs args = new UserRecordArgs()

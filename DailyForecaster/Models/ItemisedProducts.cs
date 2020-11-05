@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc.Formatters;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace DailyForecaster.Models
 {
+	[Serializable]
 	public class ItemisedProducts
 	{
 		public string ItemisedProductsId { get; set; }
@@ -16,6 +18,9 @@ namespace DailyForecaster.Models
 		public double Amount { get; set; }
 		public double Savings { get; set; }
 		public double SubTotal { get; set; }
+		public string ExpenseModelId { get; set; }
+		[ForeignKey("ExpenseModelId")]
+		public ExpenseModel ExpenseModel { get; set; }
 		public ItemisedProducts() { }
 		/// <summary>
 		/// Initalises a new Itemised Product
@@ -39,8 +44,27 @@ namespace DailyForecaster.Models
 			}
 			catch
 			{
+				ProductClassModel productClass = new ProductClassModel();
+				ProductsModel product = new ProductsModel();
+				product.ProductsModelId = productStr;
+				product.ProductClassModel = productClass;
+				ProductsModel = product;
 				EmailFunction email = new EmailFunction();
+				ProductsModelId = productStr;
+				NumberOfProducts = number;
+				Amount = Math.Round(amount, 2);
+				Savings = Math.Round(savings, 2);
+				SubTotal = Math.Round((amount * number) - savings, 2);
 				email.EmailError("Product not found", null, productStr);
+			}
+		}
+		public void Save()
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				this.ProductsModel = null;
+				_context.Add(this);
+				_context.SaveChanges();
 			}
 		}
 	}

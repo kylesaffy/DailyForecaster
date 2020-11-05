@@ -98,9 +98,11 @@ namespace DailyForecaster.Controllers
 			List<FirebaseUser> users = firebaseUser.GetUserList();
 			ReturnModel model = new ReturnModel() { result = true };
 			EmailFunction email = new EmailFunction();
-			foreach(FirebaseUser item in users)
+			//FirebaseUser item = users.Where(x => x.Email == "kylesaffy@gmail.com").FirstOrDefault();
+			//model = email.DailyEmailSend(item.FirebaseUserId);
+			foreach (FirebaseUser item in users)
 			{
-				if(model.result)
+				if (model.result)
 				{
 					model = email.DailyEmailSend(item.FirebaseUserId);
 				}
@@ -111,9 +113,11 @@ namespace DailyForecaster.Controllers
 		[HttpGet]
 		public async Task<ActionResult> RunReaderCall(string url)
 		{
+			string accountId = "0e1fc81f-ad3a-4f1e-8f20-2e8cf3515099";
+			string userId = "SIBqSTyyyYP3tBXFo4drreJbqq43";
 			ExpenseModel reader = new ExpenseModel();
-			reader = await reader.Create(url);
-			return Ok(reader);
+			ReturnModel model = await reader.Build(url, accountId,userId);
+			return Ok(model);
 		}
 		[Route("Reader")]
 		[HttpGet]

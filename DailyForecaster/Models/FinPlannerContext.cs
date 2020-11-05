@@ -8,11 +8,11 @@ namespace DailyForecaster.Models
 {
     public partial class FinPlannerContext : DbContext
     {
-        public FinPlannerContext(DbContextOptions<FinPlannerContext> options) : base(options){ }
+        public FinPlannerContext(DbContextOptions<FinPlannerContext> options) : base(options) { }
         public FinPlannerContext() { }
         public DbSet<CFType> CFTypes { get; set; }
         public DbSet<CFClassification> CFClassifications { get; set; }
-        
+
         //public DbSet<CashFlowItem> CashFlowItems { get; set; }
         public DbSet<ManualCashFlow> ManualCashFlows { get; set; }
         public DbSet<AutomatedCashFlow> AutomatedCashFlows { get; set; }
@@ -20,7 +20,7 @@ namespace DailyForecaster.Models
         public DbSet<Collections> Collections { get; set; }
         public DbSet<UserCollectionMapping> UserCollectionMapping { get; set; }
         public DbSet<Institution> Institution { get; set; }
-		public DbSet<AccountCollectionsMapping> AccountCollectionsMapping { get; set; }
+        public DbSet<AccountCollectionsMapping> AccountCollectionsMapping { get; set; }
         public DbSet<Budget> Budget { get; set; }
         public DbSet<BudgetTransaction> BudgetTransactions { get; set; }
         public DbSet<CollectionSharing> CollectionSharing { get; set; }
@@ -55,6 +55,8 @@ namespace DailyForecaster.Models
         public DbSet<RetailMerchants> RetailMerchants { get; set; }
         public DbSet<RetailBranches> RetailBranches { get; set; }
         public DbSet<ExpenseModel> ExpenseModels { get; set; }
+        public DbSet<DailyTip> DailyTip { get; set; }
+        public DbSet<DailyMotivational> DailyMotivational {get;set;}
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()

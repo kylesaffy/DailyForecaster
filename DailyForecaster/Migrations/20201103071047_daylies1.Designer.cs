@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20201103071047_daylies1")]
+    partial class daylies1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -568,9 +570,6 @@ namespace DailyForecaster.Migrations
                     b.Property<DateTime>("DistributionDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Header")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Quote")
                         .HasColumnType("nvarchar(max)");
 
@@ -734,9 +733,6 @@ namespace DailyForecaster.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ProfileImage")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("FirebaseUserId");

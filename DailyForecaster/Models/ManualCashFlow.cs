@@ -13,6 +13,7 @@ namespace DailyForecaster.Models
 	/// <summary>
 	/// Accounts for transactions that are created by users
 	/// </summary>
+    [Serializable]
 	public class ManualCashFlow
 	{
 		[Required]
@@ -84,10 +85,12 @@ namespace DailyForecaster.Models
 			ExpenseLocation = flow.ExpenseLocation;
 			Save();
 		}
-		public ManualCashFlow(CFType cfId, CFClassification cfClass, double amount, DateTime dateBooked, string source, string userID, bool exp, string el)
+		public ManualCashFlow(CFType cfId, CFClassification cfClass, double amount, DateTime dateBooked, string source, string userID, bool exp, string el,string accountId)
 		{
 			CFType = cfId;
+			CFTypeId = cfId.Id;
 			CFClassification = cfClass;
+			CFClassificationId = cfClass.Id;
 			Amount = amount;
 			DateBooked = dateBooked;
 			DateCaptured = DateTime.Now;
@@ -97,6 +100,7 @@ namespace DailyForecaster.Models
 			UserId = userID;
 			isDeleted = false;
 			ExpenseLocation = el;
+			AccountId = accountId;
 		}
 		public List<ManualCashFlow> Get(Budget budget)
 		{
@@ -250,10 +254,11 @@ namespace DailyForecaster.Models
 			from.Save(from);
 			return new ReturnModel() { result = true };
 		}
-		private void Save()
+		public void Save()
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
+				this.CFType = null;
 				_context.Add(this);
 				try
 				{

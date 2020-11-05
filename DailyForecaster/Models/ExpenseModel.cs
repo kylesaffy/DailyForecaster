@@ -1,15 +1,22 @@
 ﻿using Azure.Storage.Blobs.Models;
+using DailyForecaster.Controllers;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Azure.KeyVault.Models;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Extensions.Azure;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace DailyForecaster.Models
 {
+	[Serializable]
 	public class ExpenseModel
 	{
 		public string ExpenseModelId { get; set; }
@@ -23,6 +30,76 @@ namespace DailyForecaster.Models
 		public double Total { get; set; }
 		public DateTime Date { get; set; }
 		public List<ItemisedProducts> ItemisedProducts { get; set; }
+		public async Task<ReturnModel> Build(string url, string accountId,string user)
+		{
+			ExpenseModel model = await Create(url);
+			if (model != null)
+			{
+				if (model.BlobLink == "Error")
+				{
+					if (model.BlobLink != "Merchant not found")
+					{
+						if (model.ItemisedProducts.Where(x => x.ItemisedProductsId != null).Any())
+						{
+							CFType type = Weighting(model);
+							CFClassification classification = new CFClassification();
+							List<CFClassification> classifications = classification.GetList();
+							ManualCashFlow cf = new ManualCashFlow(type, classifications.Where(x => x.Sign == -1).FirstOrDefault(), model.Total, DateTime.Now, model.RetailBranches.Name, user, true, model.RetailBranches.RetailMerchants.Name, accountId);
+							cf.CFClassification = null;
+							cf.Save();
+							model.ManualCashFlowId = cf.Id;
+							model.Date = DateTime.Now;
+							model.RetailBranchesId = model.RetailBranches.RetailBranchesId;
+							model.RetailBranches = null;
+							foreach (ItemisedProducts item in model.ItemisedProducts.Where(x => x.ItemisedProductsId != null))
+							{
+								item.ExpenseModelId = model.ExpenseModelId;
+								item.ProductsModel = null;
+							}
+							ExpenseModel saveModel = model.DeepClone();
+							saveModel.ItemisedProducts = saveModel.ItemisedProducts.Where(x => x.ItemisedProductsId != null).ToList();
+							saveModel.Save();
+						}
+						List<ItemisedProducts> items = new List<ItemisedProducts>();
+						if (model.ItemisedProducts.Where(x => x.ItemisedProductsId == null).Any())
+						{
+							items = model.ItemisedProducts.Where(x => x.ItemisedProductsId == null).ToList();
+						}
+						return new ReturnModel() { result = true, products = items };
+					}
+					else
+					{
+						return new ReturnModel() { result = false, returnStr = "Merchant not found, we are investigating this merchant and will update our system. We will inform you once this has been corrected. We will create this transaction for you" };
+					}
+				}
+			}
+			return new ReturnModel() { result = false, returnStr = "Oops something went wrong, please try a different pricture" };
+
+		}
+		public CFType Weighting(ExpenseModel expense)
+		{
+			List<ProductClassModel> classModel = expense.ItemisedProducts.Where(x=>x.ItemisedProductsId != null).Select(y => y.ProductsModel.ProductClassModel).Distinct().ToList();
+			List<ExpenseWeighting> weightings = new List<ExpenseWeighting>();
+			CFType type = new CFType();
+			List<CFType> types = type.GetCFList();
+			foreach(ItemisedProducts item in expense.ItemisedProducts.Where(x=>x.ItemisedProductsId !=null))
+			{
+				weightings.Add(new ExpenseWeighting()
+				{
+					Amount = item.Amount,
+					CFType = types.Where(x => x.Id == item.ProductsModel.ProductClassModel.CFTypeId).FirstOrDefault()
+			});
+			}
+			weightings = weightings
+				.GroupBy(x => x.CFType)
+				.Select(y => new ExpenseWeighting
+				{
+					CFType = y.Key,
+					Amount = y.Sum(z => z.Amount)
+				}).ToList();
+			return weightings.OrderBy(x => x.Amount).Select(x => x.CFType).First();
+
+		}
 		public async Task<ExpenseModel> Create(string url)
 		{
 			RunReader reader = new RunReader();
@@ -422,5 +499,34 @@ namespace DailyForecaster.Models
 				}
 			
 		}
+		private void Save()
+		{
+			this.RetailBranches = null;
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Add(this);
+				//_context.SaveChanges();
+			}
+		}
+		
+	}
+	public static class ExtensionMethods
+	{
+		// Deep clone
+		public static T DeepClone<T>(this T a)
+		{
+			using (MemoryStream stream = new MemoryStream())
+			{
+				BinaryFormatter formatter = new BinaryFormatter();
+				formatter.Serialize(stream, a);
+				stream.Position = 0;
+				return (T)formatter.Deserialize(stream);
+			}
+		}
+	}
+	public class ExpenseWeighting
+	{
+		public CFType CFType { get; set; }
+		public double Amount { get; set; }
 	}
 }

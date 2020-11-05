@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20201027032301_update-productItemisedProducts")]
+    partial class updateproductItemisedProducts
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -541,47 +543,6 @@ namespace DailyForecaster.Migrations
                     b.ToTable("Collections");
                 });
 
-            modelBuilder.Entity("DailyForecaster.Models.DailyMotivational", b =>
-                {
-                    b.Property<string>("DailyMotivationalId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("DistributionDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Source")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("URL")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("DailyMotivationalId");
-
-                    b.ToTable("DailyMotivational");
-                });
-
-            modelBuilder.Entity("DailyForecaster.Models.DailyTip", b =>
-                {
-                    b.Property<string>("DailyTipId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("DistributionDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Header")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Quote")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Source")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("DailyTipId");
-
-                    b.ToTable("DailyTip");
-                });
-
             modelBuilder.Entity("DailyForecaster.Models.EmailPreferences", b =>
                 {
                     b.Property<string>("EmailPreferencesId")
@@ -734,9 +695,6 @@ namespace DailyForecaster.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ProfileImage")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("FirebaseUserId");

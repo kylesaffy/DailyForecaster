@@ -261,14 +261,24 @@ namespace DailyForecaster.Models
 			return reportedTransactions;
 		}
 		private ReportedTransaction(ReportedTransaction reportedTransaction, List<CFType> types, List<CFClassification> classifications)
-		{
-			CFClassification = classifications.Where(x => x.Id == reportedTransaction.AutomatedCashFlow.CFClassificationId).FirstOrDefault();
-			CFType = types.Where(x => x.Id == reportedTransaction.AutomatedCashFlow.CFTypeId).FirstOrDefault();
+		{	 
 			Amount = reportedTransaction.Amount;
 			DateBooked = reportedTransaction.DateBooked;
 			DateCaptured = reportedTransaction.DateCaptured;
 			SourceOfExpense = reportedTransaction.SourceOfExpense;
-			AutomatedCashFlow = reportedTransaction.AutomatedCashFlow;
+			if (reportedTransaction.AutomatedCashFlow != null)
+			{
+				AutomatedCashFlow = reportedTransaction.AutomatedCashFlow;
+				CFClassification = classifications.Where(x => x.Id == reportedTransaction.AutomatedCashFlow.CFClassificationId).FirstOrDefault();
+				CFType = types.Where(x => x.Id == reportedTransaction.AutomatedCashFlow.CFTypeId).FirstOrDefault();
+				Id = AutomatedCashFlow.ID;
+			}
+			else
+			{
+				CFClassification = classifications.Where(x => x.Id == reportedTransaction.CFClassification.Id).FirstOrDefault();
+				CFType = types.Where(x => x.Id == reportedTransaction.CFType.Id).FirstOrDefault();
+				Id = Guid.NewGuid().ToString();
+			}
 			ManualCashFlow = reportedTransaction.ManualCashFlow;
 			Account = reportedTransaction.Account;
 			AccountId = reportedTransaction.AccountId;

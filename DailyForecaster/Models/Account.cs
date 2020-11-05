@@ -261,11 +261,11 @@ namespace DailyForecaster.Models
 					{
 						if (item.YodleeId == 0 && item.AccountIdentifier != null)
 						{
-							item.YodleeId = yodleeAccounts.Where(x => x.accountNumber == item.AccountIdentifier).Select(x => x.id).FirstOrDefault();
+							item.YodleeId = yodleeAccounts.Where(x => x.accountNumber.Substring(x.accountNumber.Length - 4, 4) == item.AccountIdentifier.Substring(item.AccountIdentifier.Length - 4, 4)).Select(x => x.id).FirstOrDefault();
 						}
 						else
 						{
-							YodleeAccountLevel accountLevel = yodleeAccounts.Where(x => x.accountNumber == item.AccountIdentifier).FirstOrDefault();
+							YodleeAccountLevel accountLevel = yodleeAccounts.Where(x => x.accountNumber.Substring(x.accountNumber.Length - 4, 4) == item.AccountIdentifier.Substring(item.AccountIdentifier.Length - 4, 4)).FirstOrDefault();
 							if (accountLevel != null)
 							{
 								if (accountLevel.availableBalance != null)

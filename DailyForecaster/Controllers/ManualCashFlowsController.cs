@@ -81,7 +81,7 @@ namespace DailyForecaster.Controllers
         {
             CFType type = _context.CFTypes.Find(mcf.CFType);
             CFClassification classification = _context.CFClassifications.Find(mcf.CFClassification);
-            ManualCashFlow cf = new ManualCashFlow(type,classification,mcf.Amount,mcf.DateBooked,mcf.SourceOfExpense,mcf.UserId,mcf.Expected,mcf.ExpenseLocation);
+            ManualCashFlow cf = new ManualCashFlow(type,classification,mcf.Amount,mcf.DateBooked,mcf.SourceOfExpense,mcf.UserId,mcf.Expected,mcf.ExpenseLocation,"");
             if (ModelState.IsValid)
             {
                 _context.ManualCashFlows.Add(cf);

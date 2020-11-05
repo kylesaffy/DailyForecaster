@@ -8,6 +8,8 @@ namespace DailyForecaster.Models
 	/// <summary>
 	/// Idetifies whether or not this is a Income or Expense
 	/// </summary>
+	/// 
+	[Serializable]
 	public class CFClassification
 	{
 		public string Id { get; set; }

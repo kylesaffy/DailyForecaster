@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 namespace DailyForecaster.Models
 {
+	[Serializable]
 	public class RetailMerchants
 	{
 		public string RetailMerchantsId { get; set; }
