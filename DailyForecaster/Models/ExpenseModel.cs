@@ -30,12 +30,45 @@ namespace DailyForecaster.Models
 		public double Total { get; set; }
 		public DateTime Date { get; set; }
 		public List<ItemisedProducts> ItemisedProducts { get; set; }
+		
+		public async Task<ReturnModel> BuildPartial(string url, string accountId, string user, string cftypeId)
+		{
+			ExpenseModel model = await CreatePartial(url);
+			if (model != null)
+			{
+				if (model.BlobLink != "Error")
+				{
+					if (model.BlobLink != "Merchant not found")
+					{
+						CFClassification classification = new CFClassification();
+						CFType type = new CFType(cftypeId);
+						List<CFClassification> classifications = classification.GetList();
+						ManualCashFlow cf = new ManualCashFlow(type, classifications.Where(x => x.Sign == -1).FirstOrDefault(), model.Total, DateTime.Now, model.RetailBranches.Name, user, true, model.RetailBranches.RetailMerchants.Name, accountId);
+						cf.CFClassification = null;
+						cf.Save();
+						model.ManualCashFlowId = cf.Id;
+						model.Date = DateTime.Now;
+						model.RetailBranchesId = model.RetailBranches.RetailBranchesId;
+						model.RetailBranches = null;
+						ExpenseModel saveModel = model.DeepClone();
+						saveModel.Save();
+						return new ReturnModel() { result = true };
+					}
+					else
+					{
+						return new ReturnModel() { result = false, returnStr = "Merchant not found, we are investigating this merchant and will update our system. We will inform you once this has been corrected. We will create this transaction for you" };
+					}
+				}
+			}
+			return new ReturnModel() { result = false, returnStr = "Oops something went wrong, please try a different pricture" };
+
+		}
 		public async Task<ReturnModel> Build(string url, string accountId,string user)
 		{
 			ExpenseModel model = await Create(url);
 			if (model != null)
 			{
-				if (model.BlobLink == "Error")
+				if (model.BlobLink != "Error")
 				{
 					if (model.BlobLink != "Merchant not found")
 					{
@@ -100,6 +133,46 @@ namespace DailyForecaster.Models
 			return weightings.OrderBy(x => x.Amount).Select(x => x.CFType).First();
 
 		}
+		public async Task<ExpenseModel> CreatePartial(string url)
+		{
+			RunReader reader = new RunReader();
+			reader = await reader.GetRunReader(url);
+			if (reader == null)
+			{
+				return new ExpenseModel() { BlobLink = "Error" };
+			}
+			bool checker = false;
+			foreach (string item in reader.Results)
+			{
+				switch (item)
+				{
+					case "DUE VAT INCL":
+						return PicknPayPartial(reader, url);
+				}
+			}
+			if (!checker)
+			{
+				EmailFunction email = new EmailFunction();
+				email.EmailError("Merchant not found", url);
+			}
+			return null;
+		}
+		private ExpenseModel PicknPayPartial(RunReader reader, string url)
+		{
+			ExpenseModel model = new ExpenseModel();
+			int i = 0;
+			while (reader.Results[i] != "DUE VAT INCL")
+			{
+				i++;
+			}
+			model.BlobLink = url;
+			model.Date = DateTime.Now;
+			model.Total = Convert.ToDouble(reader.Results[i + 1]);
+			RetailBranches retailBranch = new RetailBranches();
+			model.RetailBranches = retailBranch.Get("Pickn Pay", "General");
+			model.ExpenseModelId = Guid.NewGuid().ToString();
+			return model;
+		}
 		public async Task<ExpenseModel> Create(string url)
 		{
 			RunReader reader = new RunReader();
@@ -111,7 +184,7 @@ namespace DailyForecaster.Models
 			bool checker = false;
 			foreach(string item in reader.Results)
 			{
-				switch(item)
+				switch(item.ToUpper())
 				{
 					case "Checkers":
 						return Checkers(reader, url);

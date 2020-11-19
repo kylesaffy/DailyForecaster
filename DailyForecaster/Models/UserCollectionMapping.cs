@@ -107,6 +107,12 @@ namespace DailyForecaster.Models
 				return _context.UserCollectionMapping.Where(x => x.Id == id).Count();
 			}
 		}
+		public bool Check(string uid)
+		{
+			FirebaseUser user = new FirebaseUser(uid);
+			if (getCollectionIds(user.FirebaseUserId, "firebase").Count() > 0) return true;
+			else return false;
+		}
 		/// <summary>
 		/// Check if the user already belong to this collection
 		/// </summary>

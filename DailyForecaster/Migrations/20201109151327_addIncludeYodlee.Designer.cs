@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20201109151327_addIncludeYodlee")]
+    partial class addIncludeYodlee
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -912,41 +914,6 @@ namespace DailyForecaster.Migrations
                     b.ToTable("ManualCashFlows");
                 });
 
-            modelBuilder.Entity("DailyForecaster.Models.MessagingModel", b =>
-                {
-                    b.Property<string>("MessagingModelId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("DateTimeCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("DateTimeRead")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("Delivered")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Message")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("Read")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("RecipientId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("SenderId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("MessagingModelId");
-
-                    b.HasIndex("RecipientId");
-
-                    b.HasIndex("SenderId");
-
-                    b.ToTable("MessagingModel");
-                });
-
             modelBuilder.Entity("DailyForecaster.Models.MonthlyAmortisation", b =>
                 {
                     b.Property<string>("MonthlyAmortisationId")
@@ -1211,43 +1178,6 @@ namespace DailyForecaster.Migrations
                     b.HasKey("RetailMerchantsId");
 
                     b.ToTable("RetailMerchants");
-                });
-
-            modelBuilder.Entity("DailyForecaster.Models.ScheduledTransactions", b =>
-                {
-                    b.Property<string>("ScheduledTransactionsId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("AccountId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<double>("Amount")
-                        .HasColumnType("float");
-
-                    b.Property<string>("CFClassificationId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("CFTypeId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Day")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FTypeId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("ScheduledTransactionsId");
-
-                    b.HasIndex("AccountId");
-
-                    b.HasIndex("CFClassificationId");
-
-                    b.HasIndex("FTypeId");
-
-                    b.ToTable("ScheduledTransactions");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.Simulation", b =>
@@ -1659,17 +1589,6 @@ namespace DailyForecaster.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("DailyForecaster.Models.MessagingModel", b =>
-                {
-                    b.HasOne("DailyForecaster.Models.FirebaseUser", "Recipient")
-                        .WithMany()
-                        .HasForeignKey("RecipientId");
-
-                    b.HasOne("DailyForecaster.Models.FirebaseUser", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId");
-                });
-
             modelBuilder.Entity("DailyForecaster.Models.MonthlyAmortisation", b =>
                 {
                     b.HasOne("DailyForecaster.Models.AccountAmortisation", "AccountAmortisation")
@@ -1739,21 +1658,6 @@ namespace DailyForecaster.Migrations
                     b.HasOne("DailyForecaster.Models.RetailMerchants", "RetailMerchants")
                         .WithMany()
                         .HasForeignKey("RetailMerchantsId");
-                });
-
-            modelBuilder.Entity("DailyForecaster.Models.ScheduledTransactions", b =>
-                {
-                    b.HasOne("DailyForecaster.Models.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId");
-
-                    b.HasOne("DailyForecaster.Models.CFClassification", "CFClassification")
-                        .WithMany()
-                        .HasForeignKey("CFClassificationId");
-
-                    b.HasOne("DailyForecaster.Models.CFType", "CFType")
-                        .WithMany()
-                        .HasForeignKey("FTypeId");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.Simulation", b =>

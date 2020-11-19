@@ -33,7 +33,10 @@ namespace DailyForecaster
 		{
 			services.AddDbContext<FinPlannerContext>(opt =>
 			opt.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-			services.AddControllers();
+			services.AddControllers();//.AddNewtonsoftJson(x => {
+				//x.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
+				//x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+				//});
 			services.AddCors(options =>
 			{
 				options.AddPolicy("AllowOrigin",
@@ -42,7 +45,7 @@ namespace DailyForecaster
 						 .AllowAnyHeader()
 						 .AllowAnyMethod());
 			});
-
+			services.Configure<TwilioAccountDetails>(Configuration.GetSection("TwilioAccountDetails"));
 			// get key for SAS
 			string value = Configuration["Token"];
 			// get file
@@ -56,7 +59,7 @@ namespace DailyForecaster
 					Credential = GoogleCredential.FromFile(pathKey)
 				});
 			//}
-			services.AddApplicationInsightsTelemetry(Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
+			//*services.AddApplicationInsightsTelemetry(Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

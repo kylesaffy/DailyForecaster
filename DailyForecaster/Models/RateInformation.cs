@@ -27,6 +27,13 @@ namespace DailyForecaster.Models
 			}
 			return 0;
 		}
+		public double GetPrime()
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.RateInformation.OrderByDescending(x => x.DateEffective).Select(x => x.PrimeRate).FirstOrDefault();
+			}
+		}
 	}
 	
 }

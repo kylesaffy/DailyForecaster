@@ -332,7 +332,7 @@ namespace DailyForecaster.Models
 									m.CFClassification = classifications.Where(x => x.Id == m.CFClassificationId).FirstOrDefault();
 								}
 								account.AutomatedCashFlows = automatedCashFlow.GetAutomatedCashFlows(account.Id, smallest, DateTime.Now.AddDays(1));
-								foreach (YodleeTransactionLevel transaction in transactions.Where(x => x.accountId == account.YodleeId))
+								foreach (YodleeTransactionLevel transaction in transactions.Where(x => x.accountId == account.YodleeId && x.status.ToLower() == "posted"))
 								{
 									check = true;
 									if (account.Institution.ProviderId == 10607762 && GetSource(transaction).Length > 29)
@@ -342,6 +342,11 @@ namespace DailyForecaster.Models
 											check = false;
 										}
 									}
+									//if (account.Institution.ProviderId == 10607762 )
+									//{
+									//	ExceptionCatcher catcher = new ExceptionCatcher();
+									//	catcher.Catch(JsonConvert.SerializeObject(transaction));
+									//}
 									if (check)
 									{
 										if (!account.AutomatedCashFlows.Where(x => x.YodleeId == transaction.id).Any())

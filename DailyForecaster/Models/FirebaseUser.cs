@@ -79,6 +79,8 @@ namespace DailyForecaster.Models
 			LastName = model.LastName;
 			Phone = model.PhoneNumber;
 			Save();
+			EmailPreferences preferences = new EmailPreferences();
+			preferences.Create(FirebaseUserId);
 		}
 		public void Update(string uid,FirebaseUser user)
 		{

@@ -41,7 +41,8 @@ namespace DailyForecaster.Models
 						if (comparison.ReportedTransactions.Select(x => x.AutomatedCashFlow).ToList()[0] != null)
 						{
 							comparisons.Add(comparison);
-							flows.AddRange(comparison.ReportedTransactions.Where(x => x.AutomatedCashFlow.DateCaptured.Date == dateTime.Date).Select(x => x.AutomatedCashFlow));
+							List<ReportedTransaction> reportedTransactions = comparison.ReportedTransactions.Where(x => x.AutomatedCashFlow != null).ToList();
+							flows.AddRange(reportedTransactions.Where(x => x.AutomatedCashFlow.DateCaptured.Date == dateTime.Date).Select(x => x.AutomatedCashFlow));
 						}
 					}
 				}

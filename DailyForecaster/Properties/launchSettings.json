@@ -3,7 +3,7 @@
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "http://localhost:60150",
+      "applicationUrl": "http://localhost:44311",
       "sslPort": 44310
     }
   },
@@ -13,7 +13,9 @@
       "commandName": "IISExpress",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "TWILIO_AUTH_TOKEN": "2cc7dcdf6a0354630b339eac86fde393",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "TWILIO_ACCOUNT_SID": "ACde0510ce9f65ea7d4b4a05f7d567e577"
       }
     },
     "DailyForecaster": {

@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
@@ -19,7 +21,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.Rest;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
+// using Newtonsoft.Json;
 using FirebaseAuth = FirebaseAdmin.Auth.FirebaseAuth;
 
 namespace DailyForecaster.Controllers
@@ -31,11 +34,16 @@ namespace DailyForecaster.Controllers
 	{
 		private readonly IOptions<MyConfig> config;
 
-		//public BlobStorageController(IOptions<MyConfig> config)
-		//{
-		//	this.config = config;
-		//}
+	
 
+		private readonly TwilioAccountDetails _twilioAccountDetails;
+		// I’ve injected twilioAccountDetails into the constructor
+
+		public RoutingController(IOptions<TwilioAccountDetails> twilioAccountDetails)
+		{
+			// We want to know if twilioAccountDetails is null so we throw an exception if it is           
+			_twilioAccountDetails = twilioAccountDetails.Value ?? throw new ArgumentException(nameof(twilioAccountDetails));
+		}
 		[Route("OpenPost")]
 		[HttpPost]
 		public ActionResult OpenPost([FromBody] JsonElement json)
@@ -46,87 +54,103 @@ namespace DailyForecaster.Controllers
 		[HttpGet]
 		public async Task<ActionResult> Get()
 		{
-			string authHeader = this.HttpContext.Request.Headers["Authorization"];
-			FirebaseToken auth = await validate(authHeader);
-			if (auth != null)
+			try
 			{
-				FirebaseUser firebaseUser = new FirebaseUser();
-				try
+				string authHeader = this.HttpContext.Request.Headers["Authorization"];
+				FirebaseToken auth = await validate(authHeader);
+				if (auth != null)
 				{
-					new ClickTracker(this.HttpContext.Request.Headers["Route"]
-						, true,
-						false,
-						"collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString(),
-						firebaseUser.GetUserId(auth.Claims["email"].ToString()),
-						true);
-				}
-				catch (Exception e)
-				{
-					ExceptionCatcher catcher = new ExceptionCatcher();
-					catcher.Catch(e.Message);
-				}
-				string route = this.HttpContext.Request.Headers["Route"];
-				string collectionsId = "";
-				if (this.HttpContext.Request.Headers["collectionsId"] != "")
-				{
-					collectionsId = this.HttpContext.Request.Headers["collectionsId"];
-				}
-				string accountId = "";
-				if (this.HttpContext.Request.Headers["accountId"] != "")
-				{
-					accountId = this.HttpContext.Request.Headers["accountId"];
-				}
-				DateTime startDate = DateTime.Now;
-				if (this.HttpContext.Request.Headers["startDate"].Count() != 0)
-				{
-					startDate = DateConvert(this.HttpContext.Request.Headers["startDate"]);
-				}
-				DateTime endDate = DateTime.Now;
-				if (this.HttpContext.Request.Headers["endDate"].Count() != 0)
-				{
-					endDate = DateConvert(this.HttpContext.Request.Headers["endDate"]);
-				}
-				if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
-				{
-					FirebaseUser user = new FirebaseUser();
-					if (!user.Exsits(auth.Claims["email"].ToString()))
+					FirebaseUser firebaseUser = new FirebaseUser();
+					try
 					{
-						new FirebaseUser(auth.Claims["email"].ToString(), auth.Uid);
+						new ClickTracker(this.HttpContext.Request.Headers["Route"]
+							, true,
+							false,
+							"collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString(),
+							firebaseUser.GetUserId(auth.Claims["email"].ToString()),
+							true);
 					}
-					switch (route)
+					catch (Exception e)
 					{
-						case "UnseenCount":
-							return UnseenCount(auth.Uid);
-						case "Index":
-							return Index(auth.Claims["email"].ToString());
-						case "GetAccounts":
-							return GetAccounts(collectionsId, auth.Claims["email"].ToString());
-						case "GetReportedTransaction":
-							return GetReportedTransactions(accountId, startDate, endDate);
-						case "GetAccount":
-							return GetAccount(accountId);
-						case "GetCollectionsMenu":
-							return GetCollectionsMenu(auth.Claims["email"].ToString());
-						case "EditBudget":
-							return EditBudget(auth.Claims["email"].ToString(), collectionsId);
-						case "SafeToSpend":
-							return SafeToSpend(auth.Claims["email"].ToString(), collectionsId);
-						case "ShareCollection":
-							return ShareCollection(collectionsId);
-						case "ManualCashFlows":
-							return ManualCashFlows(auth.Claims["email"].ToString(), collectionsId);
-						case "GetUnseenTransactions":
-							return GetUnseenTransactions(auth.Claims["email"].ToString());
-						case "GetYodleeToken":
-							return await GetYodleeToken(collectionsId, auth.Uid);
-						case "GetUser":
-							return GetUser(auth.Uid);
-						case "SmartHelp":
-							return SmartHelp(auth.Uid);
+						ExceptionCatcher catcher = new ExceptionCatcher();
+						catcher.Catch(e.Message);
+					}
+					string route = this.HttpContext.Request.Headers["Route"];
+					string collectionsId = "";
+					if (this.HttpContext.Request.Headers["collectionsId"] != "")
+					{
+						collectionsId = this.HttpContext.Request.Headers["collectionsId"];
+					}
+					string accountId = "";
+					if (this.HttpContext.Request.Headers["accountId"] != "")
+					{
+						accountId = this.HttpContext.Request.Headers["accountId"];
+					}
+					DateTime startDate = DateTime.Now;
+					if (this.HttpContext.Request.Headers["startDate"].Count() != 0)
+					{
+						startDate = DateConvert(this.HttpContext.Request.Headers["startDate"]);
+					}
+					DateTime endDate = DateTime.Now;
+					if (this.HttpContext.Request.Headers["endDate"].Count() != 0)
+					{
+						endDate = DateConvert(this.HttpContext.Request.Headers["endDate"]);
+					}
+					if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
+					{
+						FirebaseUser user = new FirebaseUser();
+						if (!user.Exsits(auth.Claims["email"].ToString()))
+						{
+							new FirebaseUser(auth.Claims["email"].ToString(), auth.Uid);
+						}
+						switch (route)
+						{
+							case "UnseenCount":
+								return UnseenCount(auth.Uid);
+							case "Index":
+								return Index(auth.Claims["email"].ToString());
+							case "GetAccounts":
+								return GetAccounts(collectionsId, auth.Claims["email"].ToString());
+							case "GetReportedTransaction":
+								return GetReportedTransactions(accountId, startDate, endDate);
+							case "GetAccount":
+								return GetAccount(accountId);
+							case "GetCollectionsMenu":
+								return GetCollectionsMenu(auth.Uid);
+							case "EditBudget":
+								return EditBudget(auth.Claims["email"].ToString(), collectionsId);
+							case "SafeToSpend":
+								return SafeToSpend(auth.Claims["email"].ToString(), collectionsId);
+							case "ShareCollection":
+								return ShareCollection(collectionsId);
+							case "ManualCashFlows":
+								return ManualCashFlows(auth.Claims["email"].ToString(), collectionsId);
+							case "GetUnseenTransactions":
+								return GetUnseenTransactions(auth.Claims["email"].ToString());
+							case "GetYodleeToken":
+								return await GetYodleeToken(collectionsId, auth.Uid);
+							case "GetUser":
+								return GetUser(auth.Uid);
+							case "SmartHelp":
+								return SmartHelp(auth.Uid);
+							case "GetCalculator":
+								return GetCalculator();
+							case "TwilioToken":
+								return TwilioToken(auth.Uid);
+							case "WelcomePage":
+								SmartHelper helper = new SmartHelper();
+								return Ok(helper.WelcomePage());
+							case "CollectionCount":
+								return CollectionCount(auth.Uid);
+						}
 					}
 				}
+				return Ok();
 			}
-			return Ok();
+			catch
+			{
+				return Ok("logoff");
+			}
 		}
 		//[Route("Delete")]
 		//[HttpDelete]
@@ -165,156 +189,213 @@ namespace DailyForecaster.Controllers
 		[HttpPost]
 		public async Task<ActionResult> Post([FromBody] JsonElement json)
 		{
-			string authHeader = this.HttpContext.Request.Headers["Authorization"];
-			string route = this.HttpContext.Request.Headers["Route"];
-			string collectionsId = "";
-			if (this.HttpContext.Request.Headers["collectionsId"] != "")
+			try
 			{
-				collectionsId = this.HttpContext.Request.Headers["collectionsId"];
-			}
-			string accountId = "";
-			if (this.HttpContext.Request.Headers["accountId"] != "")
-			{
-				accountId = this.HttpContext.Request.Headers["accountId"];
-			}
-			FirebaseToken auth = await validate(authHeader);
-			if (auth != null)
-			{
-				FirebaseUser firebaseUser = new FirebaseUser();
-				new ClickTracker(this.HttpContext.Request.Headers["Route"],
-				false,
-				true,
-				"collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString(),
-				firebaseUser.GetUserId(auth.Claims["email"].ToString()) + ", body: " + json,
-				true);
-
-				if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
+				//string stringData = this.HttpContext.Request..Content.ReadAsStringAsync().Result;
+				var reader = await this.HttpContext.Request.BodyReader.ReadAsync();
+				Request.BodyReader.AdvanceTo(reader.Buffer.Start, reader.Buffer.End);
+				string body = Encoding.UTF8.GetString(reader.Buffer.FirstSpan);
+				string authHeader = this.HttpContext.Request.Headers["Authorization"];
+				string route = this.HttpContext.Request.Headers["Route"];
+				string collectionsId = "";
+				if (this.HttpContext.Request.Headers["collectionsId"] != "")
 				{
-					switch (route)
-					{
-						case "NewUser":
-							new FirebaseUser(auth.Claims["email"].ToString(), auth.Uid);
-							return Ok();
-						case "BuildSimulation":
-							return BuildSimulation(json.GetRawText(), collectionsId);
-						case "AccountChange":
-							return AccountChange(json);
-						case "EditBudget":
-							return EditBudget(json);
-						case "BudgetChange":
-							return BudgetChange(json, auth.Uid);
-						case "BudgetTransactionDelete":
-							return BudgetTransactionDelete(json);
-						case "UpdateSplits":
-							return UpdateSplits(json);
-						case "LoginEmail":
-							return LoginEmail(auth.Claims["email"].ToString());
-						case "SaveTransaction":
-							return SaveTransaction(json, auth.Uid);
-						case "CreateCollection":
-							return CreateCollection(json, auth.Uid, auth.Claims["email"].ToString());
-						case "LinkShare":
-							return LinkShare(json, auth.Uid);
-						case "ManualCashFlows":
-							return ManualCashFlows(json, auth.Claims["email"].ToString());
-						case "UpdateUser":
-							return UpdateUser(json, auth.Uid);
-						case "NewCFType":
-							return NewCFType(json,collectionsId);
+					collectionsId = this.HttpContext.Request.Headers["collectionsId"];
+				}
+				string accountId = "";
+				if (this.HttpContext.Request.Headers["accountId"] != "")
+				{
+					accountId = this.HttpContext.Request.Headers["accountId"];
+				}
+				FirebaseToken auth = await validate(authHeader);
+				if (auth != null)
+				{
+					FirebaseUser firebaseUser = new FirebaseUser();
+					new ClickTracker(this.HttpContext.Request.Headers["Route"],
+					false,
+					true,
+					"collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString() +
+					", body: " + json, firebaseUser.GetUserId(auth.Claims["email"].ToString()), 
+					true);
 
+					if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
+					{
+						switch (route)
+						{
+							case "NewUser":
+								new FirebaseUser(auth.Claims["email"].ToString(), auth.Uid);
+								return Ok();
+							case "BuildSimulation":
+								return BuildSimulation(json.GetRawText(), collectionsId);
+							case "AccountChange":
+								return AccountChange(json);
+							case "EditBudget":
+								return EditBudget(json);
+							case "BudgetChange":
+								return BudgetChange(json, auth.Uid);
+							case "BudgetTransactionDelete":
+								return BudgetTransactionDelete(json);
+							case "UpdateSplits":
+								return UpdateSplits(json);
+							case "LoginEmail":
+								return LoginEmail(auth.Claims["email"].ToString());
+							case "SaveTransaction":
+								return SaveTransaction(json, auth.Uid);
+							case "CreateCollection":
+								return CreateCollection(json, auth.Uid, auth.Claims["email"].ToString());
+								//return Ok();
+							case "LinkShare":
+								return LinkShare(json, auth.Uid);
+							case "ManualCashFlows":
+								return ManualCashFlows(json, auth.Claims["email"].ToString());
+							case "UpdateUser":
+								return UpdateUser(json, auth.Uid);
+							case "NewCFType":
+								return NewCFType(json, collectionsId);
+							case "AddScheduledTransaction":
+								return AddScheduledTransaction(json);
+							case "Calculator":
+								return Calculator(json);
+							case "GetSimulations":
+								return GetSimulations(auth.Uid);
+							case "TwilioToken":
+								return TwilioToken(auth.Uid);
+						}
 					}
 				}
+				return Ok();
 			}
-			return Ok();
+			catch
+			{
+				return Ok("logoff");
+			}
 		}
 		[Route("PostFile")]
 		[HttpPost]
 		public async Task<IActionResult> PostFile()
 		{
-			string authHeader = this.HttpContext.Request.Headers["Authorization"];
-			string route = this.HttpContext.Request.Headers["Route"];
-			string collectionsId = "";
-			if (this.HttpContext.Request.Headers["collectionsId"] != "")
+			try
 			{
-				collectionsId = this.HttpContext.Request.Headers["collectionsId"];
-			}
-			string accountId = "";
-			if (this.HttpContext.Request.Headers["accountId"] != "")
-			{
-				accountId = this.HttpContext.Request.Headers["accountId"];
-			}
-			FirebaseToken auth = await validate(authHeader);
-			if (auth != null)
-			{
-				FirebaseUser firebaseUser = new FirebaseUser();
-				new ClickTracker(this.HttpContext.Request.Headers["Route"],
-				false,
-				true,
-				"collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString(),
-				firebaseUser.GetUserId(auth.Claims["email"].ToString()),
-				true);
-
-				if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
+				string authHeader = this.HttpContext.Request.Headers["Authorization"];
+				string route = this.HttpContext.Request.Headers["Route"];
+				string collectionsId = "";
+				if (this.HttpContext.Request.Headers["collectionsId"] != "")
 				{
-					switch (route)
+					collectionsId = this.HttpContext.Request.Headers["collectionsId"];
+				}
+				string accountId = "";
+				if (this.HttpContext.Request.Headers["accountId"] != "")
+				{
+					accountId = this.HttpContext.Request.Headers["accountId"];
+				}
+				string cfTypeId = "";
+				if (this.HttpContext.Request.Headers["cfTypeId"] != "")
+				{
+					cfTypeId = this.HttpContext.Request.Headers["cfTypeId"];
+				}
+				FirebaseToken auth = await validate(authHeader);
+				if (auth != null)
+				{
+					FirebaseUser firebaseUser = new FirebaseUser();
+					new ClickTracker(this.HttpContext.Request.Headers["Route"],
+					false,
+					true,
+					"collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString(),
+					firebaseUser.GetUserId(auth.Claims["email"].ToString()),
+					true);
+
+					if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
 					{
-						case "InvoiceUpload":
-							var files = Request.Form.Files[0];
-							try
-							{
-								if (CloudStorageAccount.TryParse("DefaultEndpointsProtocol=https;AccountName=storageaccountmoney9367;AccountKey=AtoBz3bP/esi7HTyWqg3ySyGgoIolYp376gYMjKlsaiwqNaOaORIjHSUL0RqoXw0Il4epqjP31j/LkXwZLb+PQ==;EndpointSuffix=core.windows.net", out CloudStorageAccount storageAccount))
+						switch (route)
+						{
+							case "InvoiceUpload":
+								var files = Request.Form.Files[0];
+								try
 								{
-									CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
-									CloudBlobContainer container = blobClient.GetContainerReference("invoices");
-									CloudBlockBlob blockBlob = container.GetBlockBlobReference(files.FileName);
-									await blockBlob.UploadFromStreamAsync(files.OpenReadStream());
-									string loc = "https://storageaccountmoney9367.blob.core.windows.net/invoices/" + files.FileName;
-									ExpenseModel model = new ExpenseModel();
-									ReturnModel returnModel = await model.Build(loc, accountId, auth.Uid);
-									return Ok(true);
+									if (CloudStorageAccount.TryParse("DefaultEndpointsProtocol=https;AccountName=storageaccountmoney9367;AccountKey=AtoBz3bP/esi7HTyWqg3ySyGgoIolYp376gYMjKlsaiwqNaOaORIjHSUL0RqoXw0Il4epqjP31j/LkXwZLb+PQ==;EndpointSuffix=core.windows.net", out CloudStorageAccount storageAccount))
+									{
+										CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
+										CloudBlobContainer container = blobClient.GetContainerReference("invoices");
+										CloudBlockBlob blockBlob = container.GetBlockBlobReference(files.FileName);
+										await blockBlob.UploadFromStreamAsync(files.OpenReadStream());
+										string loc = "https://storageaccountmoney9367.blob.core.windows.net/invoices/" + files.FileName;
+										ExpenseModel model = new ExpenseModel();
+										ReturnModel returnModel = await model.Build(loc, accountId, auth.Uid);
+										return Ok(true);
+									}
+									else
+									{
+										return Ok(false);
+									}
 								}
-								else
+								catch (Exception e)
 								{
+									ExceptionCatcher catcher = new ExceptionCatcher();
+									//catcher.Catch(e.Message);
 									return Ok(false);
 								}
-							}
-							catch(Exception e)
-							{
-								ExceptionCatcher catcher = new ExceptionCatcher();
-								//catcher.Catch(e.Message);
-								return Ok(false);
-							}
-						case "UploadProfileImage":
-							var file = Request.Form.Files[0];
-							try
-							{
-								if (CloudStorageAccount.TryParse("DefaultEndpointsProtocol=https;AccountName=storageaccountmoney9367;AccountKey=3XosEFLMi9B0r4V03Krn0d1yb6Ecwj6SJm8FcwzckmI9FOwUDG0/ZgPx0ZkXgkEFyh+CuiZqGZ3WJOmVnqRMxg==;EndpointSuffix=core.windows.net", out CloudStorageAccount storageAccount))
+							case "InvoiceUploadPartial":
+								var files1 = Request.Form.Files[0];
+								try
 								{
-									CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
-									CloudBlobContainer container = blobClient.GetContainerReference("profileimage");
-									string name = Guid.NewGuid().ToString();
-									CloudBlockBlob blockBlob = container.GetBlockBlobReference(name);
-									await blockBlob.UploadFromStreamAsync(file.OpenReadStream());
-									FirebaseUser user = new FirebaseUser();
-									user = user.GetUser(auth.Uid);
-									user.Update(name, user);
-									return Ok(true);
+									if (CloudStorageAccount.TryParse("DefaultEndpointsProtocol=https;AccountName=storageaccountmoney9367;AccountKey=AtoBz3bP/esi7HTyWqg3ySyGgoIolYp376gYMjKlsaiwqNaOaORIjHSUL0RqoXw0Il4epqjP31j/LkXwZLb+PQ==;EndpointSuffix=core.windows.net", out CloudStorageAccount storageAccount))
+									{
+										CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
+										CloudBlobContainer container = blobClient.GetContainerReference("invoices");
+										CloudBlockBlob blockBlob = container.GetBlockBlobReference(files1.FileName);
+										await blockBlob.UploadFromStreamAsync(files1.OpenReadStream());
+										string loc = "https://storageaccountmoney9367.blob.core.windows.net/invoices/" + files1.FileName;
+										ExpenseModel model = new ExpenseModel();
+										ReturnModel returnModel = await model.BuildPartial(loc, accountId, auth.Uid, cfTypeId);
+										return Ok(true);
+									}
+									else
+									{
+										return Ok(false);
+									}
 								}
-								else
+								catch (Exception e)
 								{
+									ExceptionCatcher catcher = new ExceptionCatcher();
+									//catcher.Catch(e.Message);
 									return Ok(false);
 								}
-							}
-							catch (Exception e)
-							{
-								ExceptionCatcher catcher = new ExceptionCatcher();
-								//catcher.Catch(e.Message);
-								return Ok(false);
-							}
+							case "UploadProfileImage":
+								var file = Request.Form.Files[0];
+								try
+								{
+									if (CloudStorageAccount.TryParse("DefaultEndpointsProtocol=https;AccountName=storageaccountmoney9367;AccountKey=3XosEFLMi9B0r4V03Krn0d1yb6Ecwj6SJm8FcwzckmI9FOwUDG0/ZgPx0ZkXgkEFyh+CuiZqGZ3WJOmVnqRMxg==;EndpointSuffix=core.windows.net", out CloudStorageAccount storageAccount))
+									{
+										CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
+										CloudBlobContainer container = blobClient.GetContainerReference("profileimage");
+										string name = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+										CloudBlockBlob blockBlob = container.GetBlockBlobReference(name);
+										await blockBlob.UploadFromStreamAsync(file.OpenReadStream());
+										FirebaseUser user = new FirebaseUser();
+										user = user.GetUser(auth.Uid);
+										user.Update(name, auth.Uid);
+										return Ok(true);
+									}
+									else
+									{
+										return Ok(false);
+									}
+								}
+								catch (Exception e)
+								{
+									ExceptionCatcher catcher = new ExceptionCatcher();
+									//catcher.Catch(e.Message);
+									return Ok(false);
+								}
+						}
 					}
 				}
+				return Ok();
 			}
-			return Ok();
+			catch(Exception e)
+			{
+				return Ok("logoff");
+			}
 			
 		}
 		[Route("GetTest")]
@@ -333,8 +414,8 @@ namespace DailyForecaster.Controllers
 		[HttpPost]
 		public async Task<ActionResult> Create([FromBody] JsonElement json)
 		{
-			UserModel model = new UserModel();
-			return Ok(await model.CreateUser(JsonConvert.DeserializeObject<UserModel>(json.GetRawText())));
+			UserModel model = JsonSerializer.Deserialize<UserModel>(json.GetRawText());
+			return Ok(await model.CreateUser(model));
 		}
 		[Route("PostTest")]
 		[HttpPost]
@@ -359,7 +440,40 @@ namespace DailyForecaster.Controllers
 			}
 			return Ok();
 		}
+		private ActionResult CollectionCount(string uid)
+		{
+			UserCollectionMapping mapping = new UserCollectionMapping();
+			if (mapping.CollectionsCounter(uid) > 0) return Ok(false);
+			else return Ok(true);
+		}
+		private ActionResult TwilioToken(string identity)
+		{
+			if (identity == null) return null;
+			TwilioTokenGenerator _tokenGenerator = new TwilioTokenGenerator();
+			var token = _tokenGenerator.Generate(identity);
+			return Ok(new { identity, token });
+		}
+		private ActionResult GetSimulations(string uid)
+		{
+			Simulation simulation = new Simulation();
+			return Ok(simulation.GetSimulations(uid));
+		}
+		private ActionResult GetCalculator()
+		{
+			CalculatorModels model = new CalculatorModels();
+			return Ok(model.Get());
+		}
+		private ActionResult Calculator(JsonElement json)
+		{
+			CalculatorModels model = JsonSerializer.Deserialize<CalculatorModels>(json.GetRawText());
+			return Ok(model.Calculate());
+		}
+		private ActionResult AddScheduledTransaction(JsonElement json)
+		{
 
+			ScheduledTransactions transactions = JsonSerializer.Deserialize<ScheduledTransactions>(json.GetRawText());
+			return Ok(transactions.Create());
+		}
 		public ActionResult GetUnseenTransactions(string email)
 		{
 			return Ok(new UnseenModel(email));
@@ -367,7 +481,7 @@ namespace DailyForecaster.Controllers
 		private ActionResult NewCFType(JsonElement json, string collectionsId)
 		{
 			CFType type = new CFType();
-			type.CreateCFType(collectionsId, JsonConvert.DeserializeObject<Newcftype>(json.GetRawText()).NewCFType);
+			type.CreateCFType(collectionsId, JsonSerializer.Deserialize<Newcftype>(json.GetRawText()).NewCFType);
 			return Ok(type.GetCFList(collectionsId));
 		}
 		private ActionResult SmartHelp(string uid)
@@ -376,14 +490,12 @@ namespace DailyForecaster.Controllers
 		}
 		private ActionResult UpdateUser(JsonElement json, string uid)
 		{
-			FirebaseUser user = JsonConvert.DeserializeObject<FirebaseUser>(json.GetRawText());
-			user.Update(uid, user);
-			return Ok();
+			ProfileModel model = JsonSerializer.Deserialize<ProfileModel>(json.GetRawText());
+			return Ok(model.Update());
 		}
 		private ActionResult GetUser(string uid)
 		{
-			FirebaseUser user = new FirebaseUser();
-			return Ok(user.GetUser(uid));
+			return Ok(new ProfileModel(uid));
 		}
 		private async Task<ActionResult> GetYodleeToken(string collectionsId,string uid)
 		{
@@ -393,21 +505,16 @@ namespace DailyForecaster.Controllers
 		}
 		private ActionResult ManualCashFlows(JsonElement json, string email)
 		{
-			return Ok(new ManualCashFlow(JsonConvert.DeserializeObject<ManualCashFlow>(json.GetRawText()),email));
+			return Ok(new ManualCashFlow(JsonSerializer.Deserialize<ManualCashFlow>(json.GetRawText()),email));
 		}
 		private ActionResult ManualCashFlows(string email, string collectionsId)
 		{
 			return Ok(new ManualCashFlowsVM(collectionsId, email));
 		}
-		private ActionResult DeleteCollection(string collectionId)
-		{
-			Collections collections = new Collections();
-			return Ok(collections.Delete(collectionId));
-		}
 		private ActionResult LinkShare(JsonElement json,string userId)
 		{
 			CollectionSharing sharing = new CollectionSharing();
-			NewCollectionsObj obj = JsonConvert.DeserializeObject<NewCollectionsObj>(json.GetRawText());
+			NewCollectionsObj obj = JsonSerializer.Deserialize<NewCollectionsObj>(json.GetRawText());
 			obj.User = userId;
 			return Ok(sharing.AddUserToCollection(obj));
 		}
@@ -425,7 +532,7 @@ namespace DailyForecaster.Controllers
 		{
 			try
 			{
-				ReportedTransaction transaction = JsonConvert.DeserializeObject<ReportedTransaction>(json.GetRawText());
+				ReportedTransaction transaction = JsonSerializer.Deserialize<ReportedTransaction>(json.GetRawText());
 				if (transaction.AutomatedCashFlow != null)
 				{
 					AutomatedCashFlow flow = transaction.AutomatedCashFlow;
@@ -437,7 +544,7 @@ namespace DailyForecaster.Controllers
 				}
 				else
 				{
-					AutomatedCashFlow automated = JsonConvert.DeserializeObject<AutomatedCashFlow>(json.GetRawText());
+					AutomatedCashFlow automated = JsonSerializer.Deserialize<AutomatedCashFlow>(json.GetRawText());
 					automated.Save(automated);
 					return Ok();
 				}
@@ -449,7 +556,7 @@ namespace DailyForecaster.Controllers
 		}
 		private ActionResult CreateCollection(JsonElement json, string userId, string email)
 		{
-			NewCollectionsObj obj = JsonConvert.DeserializeObject<NewCollectionsObj>(json.GetRawText());
+			NewCollectionsObj obj = JsonSerializer.Deserialize<NewCollectionsObj>(json.GetRawText());
 			Collections collections = new Collections();
 			return Ok(collections.CreateCollection(obj,userId,email));
 		}
@@ -474,7 +581,7 @@ namespace DailyForecaster.Controllers
 		/// <returns>Updated lsit of split transactions</returns>
 		private ActionResult UpdateSplits(JsonElement json)
 		{
-			List<SplitTransactions> splits = JsonConvert.DeserializeObject<List<SplitTransactions>>(json.GetRawText());
+			List<SplitTransactions> splits = JsonSerializer.Deserialize<List<SplitTransactions>>(json.GetRawText());
 			List<SplitTransactions> newList = new List<SplitTransactions>();
 			foreach(SplitTransactions item in splits)
 			{
@@ -489,7 +596,7 @@ namespace DailyForecaster.Controllers
 		/// <returns>Ok</returns>
 		private ActionResult BudgetTransactionDelete(JsonElement json)
 		{
-			BudgetTransaction transaction = JsonConvert.DeserializeObject<BudgetTransaction>(json.GetRawText());
+			BudgetTransaction transaction = JsonSerializer.Deserialize<BudgetTransaction>(json.GetRawText());
 			transaction.Delete();
 			return Ok();
 		}
@@ -503,7 +610,7 @@ namespace DailyForecaster.Controllers
 		{
 			try
 			{
-				BudgetTransaction transaction = JsonConvert.DeserializeObject<BudgetTransaction>(json.GetRawText());
+				BudgetTransaction transaction = JsonSerializer.Deserialize<BudgetTransaction>(json.GetRawText());
 				transaction.Budget = null;
 				transaction.Save(userId);
 				return Ok(transaction);
@@ -542,7 +649,7 @@ namespace DailyForecaster.Controllers
 		}
 		private ActionResult EditBudget(JsonElement json)
 		{
-			Collections collection = JsonConvert.DeserializeObject<Collections>(json.GetRawText());
+			Collections collection = JsonSerializer.Deserialize<Collections>(json.GetRawText());
 
 			return Ok();
 		}
@@ -560,90 +667,162 @@ namespace DailyForecaster.Controllers
 		/// <summary>
 		/// Populates the menu data for Vue FE
 		/// </summary>
-		/// <param name="email">The users email address is needed as an identifier</param>
+		/// <param name="uid">The users Id as defined by Google</param>
 		/// <returns>The required data to populate the FE left Menu</returns>
-		private ActionResult GetCollectionsMenu(string email)
+		private ActionResult GetCollectionsMenu(string uid)
 		{
-			List<MenuData> menu = new List<MenuData>();
-			List<MenuData> subMenu = new List<MenuData>();
-			menu.Add(new MenuData()
+			UserCollectionMapping mapping = new UserCollectionMapping();
+			if (mapping.Check(uid))
 			{
-				Category = true,
-				Title = "Dashboards"
-			});
-			subMenu.Add(new MenuData()
+				IncludeYodlee include = new IncludeYodlee();
+				List<MenuData> menu = new List<MenuData>();
+				List<MenuData> subMenu = new List<MenuData>();
+				List<MenuData> resources = new List<MenuData>();
+				List<MenuData> Calculators = new List<MenuData>();
+				menu.Add(new MenuData()
+				{
+					Category = true,
+					Title = "Dashboards"
+				});
+				subMenu.Add(new MenuData()
+				{
+					Title = "Homepage",
+					Key = "Homepage",
+					Url = "/dashboard/homepage"
+				});
+				subMenu.Add(new MenuData()
+				{
+					Title = "Collections",
+					Key = "Collections",
+					Url = "/dashboard/collections"
+				});
+				subMenu.Add(new MenuData()
+				{
+					Title = "Budget",
+					Key = "Budget",
+					Url = "/dashboard/budget"
+				});
+				subMenu.Add(new MenuData()
+				{
+					Title = "Safe To Spend",
+					Key = "SafeToSpend",
+					Url = "/dashboard/SafeToSpend"
+				});
+				subMenu.Add(new MenuData()
+				{
+					Title = "New Collection",
+					Key = "NewCollection",
+					Url = "/dashboard/NewCollection"
+				});
+				subMenu.Add(new MenuData()
+				{
+					Title = "Manual Transaction",
+					Key = "ManualTransactions",
+					Url = "/dashboard/ManualTransactions"
+				});
+				subMenu.Add(new MenuData()
+				{
+					Title = "Add Account",
+					Key = "AddAccounts",
+					Url = "/dashboard/AddAccount"
+				});
+				if (include.isIncluded(uid))
+				{
+					subMenu.Add(new MenuData()
+					{
+						Title = "Automated Link",
+						Key = "AutomatedLink",
+						Url = "/dashboard/AutomatedLink"
+					});
+				}
+				menu.Add(new MenuData()
+				{
+					Title = "Budget Dashboard",
+					Key = "Dashboards",
+					Icon = "fe fe-home",
+					Children = subMenu
+				});
+				menu.Add(new MenuData()
+				{
+					Title = "Simulation Dashboard",
+					Key = "Simulations",
+					Icon = "fe fe-cpu",
+					Children = null
+				});
+				menu.Add(new MenuData()
+				{
+					Title = "Resources Dashboard",
+					Key = "Resources",
+					Icon = "fe fe-book-open",
+					Children = resources
+				});
+				resources.Add(new MenuData()
+				{
+					Title = "Calculators",
+					Key = "Homepage",
+					Children = Calculators
+				});
+				Calculators.Add(new MenuData()
+				{
+					Title = "Bond Calculator",
+					Key = "BondCalculators",
+					Url = "/dashboard/Bond"
+				});
+				Calculators.Add(new MenuData()
+				{
+					Title = "Loan Calculator",
+					Key = "LoanCalculators",
+					Url = "/dashboard/Loan"
+				});
+				Calculators.Add(new MenuData()
+				{
+					Title = "Savings Calculator",
+					Key = "SavingsCalculators",
+					Url = null
+				});
+				return Ok(menu);
+			}
+			else
 			{
-				Title = "Homepage",
-				Key = "Homepage",
-				Url = "/dashboard/homepage"
-			});
-			subMenu.Add(new MenuData()
-			{
-				Title = "Collections",
-				Key = "Collections",
-				Url = "/dashboard/collections"
-			});
-			subMenu.Add(new MenuData()
-			{
-				Title = "Budget",
-				Key = "Budget",
-				Url = "/dashboard/budget"
-			});
-			subMenu.Add(new MenuData()
-			{
-				Title = "Safe To Spend",
-				Key = "SafeToSpend",
-				Url = "/dashboard/SafeToSpend"
-			});
-			subMenu.Add(new MenuData()
-			{
-				Title = "New Collection",
-				Key = "NewCollection",
-				Url = "/dashboard/NewCollection"
-			});
-			subMenu.Add(new MenuData()
-			{
-				Title = "Manual Transaction",
-				Key = "ManualTransactions",
-				Url = "/dashboard/ManualTransactions"
-			});
-			subMenu.Add(new MenuData()
-			{
-				Title = "Add Account",
-				Key = "AddAccounts",
-				Url = "/dashboard/AddAccount"
-			});
-			subMenu.Add(new MenuData()
-			{
-				Title = "Automated Link",
-				Key = "AutomatedLink",
-				Url = "/dashboard/AutomatedLink"
-			});
-			menu.Add(new MenuData()
-			{
-				Title = "Budget Dashboard",
-				Key = "Dashboards",
-				Icon = "fe fe-home",
-				Children = subMenu
-			});
-			return Ok(menu);
+				List<MenuData> menu = new List<MenuData>();
+				List<MenuData> subMenu = new List<MenuData>();
+				menu.Add(new MenuData()
+				{
+					Category = true,
+					Title = "Dashboards"
+				});
+				subMenu.Add(new MenuData()
+				{
+					Title = "New Collection",
+					Key = "NewCollection",
+					Url = "/dashboard/NewCollection"
+				});
+				menu.Add(new MenuData()
+				{
+					Title = "Budget Dashboard",
+					Key = "Dashboards",
+					Icon = "fe fe-home",
+					Children = subMenu
+				});
+				return Ok(menu);
+			}
 		}
 		/// <summary>
 		/// Creates or Updates Account
 		/// </summary>
 		/// <param name="json">Json Element Passed by FE</param>
 		/// <returns>Updated Account Object</returns>
-		private ActionResult AccountChange(JsonElement json)
+		public ActionResult AccountChange(JsonElement json)
 		{
 			try
 			{
-				Account account = JsonConvert.DeserializeObject<Account>(json.GetRawText());
+				Account account = JsonSerializer.Deserialize<Account>(json.GetRawText());
 				return Ok(account.AddAccount());
 			}
 			catch (Exception e)
 			{
 				ExceptionCatcher catcher = new ExceptionCatcher();
-				catcher.Catch(e.Message);
+				catcher.Catch(e);
 				return Ok();
 			}
 		}
@@ -693,13 +872,13 @@ namespace DailyForecaster.Controllers
 		}
 		private ActionResult UpdateSimulation(string json)
 		{
-			Simulation simulation = JsonConvert.DeserializeObject<Simulation>(json);
+			Simulation simulation = JsonSerializer.Deserialize<Simulation>(json);
 			simulation.Edit();
 			return Ok(simulation);
 		}
 		private ActionResult BuildSimulation(string json,string collectionsId)
 		{
-			SimulationAssumptions assumptions = JsonConvert.DeserializeObject<SimulationAssumptions>(json);
+			SimulationAssumptions assumptions = JsonSerializer.Deserialize<SimulationAssumptions>(json);
 			Simulation simulation = new Simulation(assumptions, collectionsId);
 			simulation.BuildSimulation(assumptions);
 			simulation.Scenario();

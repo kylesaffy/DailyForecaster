@@ -21,16 +21,21 @@
     <Compile Remove="Migrations\20200930045406_mappingCorrection3.Designer.cs" />
     <Compile Remove="Migrations\20201104133554_updateUserModel.cs" />
     <Compile Remove="Migrations\20201104133554_updateUserModel.Designer.cs" />
+    <Compile Remove="Migrations\20201109151213_addIncludeYodlee.cs" />
+    <Compile Remove="Migrations\20201109151213_addIncludeYodlee.Designer.cs" />
+    <Compile Remove="Migrations\20201112023707_addMessagingModel.cs" />
+    <Compile Remove="Migrations\20201112023707_addMessagingModel.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.6.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.7.0" />
     <PackageReference Include="BouncyCastle" Version="1.8.6.1" />
-    <PackageReference Include="FirebaseAdmin" Version="1.16.0" />
+    <PackageReference Include="DotNetOpenAuth.OAuth.ServiceProvider" Version="4.3.4.13329" />
+    <PackageReference Include="FirebaseAdmin" Version="2.0.0" />
     <PackageReference Include="FirebaseAuthentication.net" Version="3.4.0" />
     <PackageReference Include="jose-jwt-signed" Version="2.3.0" />
-    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.13.1" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Core" Version="5.2.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.10" />
     <PackageReference Include="Microsoft.Azure.CognitiveServices.Vision.ComputerVision" Version="6.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="3.1.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.0" />
@@ -43,8 +48,11 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="3.1.0" />
     <PackageReference Include="Microsoft.Toolkit" Version="6.1.1" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.6.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.8.0" />
     <PackageReference Include="System.Security.Cryptography.OpenSsl" Version="4.7.0" />
+    <PackageReference Include="System.Text.Json" Version="5.0.0" />
+    <PackageReference Include="Twilio" Version="5.49.0" />
     <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
   </ItemGroup>
 

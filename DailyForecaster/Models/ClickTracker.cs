@@ -115,6 +115,8 @@ namespace DailyForecaster.Models
 				}
 				catch (Exception e)
 				{
+					ExceptionCatcher catcher = new ExceptionCatcher();
+					catcher.Catch(e);
 					return null;
 				}
 			}

@@ -78,34 +78,6 @@ namespace DailyForecaster.Models
 			}
 			return collections;
 		}
-		public ReturnModel Delete(string collectionsId)
-		{
-			try
-			{
-				UserCollectionMapping mapping = new UserCollectionMapping();
-				mapping.Delete(collectionsId);
-				Budget budget = new Budget();
-				budget.Delete(collectionsId);
-				Account account = new Account();
-				account.Delete(collectionsId);
-				Collections collection = new Collections();
-				collection = GetCollections(collectionsId);
-				collection.Delete();
-				return new ReturnModel() { result = true };
-			}
-			catch (Exception e)
-			{
-				return new ReturnModel() { result = false, returnStr = e.StackTrace };
-			}
-		}
-		private void Delete()
-		{
-			using (FinPlannerContext _context = new FinPlannerContext())
-			{
-				_context.Remove(this);
-				_context.SaveChanges();
-			}
-		}
 		/// <summary>
 		/// Returns a collection object
 		/// </summary>

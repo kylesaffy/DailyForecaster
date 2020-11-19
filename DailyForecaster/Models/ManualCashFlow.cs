@@ -254,6 +254,11 @@ namespace DailyForecaster.Models
 			from.Save(from);
 			return new ReturnModel() { result = true };
 		}
+		public void AddScheduledTransactions(ScheduledTransactions transaction, CFType type, CFClassification classification)
+		{
+			ManualCashFlow flow = new ManualCashFlow(type, classification, transaction.Amount, DateTime.Now, transaction.Description, null, true, null, transaction.AccountId);
+			Save(flow);
+		}
 		public void Save()
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())
@@ -262,7 +267,9 @@ namespace DailyForecaster.Models
 				_context.Add(this);
 				try
 				{
+					AccountChange change = new AccountChange();
 					_context.SaveChanges();
+					change.AddAccountChange(this);	   					
 				}
 				catch (Exception e)
 				{

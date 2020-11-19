@@ -111,7 +111,8 @@ namespace DailyForecaster.Models
 			client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", "cobSession=" + session);
 			client.DefaultRequestHeaders.Add("Cobrand-Name", "moneyminders");
 			client.DefaultRequestHeaders.Add("Api-Version", "1.1");
-			StringContent content = new StringContent(JsonConvert.SerializeObject(new APIKey() { publicKey = key }), Encoding.UTF8, "application/json");
+			string stuff = JsonConvert.SerializeObject(new APIKey() { publicKey = key });
+			StringContent content = new StringContent(stuff, Encoding.UTF8, "application/json");
 			var request = new HttpRequestMessage
 			{
 				Method = HttpMethod.Get,
@@ -158,8 +159,9 @@ namespace DailyForecaster.Models
 			client.DefaultRequestHeaders.Add("Cobrand-Name", "moneyminders");
 			var byteArray = Encoding.ASCII.GetBytes(model.cobrand.cobrandLogin + ":" + model.cobrand.cobrandPassword);
 			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
-			client.DefaultRequestHeaders.Add("Api-Version", "1.1");				
-			StringContent content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
+			client.DefaultRequestHeaders.Add("Api-Version", "1.1");
+			//string stuff = JsonConvert.SerializeObject(model);
+			StringContent content = new StringContent("{\"cobrand\":{\"cobrandLogin\":\"moneyminders\",\"cobrandPassword\":\"GRDT@ytjhgg9872\"}}", Encoding.UTF8, "application/json");
 			HttpResponseMessage response = await client.PostAsync(url + "/cobrand/login", content);
 			if(response.IsSuccessStatusCode)
 			{
@@ -229,7 +231,7 @@ namespace DailyForecaster.Models
 	}
 	public class CoBrandModel
 	{
-		public coBrand cobrand { get; set; }
+		public virtual coBrand cobrand { get; set; }
 		public static CoBrandModel ModelReturn()
 		{
 			CoBrandModel model = new CoBrandModel()

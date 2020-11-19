@@ -42,6 +42,33 @@ namespace DailyForecaster.Models
 			CollectionsId = collectionsId;
 			SimulationId = Save();
 		}
+		public List<Simulation>	GetSimulations(string uid)
+		{
+			FirebaseUser user = new FirebaseUser(uid);
+			Collections collection = new Collections();
+			List<string> collections = collection.GetCollections(user.Email, "").Select(x => x.CollectionsId).ToList(); ;
+			return GetSimulations(collections);
+		}
+		private List<Simulation> GetSimulations(List<string> collectionIds)
+		{
+			List<Simulation> simulations = new List<Simulation>();
+			try
+			{
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					simulations = _context
+						.Simulation
+						.Where(col => collectionIds.Contains(col.CollectionsId))
+						.ToList();
+				}
+			}
+			catch (Exception e)
+			{
+				ExceptionCatcher catcher = new ExceptionCatcher();
+				catcher.Catch(e.Message);
+			}
+			return simulations;
+		}
 		/// <summary>
 		/// Saves the current Simulation
 		/// </summary>

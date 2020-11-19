@@ -107,7 +107,7 @@ namespace DailyForecaster.Models
 					return _context
 						.Account
 						.Where(x => x.CollectionsId == collecionsId)
-						.Where(x => x.AccountType.Transactional)
+						.Where(x => x.AccountType.Bank)
 						.Select(x => x.Available)
 						.Sum();
 				}
@@ -268,17 +268,35 @@ namespace DailyForecaster.Models
 							YodleeAccountLevel accountLevel = yodleeAccounts.Where(x => x.accountNumber.Substring(x.accountNumber.Length - 4, 4) == item.AccountIdentifier.Substring(item.AccountIdentifier.Length - 4, 4)).FirstOrDefault();
 							if (accountLevel != null)
 							{
-								if (accountLevel.availableBalance != null)
+								if (item.AccountType.Bank)
 								{
-									item.Available = accountLevel.availableBalance.amount;
-								}
-								else if(accountLevel.availableCredit != null)
-								{
-									item.Available = accountLevel.availableCredit.amount;
+									if (accountLevel.availableBalance != null)
+									{
+										item.Available = accountLevel.availableBalance.amount;
+									}
+									else if (accountLevel.availableCredit != null)
+									{
+										item.Available = accountLevel.availableCredit.amount;
+									}
+									else
+									{
+										item.Available = accountLevel.balance.amount;
+									}
 								}
 								else
 								{
-									item.Available = accountLevel.balance.amount;
+									if (accountLevel.availableBalance != null)
+									{
+										item.Available = -accountLevel.availableBalance.amount;
+									}
+									else if (accountLevel.availableCredit != null)
+									{
+										item.Available = -accountLevel.availableCredit.amount;
+									}
+									else
+									{
+										item.Available = -accountLevel.balance.amount;
+									}
 								}
 							}
 						}
@@ -385,6 +403,28 @@ namespace DailyForecaster.Models
 				//}
 			}
 			return accounts;
+		}
+		public async Task<List<Account>> AddYodleeAccount(string collectionsId)
+		{
+			YodleeAccountModel yodlee = new YodleeAccountModel();
+			List<YodleeAccountLevel> yodleeAccounts = await yodlee.GetYodleeAccounts(collectionsId);
+			List<Account> existingAccounts = GetAccountsEmpty(collectionsId);
+			List<Account> newAccounts = new List<Account>();
+			foreach(YodleeAccountLevel item in yodleeAccounts)
+			{
+				if(!existingAccounts.Where(x=>x.YodleeId == item.id).Any())
+				{
+					newAccounts.Add(NewAccount(item));
+				}
+			}
+			return new List<Account>();
+		}
+		private Account NewAccount(YodleeAccountLevel yodlee)
+		{
+			Account account = new Account();
+			account.YodleeId = yodlee.id;
+			account.Id = Guid.NewGuid().ToString();
+			return account;
 		}
 		public Account AddAccount()
 		{

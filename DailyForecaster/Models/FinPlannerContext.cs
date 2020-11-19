@@ -57,6 +57,9 @@ namespace DailyForecaster.Models
         public DbSet<ExpenseModel> ExpenseModels { get; set; }
         public DbSet<DailyTip> DailyTip { get; set; }
         public DbSet<DailyMotivational> DailyMotivational {get;set;}
+        public DbSet<IncludeYodlee> IncludeYodlee { get; set; }
+        public DbSet<ScheduledTransactions> ScheduledTransactions { get; set; }
+        public DbSet<MessagingModel> MessagingModel { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()

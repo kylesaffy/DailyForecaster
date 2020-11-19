@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using DailyForecaster.Models;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Newtonsoft.Json;
 
 namespace DailyForecaster.Controllers
 {
@@ -37,6 +39,18 @@ namespace DailyForecaster.Controllers
 			AutomatedLog log = new AutomatedLog();
 			log.SaveLog(start, end, "UpdateAccounts", result);
 			return Ok(result);
+		}
+		[Route("ScheduledTransactionsRun")]
+		[HttpGet]
+		public ActionResult ScheduledTransactionsRun()
+		{
+			DateTime start = DateTime.Now;
+			ScheduledTransactions transactions = new ScheduledTransactions();
+			transactions.Check();
+			DateTime end = DateTime.Now;
+			AutomatedLog log = new AutomatedLog();
+			log.SaveLog(start, end, "ScheduledTransactionsRun", true);
+			return Ok(true);
 		}
 		[Route("BudgetDuplicate")]
 		[HttpGet]
@@ -98,25 +112,37 @@ namespace DailyForecaster.Controllers
 			List<FirebaseUser> users = firebaseUser.GetUserList();
 			ReturnModel model = new ReturnModel() { result = true };
 			EmailFunction email = new EmailFunction();
+			EmailPreferences preferences = new EmailPreferences();
 			//FirebaseUser item = users.Where(x => x.Email == "kylesaffy@gmail.com").FirstOrDefault();
 			//model = email.DailyEmailSend(item.FirebaseUserId);
 			foreach (FirebaseUser item in users)
 			{
-				if (model.result)
+				preferences.CheckPrefrences(item);
+				if (model.result && preferences.CheckDaily(item))
 				{
 					model = email.DailyEmailSend(item.FirebaseUserId);
 				}
 			}
 			return Ok(model);
 		}
+		[Route("Register")]
+		[HttpPost]
+		public async Task<ActionResult> Register()
+		{
+			string json = "{\"CollectionsId\": \"30c1ce56-964a-4ceb-85df-cceb3a09b417\",\"UserId\": \"uTSmqNJBCHPHwE7XSNVjpzR1mSf2\"}";
+			RegisterModel model = JsonConvert.DeserializeObject<RegisterModel>(json);
+			YodleeModel yodleeModel = new YodleeModel();
+			return Ok(await yodleeModel.Register(model.UserId, model.CollectionsId));
+		}
 		[Route("RunReaderCall")]
 		[HttpGet]
 		public async Task<ActionResult> RunReaderCall(string url)
 		{
-			string accountId = "0e1fc81f-ad3a-4f1e-8f20-2e8cf3515099";
-			string userId = "SIBqSTyyyYP3tBXFo4drreJbqq43";
+			string accountId = "c07f0c85-a275-4626-a7a0-48b79e5354b6";
+			string userId = "PkPnJIuCxbS14NrcWJ6VQpp2cdn2";
+			string cftypeid = "4f19ee58-9a78-43b5-8cb6-331b75dc8b39";
 			ExpenseModel reader = new ExpenseModel();
-			ReturnModel model = await reader.Build(url, accountId,userId);
+			ReturnModel model = await reader.BuildPartial(url, accountId,userId,cftypeid);
 			return Ok(model);
 		}
 		[Route("Reader")]
@@ -127,5 +153,10 @@ namespace DailyForecaster.Controllers
 			reader = await reader.GetRunReader(url);
 			return Ok(reader);
 		}
+	}
+	public class RegisterModel
+	{
+		public string CollectionsId { get; set; }
+		public string UserId { get; set; }
 	}
 }

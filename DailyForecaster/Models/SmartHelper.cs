@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace DailyForecaster.Models
@@ -9,6 +11,18 @@ namespace DailyForecaster.Models
 	{
 		public string Html { get; set; }
 		public SmartHelper() { }
+		public string WelcomePage()
+		{
+			string text = "";
+			var webRequest = WebRequest.Create(@"https://storageaccountmoney9367.blob.core.windows.net/cloud-store/WelcomePage.html");
+			using (var response = webRequest.GetResponse())
+			using (var content = response.GetResponseStream())
+			using (var reader = new StreamReader(content))
+			{
+				text = reader.ReadToEnd();
+			};
+			return text;
+		}
 		public SmartHelper(string uid)
 		{
 			UserCollectionMapping mapping = new UserCollectionMapping();
@@ -18,7 +32,7 @@ namespace DailyForecaster.Models
 			collectionIds = mapping.getCollectionIds(user.FirebaseUserId, "firebase");
 			if(collectionIds.Count ==0)
 			{
-				Html = "<div><h4>First thing is first! MoneyMinders works on the notion of Collections:</h4><p>By Collections we mean a collection of accounts that you as the user sets. Collections contain the budgets, accounts, and all of your transactions on those accounts. Collections<b> cannot</b> talk to each other. They are completely isolated entities. You as the creater of a collection can choose to share a specific collection with someone else. Each share code can only be used once. After that if you want to share the collection with another person you will need to create another sharing link. While on that note, you can share a collection with as many people as you want. We do inform you of which of your collections are shared by other users.</p><p> We will display this icon on your home page if the collection is shared.</p><div><i class='fe fe-users font-size-50'></i></div></br><p>If the collection is only seen by you then you will see this icon</p><div><i class='fe fe-user font-size-50'></i></div><p>You can create as many collections as you want as well.</p><p>If you feel that something is not clear or that you need more information from us, please feel free to email us on<a href= 'mailto:admin@moneyminders.co.za' > admin@moneyminders</a>.We love hearing feedback from you and are excited to share our ideas with you.</p><p>In orer to create a collection, please click on the Homepage or New Collection on the left menu, otherwise if you aren't sure where these are you can click <a href='#/dashboard/NewCollection'><u>here</u></a></p></div";
+				Html = "<div><h4>First thing is first! MoneyMinders works on the notion of Collections:</h4><p>By Collections we mean a collection of accounts that you as the user sets. Collections contain the budgets, accounts, and all of your transactions on those accounts. Collections<b> cannot</b> talk to each other. They are completely isolated entities. You as the creater of a collection can choose to share a specific collection with someone else. Each share code can only be used once. After that if you want to share the collection with another person you will need to create another sharing link. While on that note, you can share a collection with as many people as you want. We do inform you of which of your collections are shared by other users.</p><p> We will display this icon on your home page if the collection is shared.</p><div><i class='fe fe-users font-size-50'></i></div></br><p>If the collection is only seen by you then you will see this icon</p><div><i class='fe fe-user font-size-50'></i></div><p>You can create as many collections as you want as well.</p><p>If you feel that something is not clear or that you need more information from us, please feel free to email us on<a href= 'mailto:admin@moneyminders.co.za' > admin@moneyminders</a>.We love hearing feedback from you and are excited to share our ideas with you.</p><p>In orer to create a collection, please click on the Homepage or New Collection on the left menu, otherwise if you aren't sure where these are you can click <a href='#/dashboard/NewCollection'><u>here</u></a></p></div>";
 			}
 			else
 			{

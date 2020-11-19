@@ -1,4 +1,4 @@
-﻿using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
+﻿// using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
 using System;
 using System.Collections.Generic;
 using System.Linq;

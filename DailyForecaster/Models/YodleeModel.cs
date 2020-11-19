@@ -102,7 +102,7 @@ namespace DailyForecaster.Models
 				return _context.YodleeModel.Where(x => x.CollectionsId == collectionsId).Select(x => x.loginName).FirstOrDefault();
 			}
 		}
-		private async Task<ReturnModel> Register(string userId, string collectionsId)
+		public async Task<ReturnModel> Register(string userId, string collectionsId)
 		{
 			YodleeAuthReturn auth = await GetAdminAuth();
 			ReturnModel returnModel = new ReturnModel();
@@ -118,7 +118,27 @@ namespace DailyForecaster.Models
 					yodleeModel = new YodleeModel(collectionsId, "Get");
 				}
 				FirebaseUser user = new FirebaseUser();
-				UserNames userNames = user.getNames(userId);
+				UserNames userNames = new UserNames();
+				try
+				{
+					userNames = user.getNames(userId);
+				}
+				catch
+				{
+					userNames = new UserNames()
+					{
+						first = "",
+						last = ""
+					};
+				}
+				if(userNames.first == null)
+				{
+					userNames = new UserNames()
+					{
+						first = "",
+						last = ""
+					};
+				}
 				RegisterModel registerModel = new RegisterModel(yodleeModel.loginName, userNames);
 
 				HttpClient client = new HttpClient();

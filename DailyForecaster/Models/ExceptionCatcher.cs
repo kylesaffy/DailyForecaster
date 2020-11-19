@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -21,6 +22,20 @@ namespace DailyForecaster.Models
 				Exception = e
 			};
 			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.ExceptionCatcher.Add(catcher);
+				_context.SaveChanges();
+			}
+		}
+		public void Catch(Exception e)
+		{
+			ExceptionCatcher catcher = new ExceptionCatcher()
+			{
+				Id = Guid.NewGuid().ToString(),
+				DateTime = DateTime.Now,
+				Exception = JsonConvert.SerializeObject(e)
+			};
+			using (FinPlannerContext _context = new FinPlannerContext())
 			{
 				_context.ExceptionCatcher.Add(catcher);
 				_context.SaveChanges();
