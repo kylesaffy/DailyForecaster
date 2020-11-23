@@ -182,7 +182,7 @@ namespace DailyForecaster.Models
 					using (FinPlannerContext _context = new FinPlannerContext())
 					{
 						List<string> collectionIds = _context.UserCollectionMapping
-							.Where(x => x.Id == userId)
+							.Where(x => x.FirebaseUserId == userId)
 							.Select(x => x.CollectionsId)
 							.ToList();
 						foreach (string item in collectionIds)
@@ -229,7 +229,7 @@ namespace DailyForecaster.Models
 					using (FinPlannerContext _context = new FinPlannerContext())
 					{
 						List<string> collectionsIds = _context.UserCollectionMapping
-							.Where(x => x.Id == userId)
+							.Where(x => x.FirebaseUserId == userId)
 							.Select(x => x.CollectionsId)
 							.ToList();
 						collections.AddRange(GetCollections(collectionsIds, 10));
@@ -326,7 +326,7 @@ namespace DailyForecaster.Models
 			Collections col = new Collections(obj.durationType, obj.name, obj.User, obj.resetDate);
 			UserCollectionMapping mapping = new UserCollectionMapping(col.CollectionsId, obj.User);
 			ReturnModel returnModel = new ReturnModel();
-			if (mapping.Id == "999")
+			if (mapping.FirebaseUserId == "999")
 			{
 				returnModel.result = false;
 				return returnModel;
@@ -362,7 +362,7 @@ namespace DailyForecaster.Models
 				mapping = new UserCollectionMapping(col.CollectionsId, userId);
 			}
 			ReturnModel returnModel = new ReturnModel();
-			if (mapping.Id == "999")
+			if (mapping.FirebaseUserId == "999")
 			{
 				returnModel.result = false;
 				return returnModel;

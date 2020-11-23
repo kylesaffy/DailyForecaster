@@ -145,6 +145,28 @@ namespace DailyForecaster.Controllers
 			ReturnModel model = await reader.BuildPartial(url, accountId,userId,cftypeid);
 			return Ok(model);
 		}
+		[Route("GetYodlee")]
+		[HttpGet]
+		public async Task<ActionResult> GetYodlee(string id)
+		{
+			YodleeAccountModel model = new YodleeAccountModel();
+			return Ok(await model.GetYodleeAccounts(id));
+		}
+		[Route("GetYodleeFNB")]
+		[HttpGet]
+		public async Task<ActionResult> GetYodleeFNB(string id)
+		{
+			YodleeAccountModel model = new YodleeAccountModel();
+			List<YodleeAccountLevel> accounts = await model.GetYodleeAccounts(id);
+			return Ok(accounts.Where(x=>x.providerId == "15376").ToList().Count());
+		}
+		[Route("DeleteYodlee")]
+		[HttpGet]
+		public async Task<ActionResult> DeleteYodlee(string id)
+		{
+			YodleeAccountModel model = new YodleeAccountModel();
+			return Ok(await model.DeleteAllAccounts(id));
+		}
 		[Route("Reader")]
 		[HttpGet]
 		public async Task<ActionResult> Reader(string url)

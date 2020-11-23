@@ -15,6 +15,7 @@ namespace DailyForecaster.Models
 		public string Budgeted { get; set; }
 		public string Name { get; set; }
 		public string CollectionsId { get; set; }
+		public bool Account { get; set; }
 		/// <summary>
 		/// The landing page is made up of a series of object this returns a list of the collection ojects high level details
 		/// </summary>

@@ -27,6 +27,10 @@ namespace DailyForecaster.Models
 			UserCollectionMapping mapping = new UserCollectionMapping();
 			return mapping.getCollectionIds(user.FirebaseUserId, "firebase");
 		}
+		public bool Exists(string uid)
+		{
+			return Exisits(GetCollections(uid));
+		}
 		public void Check(string uid)
 		{
 			Check(GetCollections(uid));			
@@ -34,7 +38,7 @@ namespace DailyForecaster.Models
 		public bool isIncluded(string uid)
 		{
 			int counter = 0;
-			Check(uid);
+			//Check(uid);
 			List<string> collectionIds = GetCollections(uid);
 			foreach(string item in collectionIds)
 			{
@@ -64,6 +68,22 @@ namespace DailyForecaster.Models
 					}
 				}
 			}
+		}
+		private bool Exisits(List<string> collectionIds)
+		{
+			int count = 0;
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				foreach (string item in collectionIds)
+				{
+					if (_context.IncludeYodlee.Where(x => x.CollectionsId == item).Any())
+					{
+						count++;
+					}
+				}
+			}
+			if (count > 0) return true;
+			else return false;
 		}
 		public void Create(string collectionsId, bool included = true)
 		{

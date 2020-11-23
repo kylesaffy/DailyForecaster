@@ -24,6 +24,7 @@ using Microsoft.WindowsAzure.Storage.Blob;
 using System.Text.Json.Serialization;
 // using Newtonsoft.Json;
 using FirebaseAuth = FirebaseAdmin.Auth.FirebaseAuth;
+using Newtonsoft.Json;
 
 namespace DailyForecaster.Controllers
 {
@@ -80,6 +81,11 @@ namespace DailyForecaster.Controllers
 					if (this.HttpContext.Request.Headers["collectionsId"] != "")
 					{
 						collectionsId = this.HttpContext.Request.Headers["collectionsId"];
+					}
+					string misc = "";
+					if (this.HttpContext.Request.Headers["miscellaneous"] != "")
+					{
+						misc = this.HttpContext.Request.Headers["miscellaneous"].ToString();
 					}
 					string accountId = "";
 					if (this.HttpContext.Request.Headers["accountId"] != "")
@@ -142,6 +148,10 @@ namespace DailyForecaster.Controllers
 								return Ok(helper.WelcomePage());
 							case "CollectionCount":
 								return CollectionCount(auth.Uid);
+							case "GetYodleeAccounts":
+								return await GetYodleeAccounts(misc, collectionsId);
+							case "CheckYodleeInclusion":
+								return CheckYodleeInclusion(auth.Uid);
 						}
 					}
 				}
@@ -228,7 +238,7 @@ namespace DailyForecaster.Controllers
 							case "BuildSimulation":
 								return BuildSimulation(json.GetRawText(), collectionsId);
 							case "AccountChange":
-								return AccountChange(json);
+								return await AccountChange(json);
 							case "EditBudget":
 								return EditBudget(json);
 							case "BudgetChange":
@@ -414,7 +424,7 @@ namespace DailyForecaster.Controllers
 		[HttpPost]
 		public async Task<ActionResult> Create([FromBody] JsonElement json)
 		{
-			UserModel model = JsonSerializer.Deserialize<UserModel>(json.GetRawText());
+			UserModel model = System.Text.Json.JsonSerializer.Deserialize<UserModel>(json.GetRawText());
 			return Ok(await model.CreateUser(model));
 		}
 		[Route("PostTest")]
@@ -439,6 +449,16 @@ namespace DailyForecaster.Controllers
 				}
 			}
 			return Ok();
+		}
+		private ActionResult CheckYodleeInclusion(string uid)
+		{
+			IncludeYodlee includeYodlee = new IncludeYodlee();
+			return Ok(includeYodlee.Exists(uid));
+		}
+		private async Task<ActionResult> GetYodleeAccounts(string id, string collectionsId)
+		{
+			Account account = new Account();
+			return Ok(await account.GetYodleeAccounts(id,collectionsId));
 		}
 		private ActionResult CollectionCount(string uid)
 		{
@@ -465,13 +485,13 @@ namespace DailyForecaster.Controllers
 		}
 		private ActionResult Calculator(JsonElement json)
 		{
-			CalculatorModels model = JsonSerializer.Deserialize<CalculatorModels>(json.GetRawText());
+			CalculatorModels model = System.Text.Json.JsonSerializer.Deserialize<CalculatorModels>(json.GetRawText());
 			return Ok(model.Calculate());
 		}
 		private ActionResult AddScheduledTransaction(JsonElement json)
 		{
 
-			ScheduledTransactions transactions = JsonSerializer.Deserialize<ScheduledTransactions>(json.GetRawText());
+			ScheduledTransactions transactions = System.Text.Json.JsonSerializer.Deserialize<ScheduledTransactions>(json.GetRawText());
 			return Ok(transactions.Create());
 		}
 		public ActionResult GetUnseenTransactions(string email)
@@ -481,7 +501,7 @@ namespace DailyForecaster.Controllers
 		private ActionResult NewCFType(JsonElement json, string collectionsId)
 		{
 			CFType type = new CFType();
-			type.CreateCFType(collectionsId, JsonSerializer.Deserialize<Newcftype>(json.GetRawText()).NewCFType);
+			type.CreateCFType(collectionsId, System.Text.Json.JsonSerializer.Deserialize<Newcftype>(json.GetRawText()).NewCFType);
 			return Ok(type.GetCFList(collectionsId));
 		}
 		private ActionResult SmartHelp(string uid)
@@ -490,7 +510,7 @@ namespace DailyForecaster.Controllers
 		}
 		private ActionResult UpdateUser(JsonElement json, string uid)
 		{
-			ProfileModel model = JsonSerializer.Deserialize<ProfileModel>(json.GetRawText());
+			ProfileModel model = System.Text.Json.JsonSerializer.Deserialize<ProfileModel>(json.GetRawText());
 			return Ok(model.Update());
 		}
 		private ActionResult GetUser(string uid)
@@ -505,7 +525,7 @@ namespace DailyForecaster.Controllers
 		}
 		private ActionResult ManualCashFlows(JsonElement json, string email)
 		{
-			return Ok(new ManualCashFlow(JsonSerializer.Deserialize<ManualCashFlow>(json.GetRawText()),email));
+			return Ok(new ManualCashFlow(System.Text.Json.JsonSerializer.Deserialize<ManualCashFlow>(json.GetRawText()),email));
 		}
 		private ActionResult ManualCashFlows(string email, string collectionsId)
 		{
@@ -514,7 +534,7 @@ namespace DailyForecaster.Controllers
 		private ActionResult LinkShare(JsonElement json,string userId)
 		{
 			CollectionSharing sharing = new CollectionSharing();
-			NewCollectionsObj obj = JsonSerializer.Deserialize<NewCollectionsObj>(json.GetRawText());
+			NewCollectionsObj obj = System.Text.Json.JsonSerializer.Deserialize<NewCollectionsObj>(json.GetRawText());
 			obj.User = userId;
 			return Ok(sharing.AddUserToCollection(obj));
 		}
@@ -532,7 +552,7 @@ namespace DailyForecaster.Controllers
 		{
 			try
 			{
-				ReportedTransaction transaction = JsonSerializer.Deserialize<ReportedTransaction>(json.GetRawText());
+				ReportedTransaction transaction = System.Text.Json.JsonSerializer.Deserialize<ReportedTransaction>(json.GetRawText());
 				if (transaction.AutomatedCashFlow != null)
 				{
 					AutomatedCashFlow flow = transaction.AutomatedCashFlow;
@@ -544,7 +564,7 @@ namespace DailyForecaster.Controllers
 				}
 				else
 				{
-					AutomatedCashFlow automated = JsonSerializer.Deserialize<AutomatedCashFlow>(json.GetRawText());
+					AutomatedCashFlow automated = System.Text.Json.JsonSerializer.Deserialize<AutomatedCashFlow>(json.GetRawText());
 					automated.Save(automated);
 					return Ok();
 				}
@@ -556,7 +576,7 @@ namespace DailyForecaster.Controllers
 		}
 		private ActionResult CreateCollection(JsonElement json, string userId, string email)
 		{
-			NewCollectionsObj obj = JsonSerializer.Deserialize<NewCollectionsObj>(json.GetRawText());
+			NewCollectionsObj obj = System.Text.Json.JsonSerializer.Deserialize<NewCollectionsObj>(json.GetRawText());
 			Collections collections = new Collections();
 			return Ok(collections.CreateCollection(obj,userId,email));
 		}
@@ -581,7 +601,7 @@ namespace DailyForecaster.Controllers
 		/// <returns>Updated lsit of split transactions</returns>
 		private ActionResult UpdateSplits(JsonElement json)
 		{
-			List<SplitTransactions> splits = JsonSerializer.Deserialize<List<SplitTransactions>>(json.GetRawText());
+			List<SplitTransactions> splits = System.Text.Json.JsonSerializer.Deserialize<List<SplitTransactions>>(json.GetRawText());
 			List<SplitTransactions> newList = new List<SplitTransactions>();
 			foreach(SplitTransactions item in splits)
 			{
@@ -596,7 +616,7 @@ namespace DailyForecaster.Controllers
 		/// <returns>Ok</returns>
 		private ActionResult BudgetTransactionDelete(JsonElement json)
 		{
-			BudgetTransaction transaction = JsonSerializer.Deserialize<BudgetTransaction>(json.GetRawText());
+			BudgetTransaction transaction = System.Text.Json.JsonSerializer.Deserialize<BudgetTransaction>(json.GetRawText());
 			transaction.Delete();
 			return Ok();
 		}
@@ -610,7 +630,7 @@ namespace DailyForecaster.Controllers
 		{
 			try
 			{
-				BudgetTransaction transaction = JsonSerializer.Deserialize<BudgetTransaction>(json.GetRawText());
+				BudgetTransaction transaction = System.Text.Json.JsonSerializer.Deserialize<BudgetTransaction>(json.GetRawText());
 				transaction.Budget = null;
 				transaction.Save(userId);
 				return Ok(transaction);
@@ -649,7 +669,7 @@ namespace DailyForecaster.Controllers
 		}
 		private ActionResult EditBudget(JsonElement json)
 		{
-			Collections collection = JsonSerializer.Deserialize<Collections>(json.GetRawText());
+			Collections collection = System.Text.Json.JsonSerializer.Deserialize<Collections>(json.GetRawText());
 
 			return Ok();
 		}
@@ -812,12 +832,26 @@ namespace DailyForecaster.Controllers
 		/// </summary>
 		/// <param name="json">Json Element Passed by FE</param>
 		/// <returns>Updated Account Object</returns>
-		public ActionResult AccountChange(JsonElement json)
+		public async Task<ActionResult> AccountChange(JsonElement json)
 		{
 			try
 			{
-				Account account = JsonSerializer.Deserialize<Account>(json.GetRawText());
-				return Ok(account.AddAccount());
+				Account account = System.Text.Json.JsonSerializer.Deserialize<Account>(json.GetRawText());
+				Account account1 = JsonConvert.DeserializeObject<Account>(json.GetRawText());
+				string id = "";
+				if (account.InstitutionId != null)
+				{
+					account.AddAccount();
+					id = account.CollectionsId;
+				}
+				else
+				{
+					account1.AddAccount();
+					id = account1.CollectionsId;
+				}
+				Collections collections = new Collections(id);
+				collections.Accounts = account.GetAccounts(id);
+				return Ok(await account.UpdateAccounts(id, collections.Accounts.ToList()));
 			}
 			catch (Exception e)
 			{
@@ -872,13 +906,13 @@ namespace DailyForecaster.Controllers
 		}
 		private ActionResult UpdateSimulation(string json)
 		{
-			Simulation simulation = JsonSerializer.Deserialize<Simulation>(json);
+			Simulation simulation = System.Text.Json.JsonSerializer.Deserialize<Simulation>(json);
 			simulation.Edit();
 			return Ok(simulation);
 		}
 		private ActionResult BuildSimulation(string json,string collectionsId)
 		{
-			SimulationAssumptions assumptions = JsonSerializer.Deserialize<SimulationAssumptions>(json);
+			SimulationAssumptions assumptions = System.Text.Json.JsonSerializer.Deserialize<SimulationAssumptions>(json);
 			Simulation simulation = new Simulation(assumptions, collectionsId);
 			simulation.BuildSimulation(assumptions);
 			simulation.Scenario();

@@ -249,6 +249,66 @@ namespace DailyForecaster.Models
 			}
 			return acc;
 		}
+		public async Task<List<Account>> GetYodleeAccounts(string providerId, string collectionsId)
+		{
+			YodleeAccountModel model = new YodleeAccountModel();
+			List<YodleeAccountLevel> yodleeAccounts = await model.GetYodleeAccounts(collectionsId);
+			List<YodleeAccountLevel> final = new List<YodleeAccountLevel>();
+			List<Account> existing = GetAccounts(collectionsId);
+			if (providerId == "null")
+			{
+				Institution institution = new Institution();
+				List<string> ids = institution.GetProviders();
+				foreach(YodleeAccountLevel item in yodleeAccounts)
+				{
+					if(!ids.Where(x=>x == item.providerId).Any() && !ids.Where(x=>x == item.providerAccountId.ToString()).Any() && !existing.Select(x => x.AccountIdentifier.Substring(4, 4)).Where(x=>x == item.accountNumber.Substring(item.accountNumber.Length-4,4)).Any())
+					{
+						final = yodleeAccounts.Where(x => x.providerId == item.providerId).ToList();
+						break;
+					}
+				}
+			}
+			else
+			{
+				final = yodleeAccounts.Where(x => x.providerId == providerId).ToList();
+			}
+			List<Account> accounts = new List<Account>();
+			foreach(YodleeAccountLevel item in final)
+			{
+				if(!existing.Where(x=>x.YodleeId == item.id).Any())	accounts.Add(CreateFromYodlee(item, collectionsId));
+			}
+			return accounts;
+		}
+		public Account CreateFromYodlee(YodleeAccountLevel yodleeAccount,string collectionsId)
+		{
+			Institution institution = new Institution();
+			institution = institution.GetInstitution(Convert.ToInt64(yodleeAccount.providerId));
+			string InstId = "";
+			if(institution != null)
+			{
+				InstId = institution.Id;
+			}
+			return new Account()
+			{
+				Id = Guid.NewGuid().ToString(),
+				Name = yodleeAccount.displayedName,
+				InstitutionId = InstId,
+				//Available = account.Available,
+				//AccountLimit = account.AccountLimit,
+				//NetAmount = account.NetAmount,
+				//DebitRate = account.DebitRate,
+				//CreditRate = account.CreditRate,
+				//Floating = account.Floating,
+				//FloatingType = account.FloatingType,
+				//MonthlyFee = account.MonthlyFee,
+				CollectionsId = collectionsId,
+				//AccountTypeId = account.AccountTypeId,
+				AccountIdentifier = yodleeAccount.accountNumber.Substring(yodleeAccount.accountNumber.Length - 4, 4),
+				YodleeId = yodleeAccount.id,
+				//Maturity = account.Maturity,
+				//MonthlyPayment = account.MonthlyPayment,
+			};
+		}
 		public async Task<bool> UpdateAccounts(string collectionsId,List<Account> accounts)
 		{
 			YodleeAccountModel model = new YodleeAccountModel();
@@ -257,6 +317,7 @@ namespace DailyForecaster.Models
 			{
 				using (FinPlannerContext _context = new FinPlannerContext())
 				{
+					
 					foreach (Account item in accounts)
 					{
 						if (item.YodleeId == 0 && item.AccountIdentifier != null)
@@ -266,6 +327,11 @@ namespace DailyForecaster.Models
 						else
 						{
 							YodleeAccountLevel accountLevel = yodleeAccounts.Where(x => x.accountNumber.Substring(x.accountNumber.Length - 4, 4) == item.AccountIdentifier.Substring(item.AccountIdentifier.Length - 4, 4)).FirstOrDefault();
+							if (item.Institution.ProviderId == 0)
+							{
+								item.Institution.ProviderId = Convert.ToInt32(accountLevel.providerId);
+								item.Institution.Update();
+							}
 							if (accountLevel != null)
 							{
 								if (item.AccountType.Bank)
@@ -278,9 +344,13 @@ namespace DailyForecaster.Models
 									{
 										item.Available = accountLevel.availableCredit.amount;
 									}
-									else
+									else if (accountLevel.balance != null)
 									{
 										item.Available = accountLevel.balance.amount;
+									}
+									else
+									{
+										item.Available = 0;
 									}
 								}
 								else
@@ -310,7 +380,6 @@ namespace DailyForecaster.Models
 						};
 						_context.Add(balance);
 					}
-					
 					_context.SaveChanges();	
 				}
 				return true;

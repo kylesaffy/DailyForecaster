@@ -13,15 +13,15 @@ namespace DailyForecaster.Models
 		public List<CFClassification> CFClassifications { get; set; }
 		public List<CFType> CFTypes { get; set; }
 		public List<Account> Accounts { get; set; }
-		public UnseenModel(string userId)
+		public UnseenModel(string email)
 		{
-			AspNetUsers users = new AspNetUsers();
-			string id = users.getUserId(userId);
+			FirebaseUser users = new FirebaseUser();
+			string id = users.GetUserId(email);
 			using (FinPlannerContext _context = new FinPlannerContext())
 			{
 				List<string> collections = _context
 					.UserCollectionMapping
-					.Where(x => x.Id == id)
+					.Where(x => x.FirebaseUserId == id)
 					.Select(x => x.CollectionsId)
 					.ToList();
 				List<string> accountsStr = _context

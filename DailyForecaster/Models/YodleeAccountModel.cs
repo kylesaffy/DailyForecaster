@@ -45,11 +45,11 @@ namespace DailyForecaster.Models
 				client.DefaultRequestHeaders.Add("Api-Version", "1.1");
 				client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 				HttpResponseMessage response = await client.DeleteAsync(url + "/Accounts/" + provider.id);
-				if (!response.IsSuccessStatusCode)
-				{
-					result = false;
-					break;
-				}
+				//if (!response.IsSuccessStatusCode)
+				//{
+				//	result = false;
+				//	break;
+				//}
 			}
 			return result;
 		}

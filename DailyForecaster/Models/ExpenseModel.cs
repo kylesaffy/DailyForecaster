@@ -602,4 +602,10 @@ namespace DailyForecaster.Models
 		public CFType CFType { get; set; }
 		public double Amount { get; set; }
 	}
+	public class ReturnModel
+	{
+		public bool result { get; set; }
+		public string returnStr { get; set; }
+		public List<ItemisedProducts> products { get; set; }
+	}
 }

@@ -15,9 +15,6 @@ namespace DailyForecaster.Models
 		[Required]
 		public string CollectionsId { get; set; }
 		public Collections Collections { get; set; }
-		public string Id { get; set; }
-		[ForeignKey("Id")]
-		public AspNetUsers AspNetUsers { get; set; }
 		public string FirebaseUserId { get; set; }
 		[ForeignKey("FirebaseUserId")]
 		public FirebaseUser FirebaseUser { get; set; }
@@ -42,7 +39,7 @@ namespace DailyForecaster.Models
 		/// Responsible for returning the mapping of a single user to the collections to which they are assigned
 		/// </summary>
 		/// <param name="userId">The unique ID of the user</param>
-		/// <param name="type">Either firebase or asp</param>
+		/// <param name="type">firebase only accepted</param>
 		/// <returns>Returns a string of the id's of the collections to which a single user is associated</returns>
 		public List<string> getCollectionIds(string userId, string type)
 		{
@@ -53,11 +50,11 @@ namespace DailyForecaster.Models
 					{
 						return _context.UserCollectionMapping.Where(x => x.FirebaseUserId == userId).Select(x => x.CollectionsId).ToList();
 					}
-				case "asp":
-					using (FinPlannerContext _context = new FinPlannerContext())
-					{
-						return _context.UserCollectionMapping.Where(x => x.Id == userId).Where(x=>x.IsDelete == false).Select(x => x.CollectionsId).ToList();
-					}
+				//case "asp":
+				//	using (FinPlannerContext _context = new FinPlannerContext())
+				//	{
+				//		return _context.UserCollectionMapping.Where(x => x.Id == userId).Where(x=>x.IsDelete == false).Select(x => x.CollectionsId).ToList();
+				//	}
 				default:
 					return null;
 			}
@@ -84,7 +81,6 @@ namespace DailyForecaster.Models
 			else
 			{
 				userId = userIdNew;
-				Id = userId;
 			}
 			if (CheckUser(collectionsId, userId))
 			{
@@ -95,16 +91,15 @@ namespace DailyForecaster.Models
 			{
 				UserCollectionMappingId = "999";
 				CollectionsId = "999";
-				Id = "999";
 			}
 		}
 		public int CollectionsCounter(string userId)
 		{
 			using (FinPlannerContext _context = new FinPlannerContext())
 			{
-				AspNetUsers user = new AspNetUsers();
-				string id = user.getUserId(userId);
-				return _context.UserCollectionMapping.Where(x => x.Id == id).Count();
+				FirebaseUser user = new FirebaseUser();
+				string id = user.GetUser(userId).FirebaseUserId;
+				return _context.UserCollectionMapping.Where(x => x.FirebaseUserId == id).Count();
 			}
 		}
 		public bool Check(string uid)
@@ -130,7 +125,7 @@ namespace DailyForecaster.Models
 				//userId = aspNetUsers.getUserId(userId);
 				foreach (UserCollectionMapping item in mappings)
 				{
-					if (item.Id == userId || item.FirebaseUserId == userId)
+					if (item.FirebaseUserId == userId || item.FirebaseUserId == userId)
 					{
 						ans = false;
 						break;
@@ -142,7 +137,7 @@ namespace DailyForecaster.Models
 		public bool CheckUser()
 		{
 			bool ans = true;
-			if (Id == "999")
+			if (FirebaseUserId == "999")
 			{
 				ans = false;
 			}
@@ -156,7 +151,7 @@ namespace DailyForecaster.Models
 					//userId = aspNetUsers.getUserId(userId);
 					foreach (UserCollectionMapping item in mappings)
 					{
-						if (item.Id == Id || item.FirebaseUserId == Id)
+						if (item.FirebaseUserId == FirebaseUserId || item.FirebaseUserId == FirebaseUserId)
 						{
 							ans = false;
 							break;

@@ -35,5 +35,30 @@ namespace DailyForecaster.Models
 					.ToList();
 			}
 		}
+		public void Update()
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Entry(this).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+				_context.SaveChanges();
+			}
+		}
+		public List<string> GetProviders()
+		{
+			List<long> providers = GetInstitutions().Select(x => x.ProviderId).ToList();
+			List<string> result = new List<string>();
+			foreach (long item in providers)
+			{
+				result.Add(Convert.ToString(item));
+			}
+			return result;
+		}
+		public Institution GetInstitution(long providerId)
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.Institution.Where(x => x.ProviderId == providerId).FirstOrDefault();
+			}
+		}
 	}
 }

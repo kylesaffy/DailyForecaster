@@ -29,13 +29,13 @@ namespace DailyForecaster.Models
 		private int GetCount(string email)
 		{
 			int count = 0;
-			AspNetUsers users = new AspNetUsers();
-			string id = users.getUserId(email);
+			FirebaseUser user = new FirebaseUser();
+			string id = user.GetUserId(email);
 			using (FinPlannerContext _context = new FinPlannerContext())
 			{
 				List<string> collections = _context
 					.UserCollectionMapping
-					.Where(x => x.Id == id)
+					.Where(x => x.FirebaseUserId == id)
 					.Select(x => x.CollectionsId)
 					.ToList();
 				List<string> accounts = _context
