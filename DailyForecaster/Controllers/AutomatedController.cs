@@ -152,6 +152,13 @@ namespace DailyForecaster.Controllers
 			YodleeAccountModel model = new YodleeAccountModel();
 			return Ok(await model.GetYodleeAccounts(id));
 		}
+		[Route("RemoveAutoUpdates")]
+		[HttpGet]
+		public async Task<ActionResult> RemoveAutoUpdates(string id)
+		{
+			YodleeModel model = new YodleeModel();
+			return Ok(await model.RemoveAutoUpdates(id));
+		}
 		[Route("GetYodleeFNB")]
 		[HttpGet]
 		public async Task<ActionResult> GetYodleeFNB(string id)

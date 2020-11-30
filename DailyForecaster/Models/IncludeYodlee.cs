@@ -21,6 +21,53 @@ namespace DailyForecaster.Models
 			CollectionsId = collectionsId;
 			Included = included;
 		}
+		public IncludeYodlee (string collectionsId)
+		{
+			IncludeYodlee yodlee = Get(collectionsId);
+			IncludeYodleeId = yodlee.IncludeYodleeId;
+			Included = yodlee.Included;
+			CollectionsId = yodlee.CollectionsId;
+		}
+		public async Task<bool> Update(bool included,string userId)
+		{
+			ReturnModel returnModel = new ReturnModel();
+			YodleeModel model = new YodleeModel();
+			if (included)
+			{
+				returnModel = await model.Register(userId, this.CollectionsId);
+			}
+			else
+			{
+				returnModel = await model.Unregister(this.CollectionsId);
+			}
+			if(returnModel.result)
+			{
+				if(!included)
+				{
+					Account account = new Account();
+					if(account.ResetYodlee(this.CollectionsId))
+					{
+						this.Included = included;
+						Update();
+					}
+				}
+				else
+				{
+					this.Included = included;
+					Update();
+				}
+				
+			}
+			return returnModel.result;
+		}
+		private void Update()
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Entry(this).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+				_context.SaveChanges();
+			}
+		}
 		private List<string> GetCollections(string uid)
 		{
 			FirebaseUser user = new FirebaseUser(uid);
@@ -42,9 +89,12 @@ namespace DailyForecaster.Models
 			List<string> collectionIds = GetCollections(uid);
 			foreach(string item in collectionIds)
 			{
-				if(Get(item).Included)
+				if (Exisits(item))
 				{
-					counter++;
+					if (Get(item).Included)
+					{
+						counter++;
+					}
 				}
 			}
 			if(counter > 0)
@@ -68,6 +118,19 @@ namespace DailyForecaster.Models
 					}
 				}
 			}
+		}
+		private bool Exisits(string collectionId)
+		{
+			int count = 0;
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{						
+				if (_context.IncludeYodlee.Where(x => x.CollectionsId == collectionId).Any())
+				{
+					count++;
+				}
+			}
+			if (count > 0) return true;
+			else return false;
 		}
 		private bool Exisits(List<string> collectionIds)
 		{

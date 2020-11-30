@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20201128054352_updateAccountType1")]
+    partial class updateAccountType1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -220,6 +222,9 @@ namespace DailyForecaster.Migrations
 
                     b.Property<bool>("Transactional")
                         .HasColumnType("bit");
+
+                    b.Property<string>("YodleeString")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("AccountTypeId");
 
@@ -1423,27 +1428,6 @@ namespace DailyForecaster.Migrations
                     b.ToTable("UserInteraction");
                 });
 
-            modelBuilder.Entity("DailyForecaster.Models.YodleeAccountType", b =>
-                {
-                    b.Property<string>("YodleeAccountTypeId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("AccountTypeId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Container")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("YodleeDesc")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("YodleeAccountTypeId");
-
-                    b.HasIndex("AccountTypeId");
-
-                    b.ToTable("YodleeAccountType");
-                });
-
             modelBuilder.Entity("DailyForecaster.Models.YodleeModel", b =>
                 {
                     b.Property<string>("Id")
@@ -1837,13 +1821,6 @@ namespace DailyForecaster.Migrations
                     b.HasOne("DailyForecaster.Models.FirebaseUser", "FirebaseUser")
                         .WithMany()
                         .HasForeignKey("FirebaseUserId");
-                });
-
-            modelBuilder.Entity("DailyForecaster.Models.YodleeAccountType", b =>
-                {
-                    b.HasOne("DailyForecaster.Models.AccountType", "AccountType")
-                        .WithMany()
-                        .HasForeignKey("AccountTypeId");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.YodleeModel", b =>

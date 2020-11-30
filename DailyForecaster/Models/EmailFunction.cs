@@ -101,7 +101,7 @@ namespace DailyForecaster.Models
 				EnableSsl = true,
 				Timeout = 200000
 			};
-			MailAddress from = new MailAddress(FromEmail, "Admin", Encoding.UTF8);
+			MailAddress from = new MailAddress(FromEmail, "MoneyMinders", Encoding.UTF8);
 			MailAddress to = new MailAddress(ToEmail);
 			MailMessage message = new MailMessage(from, to);
 			if (Subject == "Confirm your account")

@@ -36,7 +36,7 @@ namespace DailyForecaster.Models
 			}
 			Collection = new Collections(collectionsId);
 			CFTypes = type.GetCFList(collectionsId);
-			Budget budget = Collection.Budgets.OrderByDescending(x => x.StartDate).FirstOrDefault();
+			Budget budget = Collection.Budgets.Where(x=>x.SimulationBool == false).OrderByDescending(x => x.StartDate).FirstOrDefault();
 			BudgetId = budget.BudgetId;
 			foreach (BudgetTransaction item in budget.BudgetTransactions)
 			{
@@ -47,6 +47,18 @@ namespace DailyForecaster.Models
 			Collection.Budgets.Add(budget);
 			Collections = collections.GetCollections(email, "BudgetVM");
 
+		}
+		public BudgetVM(string budgetId)
+		{
+			CFType type = new CFType();
+			CFClassification classification = new CFClassification();
+			CFClassifications = classification.GetList();
+			Budget budget = new Budget();
+			budget = budget.GetBudgetById(budgetId);
+			CFTypes = type.GetCFList(budget.CollectionId);
+			Collection = new Collections();
+			Collection.Budgets = new List<Budget>();
+			Collection.Budgets.Add(budget);
 		}
 	}
 }

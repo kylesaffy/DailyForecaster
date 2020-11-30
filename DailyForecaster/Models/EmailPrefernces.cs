@@ -54,12 +54,31 @@ namespace DailyForecaster.Models
 				_context.SaveChanges();
 			}
 		}
+		/// <summary>
+		/// Get Email preference object by FirebaseUserId
+		/// </summary>
+		/// <param name="id">FirebaseUserId</param>
+		/// <returns>Single Email Prefence Object</returns>
 		private EmailPreferences Get(string id)
-		{
-			using(FinPlannerContext _context = new FinPlannerContext())
+		{							
+			using (FinPlannerContext _context = new FinPlannerContext())
 			{
 				return _context.EmailPrefernces.Where(x => x.FirebaseUserId == id).FirstOrDefault();
 			}
+			
+		}
+		/// <summary>
+		/// Get Email preference object by Id
+		/// </summary>
+		/// <param name="id">Object Id</param>
+		/// <returns>Single Email Prefence Object</returns>
+		private EmailPreferences GetById(string id)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.EmailPrefernces.Find(id);
+			}
+
 		}
 		public bool Check(string id)
 		{
@@ -70,7 +89,7 @@ namespace DailyForecaster.Models
 		}
 		public EmailPreferences Update()
 		{
-			EmailPreferences oldPreferences = Get(this.EmailPreferencesId);
+			EmailPreferences oldPreferences = GetById(this.EmailPreferencesId);
 			oldPreferences.DailyCommunication = this.DailyCommunication;
 			oldPreferences.LoginNotification = this.LoginNotification;
 			SaveChanges();

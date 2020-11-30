@@ -42,6 +42,10 @@ namespace DailyForecaster.Models
 			CollectionsId = collectionsId;
 			SimulationId = Save();
 		}
+		public Simulation Get(string id)
+		{
+			return GetSimulation(id);
+		}
 		public List<Simulation>	GetSimulations(string uid)
 		{
 			FirebaseUser user = new FirebaseUser(uid);
@@ -65,7 +69,18 @@ namespace DailyForecaster.Models
 			catch (Exception e)
 			{
 				ExceptionCatcher catcher = new ExceptionCatcher();
-				catcher.Catch(e.Message);
+				catcher.Catch(e);
+			}
+			if(simulations.Count > 0)
+			{
+				foreach (Simulation item in simulations)
+				{
+					item.Collections = new Collections();
+					item.Collections = item.Collections.GetCollections(item.CollectionsId);
+					Budget budget = new Budget();
+					item.Budgets = budget.GetBudgets(item.CollectionsId,true);
+					item.Budgets = item.Budgets.Where(x => x.SimulationId == item.SimulationId).ToList();
+				}
 			}
 			return simulations;
 		}
@@ -86,7 +101,7 @@ namespace DailyForecaster.Models
 				{
 					_context.Entry(this).State = EntityState.Modified;
 				}
-				//_context.SaveChanges();
+				_context.SaveChanges();
 			}
 			return this.SimulationId;
 		}
@@ -102,11 +117,141 @@ namespace DailyForecaster.Models
 			this.SimulationAssumptions.Simulation = null;
 			return this;
 		}
+		private void BuildSim()
+		{
+			string budgetId = BuildBudgets();
+		}
+		private List<BudgetTransaction> BuildBudgetTransactions(string budgetId, int month, string newBudgetId, string userId)
+		{
+			BudgetTransaction transaction = new BudgetTransaction();
+			List<BudgetTransaction> transactions = transaction.GetBudgetTransactions(budgetId);
+			List<BudgetTransaction> newTransactions = new List<BudgetTransaction>();
+			CFType type = new CFType();
+			List<CFType> types = type.GetCFList(this.CollectionsId);
+			int count = 0;
+			foreach(BudgetTransaction t in transactions)
+			{
+				switch(t.CFTypeId)
+				{
+					case "bc86f797-2f81-4467-80c4-a6387099d0b0":
+						newTransactions.Add(new BudgetTransaction()
+						{
+							Amount = BuildSalary(t.Amount, month) + BuildBonus(t.Amount, month),
+							BudgetId = newBudgetId,
+							CFClassificationId = t.CFClassificationId,
+							CFTypeId = t.CFTypeId,
+							Name = t.Name
+						});
+						break;
+					default:
+						newTransactions.Add(new BudgetTransaction()
+						{
+							Amount = BuildPayment(t.Amount,month,types.Where(x=>x.Id == t.CFTypeId).Select(x=>x.Infaltion).FirstOrDefault()),
+							BudgetId = newBudgetId,
+							CFClassificationId = t.CFClassificationId,
+							CFTypeId = t.CFTypeId,
+							Name = t.Name
+						});
+						break;
+				}
+				newTransactions[count].Save(userId);
+				count++;
+			}
+			return newTransactions;
+		}
+		/// <summary>
+		/// Builds the new transaction amount
+		/// </summary>
+		/// <param name="Amount">Prevoius Amount</param>
+		/// <param name="month">Current month</param>
+		/// <param name="inflation">Is this an inflation based amount</param>
+		/// <returns>New transaction amount</returns>
+		private double BuildPayment(double Amount, int month, bool inflation)
+		{
+			double amount = 0;
+			if (month == 1 && inflation) amount = Amount * (1 + 0.06);
+			else amount = Amount;
+			return amount;
+		}
+		/// <summary>
+		/// Builds the Bonus Amount
+		/// </summary>
+		/// <param name="Amount">Previous Salary</param>
+		/// <param name="month">Current Month</param>
+		/// <returns>Bonus Amount if the bonus occurs</returns>
+		private double BuildBonus(double Amount, int month)
+		{
+			double amount = 0;
+			if (this.SimulationAssumptions.Bonus && this.SimulationAssumptions.BonusMonth == month) amount = Amount * this.SimulationAssumptions.BonusAmount;
+			return amount;
+		}
+		/// <summary>
+		/// Build the salary amount
+		/// </summary>
+		/// <param name="Amount">Previous Salary</param>
+		/// <param name="month">Current Month</param>
+		/// <returns>New Salary Amount</returns>
+		private	double BuildSalary(double Amount, int month)
+		{
+			double amount = 0;
+			if (this.SimulationAssumptions.Increase)
+			{
+				if (month == this.SimulationAssumptions.IncreaseMonth)
+				{
+					amount = Amount * (1 + this.SimulationAssumptions.IncreasePercentage);
+				}
+				else
+				{
+					amount = Amount;
+				}
+			}
+			else
+			{
+				amount = Amount;
+			}
+			return amount;			
+		}
+		/// <summary>
+		/// Build the budgets for the simulation
+		/// </summary>
+		private string BuildBudgets()
+		{
+			Budget budget = new Budget(this.CollectionsId);
+			DateTime initiationDate = setDate(budget.StartDate);
+			DateTime endingDate = setDate(budget.EndDate);
+			for(int i = 0; i < this.SimulationAssumptions.NumberOfMonths; i ++)
+			{
+				this.Budgets.Add(new Budget(this.CollectionsId,initiationDate,endingDate,true,this.SimulationId));
+				initiationDate = setDate(initiationDate);
+				endingDate = setDate(endingDate);
+			}
+			return budget.BudgetId;
+		}
+		/// <summary>
+		/// Set the date for the budgets
+		/// </summary>
+		/// <param name="date">pervious date</param>
+		/// <returns>new date</returns>
+		public DateTime setDate(DateTime date)
+		{
+			switch (this.Collections.DurationType.ToLower())
+			{
+				case "month":
+					date = date.AddMonths(1);
+					break;
+				case "week":
+					date = date.AddDays(7);
+					break;
+				default:
+					break;
+			}
+			return date;
+		}
 		private void Build()
 		{
 			this.Collections = new Collections(this.CollectionsId);
 			// Get base information
-			Budget budget = Collections.Budgets.Where(x => x.Simulation == false).OrderByDescending(x => x.StartDate).FirstOrDefault();
+			Budget budget = Collections.Budgets.Where(x => x.SimulationBool == false).OrderByDescending(x => x.StartDate).FirstOrDefault();
 			this.Collections.Budgets = null;
 			Account account = new Account();
 			this.Collections.Accounts = account.GetAccounts(this.CollectionsId);
@@ -138,7 +283,7 @@ namespace DailyForecaster.Models
 					// Loop for the number of Months
 					for (int i = 0; i < SimulationAssumptions.NumberOfMonths; i++)
 					{
-						Budget sim = new Budget(CollectionsId, date.AddMonths(i), date.AddMonths(i + 1), true);
+						Budget sim = new Budget(CollectionsId, date.AddMonths(i), date.AddMonths(i + 1), true, this.SimulationId);
 						sim.AccountStates = new List<AccountState>();
 						// If first month, then pull BudgetTransactions from actual BudgetTransactions ELSE pull from previous month
 						if (i == 0)
@@ -146,8 +291,11 @@ namespace DailyForecaster.Models
 							sim.BudgetTransactions = budget.BudgetTransactions.Where(x=>x.Automated == false).ToList();
 							foreach(BudgetTransaction item in sim.BudgetTransactions)
 							{
-								item.CFClassification = cfList.Where(x => x.Id == item.CFClassificationId).FirstOrDefault();
-								item.CFType = typeList.Where(x => x.Id == item.CFTypeId).FirstOrDefault();
+								item.BudgetTransactionId = null;
+								item.BudgetId = sim.BudgetId;
+								item.Save("");
+								// item.CFClassification = cfList.Where(x => x.Id == item.CFClassificationId).FirstOrDefault();
+								// item.CFType = typeList.Where(x => x.Id == item.CFTypeId).FirstOrDefault();
 							}
 							foreach(Account item in Collections.Accounts)
 							{
@@ -159,7 +307,13 @@ namespace DailyForecaster.Models
 							sim.BudgetTransactions = this.Budgets[i - 1].BudgetTransactions.Where(x => x.Automated == false).ToList();
 							foreach (BudgetTransaction item in sim.BudgetTransactions)
 							{
-								item.CFClassification = cfList.Where(x => x.Id == item.CFClassificationId).FirstOrDefault();
+								item.BudgetTransactionId = null;
+								item.CFClassification = null;
+								item.CFType = null;
+								item.BudgetId = sim.BudgetId;
+								item.Save("");
+								// item.CFType = typeList.Where(x => x.Id == item.CFTypeId).FirstOrDefault();
+								// item.CFClassification = cfList.Where(x => x.Id == item.CFClassificationId).FirstOrDefault();
 							}
 							foreach (Account item in this.Collections.Accounts)
 							{

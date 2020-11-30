@@ -22,8 +22,11 @@ namespace DailyForecaster.Models
 		public string CollectionId { get; set; }
 		[ForeignKey("CollectionId")]
 		public Collections Collection { get; set; }
+		public string SimulationId { get; set; }
+		[ForeignKey("SimulationId")]
+		public Simulation Simulation { get; set; }
 		public ICollection<BudgetTransaction> BudgetTransactions { get; set; }
-		public bool Simulation { get; set; }
+		public bool SimulationBool { get; set; }
 		public ICollection<AccountState> AccountStates { get; set; }
 		public Budget() { }
 
@@ -70,6 +73,15 @@ namespace DailyForecaster.Models
 				item.CFType = types.Where(x => x.Id == item.CFTypeId).FirstOrDefault();
 			}
 		}
+		public Budget GetBudgetById(string id)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				Budget budget = _context.Budget.Find(id);
+				budget.GetBudgetTransacions();
+				return budget;
+			}
+		}
 		public List<Budget> NewBudget(Collections collection)
 		{
 			List<Budget> budgets = new List<Budget>();
@@ -107,13 +119,22 @@ namespace DailyForecaster.Models
 			budgets.Add(new Budget(collection.CollectionsId, start, end, false));
 			return budgets;
 		}
-		public Budget(string collectionsId, DateTime startDate, DateTime endDate, bool simulation)
+		/// <summary>
+		/// Build Budget with given inputs
+		/// </summary>
+		/// <param name="collectionsId">Id of collection that the budget is associated with</param>
+		/// <param name="startDate">Start date of the budget</param>
+		/// <param name="endDate">End date of the budget</param>
+		/// <param name="simulation">Bool isSimuation</param>
+		/// <param name="simId">if simulation is true then simulationId is needed, defaulted to null</param>
+		public Budget(string collectionsId, DateTime startDate, DateTime endDate, bool simulation, string simId = null)
 		{
 			BudgetId = Guid.NewGuid().ToString();
 			StartDate = startDate;
 			CollectionId = collectionsId;
 			EndDate = endDate;
-			Simulation = simulation;
+			SimulationBool = simulation;
+			SimulationId = simId;
 			Save();
 		}
 		private void Save()
@@ -413,7 +434,7 @@ namespace DailyForecaster.Models
 				return _context
 					.Budget
 					.Where(x => x.CollectionId == collectionsId)
-					.Where(x => x.Simulation == false)
+					.Where(x => x.SimulationBool == false)
 					.OrderByDescending(x => x.EndDate)
 					.FirstOrDefault();
 			}
@@ -426,23 +447,25 @@ namespace DailyForecaster.Models
 			{
 				budget = collection
 					.Budgets
-					.Where(x => x.Simulation == false)
+					.Where(x => x.SimulationBool == false)
 					.OrderByDescending(x => x.EndDate)
 					.First();
 				budget.Collection = null;
 			}
 			return budget;
 		}
-		public List<Budget> GetBudgets(string collectionsId)
+		public List<Budget> GetBudgets(string collectionsId, bool sim = false)
 		{
+			List<Budget> budgets = new List<Budget>();
 			using (FinPlannerContext _context = new FinPlannerContext())
 			{
-				return _context
+				budgets = _context
 					.Budget
 					.Where(x => x.CollectionId == collectionsId)
-					.Where(x => x.Simulation == false)
+					.Where(x => x.SimulationBool == sim)
 					.ToList();
 			}
+			return budgets;
 		}
 		private Budget FindBudget(string collectionId)
 		{
@@ -481,7 +504,7 @@ namespace DailyForecaster.Models
 						budget = _context
 							.Budget
 							.Where(x => x.CollectionId == collectionId && x.StartDate == currentDate)
-							.Where(x => x.Simulation == false)
+							.Where(x => x.SimulationBool == false)
 							.FirstOrDefault();
 					}
 					break;

@@ -40,7 +40,7 @@ namespace DailyForecaster
 			services.AddCors(options =>
 			{
 				options.AddPolicy("AllowOrigin",
-						 //builder => builder.WithOrigins("https://localhost:44307", "https://12dceb811896.ngrok.io")
+						 // builder => builder.WithOrigins("https://localhost:44307", "https://12dceb811896.ngrok.io")
 						 builder=>builder.AllowAnyOrigin()
 						 .AllowAnyHeader()
 						 .AllowAnyMethod());

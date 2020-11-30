@@ -26,6 +26,13 @@ namespace DailyForecaster.Models
 		[ForeignKey("CollectionsId")]
 		public Collections Collection { get; set; }
 		public YodleeModel() { }
+		public YodleeModel Get(string collectionsId)
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.YodleeModel.Where(x => x.CollectionsId == collectionsId).FirstOrDefault();
+			}
+		}
 		/// <summary>
 		/// Either creates and or returns a yodlee model object depending on the instruction passed
 		/// </summary>
@@ -100,6 +107,50 @@ namespace DailyForecaster.Models
 			using(FinPlannerContext _context = new FinPlannerContext())
 			{
 				return _context.YodleeModel.Where(x => x.CollectionsId == collectionsId).Select(x => x.loginName).FirstOrDefault();
+			}
+		}
+		public async Task<ReturnModel> RemoveAutoUpdates(string collectionsId)
+		{
+			string token = await getToken(collectionsId, "");
+			HttpClient client = new HttpClient();
+			client.DefaultRequestHeaders.Add("Api-Version", "1.1");
+			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+			HttpResponseMessage response = await client.DeleteAsync(@"https://api.yodlee.uk/ysl/configs/notifications/events/AUTO_REFRESH_UPDATES");
+			if (response.IsSuccessStatusCode)
+			{
+				YodleeModel yodleeModel = Get(collectionsId);
+				yodleeModel.Remove();
+				return new ReturnModel() { result = true };
+			}
+			else
+			{
+				return new ReturnModel() { result = false, returnStr = await response.Content.ReadAsStringAsync() };
+			}
+		}
+		public async Task<ReturnModel> Unregister(string collectionsId)
+		{
+			string token = await getToken(collectionsId, "");
+			HttpClient client = new HttpClient();
+			client.DefaultRequestHeaders.Add("Api-Version", "1.1");
+			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+			HttpResponseMessage response = await client.DeleteAsync(url + "/user/unregister");
+			if (response.IsSuccessStatusCode)
+			{
+				YodleeModel yodleeModel = Get(collectionsId);
+				yodleeModel.Remove();
+				return new ReturnModel() { result = true };
+			}
+			else
+			{
+				return new ReturnModel() { result = false };
+			}
+		}
+		private void Remove()
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Remove(this);
+				_context.SaveChanges();
 			}
 		}
 		public async Task<ReturnModel> Register(string userId, string collectionsId)

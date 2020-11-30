@@ -121,7 +121,7 @@ namespace DailyForecaster.Models
 			}
 		}
 		/// <summary>
-		/// Saves wither by updating or creating a single BudgetTransaction Object
+		/// Saves either by updating or creating a single BudgetTransaction Object
 		/// </summary>
 		/// <param name="userId">Id of the user creating the transaction</param>
 		public void Save(string userId)

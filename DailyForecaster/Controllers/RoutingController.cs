@@ -35,7 +35,7 @@ namespace DailyForecaster.Controllers
 	{
 		private readonly IOptions<MyConfig> config;
 
-	
+
 
 		private readonly TwilioAccountDetails _twilioAccountDetails;
 		// I’ve injected twilioAccountDetails into the constructor
@@ -109,6 +109,7 @@ namespace DailyForecaster.Controllers
 						{
 							new FirebaseUser(auth.Claims["email"].ToString(), auth.Uid);
 						}
+						SmartHelper helper = new SmartHelper();
 						switch (route)
 						{
 							case "UnseenCount":
@@ -144,7 +145,6 @@ namespace DailyForecaster.Controllers
 							case "TwilioToken":
 								return TwilioToken(auth.Uid);
 							case "WelcomePage":
-								SmartHelper helper = new SmartHelper();
 								return Ok(helper.WelcomePage());
 							case "CollectionCount":
 								return CollectionCount(auth.Uid);
@@ -152,6 +152,20 @@ namespace DailyForecaster.Controllers
 								return await GetYodleeAccounts(misc, collectionsId);
 							case "CheckYodleeInclusion":
 								return CheckYodleeInclusion(auth.Uid);
+							case "NewToAccounts":
+								return Ok(helper.NewToAccounts());
+							case "GetNewSimulationAssumptions":
+								return GetNewSimulationAssumptions(auth.Uid);
+							case "GetSimulations":
+								return GetSimulations(auth.Uid);
+							case "GetSim":
+								return GetSim(misc);
+							case "GetBudget":
+								return GetBudget(misc);
+							case "UpdateYodlee":
+								return await UpdateInclude(misc, collectionsId,auth.Uid);
+							case "GetInclude":
+								return GetInclude(collectionsId);
 						}
 					}
 				}
@@ -195,6 +209,7 @@ namespace DailyForecaster.Controllers
 		//	}
 		//	return null;
 		//}
+		
 		[Route("Post")]
 		[HttpPost]
 		public async Task<ActionResult> Post([FromBody] JsonElement json)
@@ -225,7 +240,7 @@ namespace DailyForecaster.Controllers
 					false,
 					true,
 					"collectionsId: " + this.HttpContext.Request.Headers["collectionsId"] + ", accountId: " + this.HttpContext.Request.Headers["accountId"] + ", startDate: " + this.HttpContext.Request.Headers["startDate"] + ", endDate: " + this.HttpContext.Request.Headers["startDate"] + ", email: " + auth.Claims["email"].ToString() +
-					", body: " + json, firebaseUser.GetUserId(auth.Claims["email"].ToString()), 
+					", body: " + json, firebaseUser.GetUserId(auth.Claims["email"].ToString()),
 					true);
 
 					if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
@@ -253,7 +268,7 @@ namespace DailyForecaster.Controllers
 								return SaveTransaction(json, auth.Uid);
 							case "CreateCollection":
 								return CreateCollection(json, auth.Uid, auth.Claims["email"].ToString());
-								//return Ok();
+							//return Ok();
 							case "LinkShare":
 								return LinkShare(json, auth.Uid);
 							case "ManualCashFlows":
@@ -266,10 +281,10 @@ namespace DailyForecaster.Controllers
 								return AddScheduledTransaction(json);
 							case "Calculator":
 								return Calculator(json);
-							case "GetSimulations":
-								return GetSimulations(auth.Uid);
 							case "TwilioToken":
 								return TwilioToken(auth.Uid);
+							case "CreateInclusion":
+								return CreateInclusion(json, collectionsId);
 						}
 					}
 				}
@@ -402,11 +417,11 @@ namespace DailyForecaster.Controllers
 				}
 				return Ok();
 			}
-			catch(Exception e)
+			catch (Exception e)
 			{
 				return Ok("logoff");
 			}
-			
+
 		}
 		[Route("GetTest")]
 		[HttpGet]
@@ -431,14 +446,12 @@ namespace DailyForecaster.Controllers
 		[HttpPost]
 		public async Task<ActionResult> PostTest([FromBody] JsonElement json)
 		{
-			string authHeader = this.HttpContext.Request.Headers["Authorization"];
 			string route = this.HttpContext.Request.Headers["Route"];
 			string collectionsId = "";
 			if (this.HttpContext.Request.Headers["collectionsId"] != "")
 			{
 				collectionsId = this.HttpContext.Request.Headers["collectionsId"];
 			}
-			if (authHeader == "A90986C6-B81D-45C7-97E2-B6EEE486A2D0E9BE35C6-36DB-441D-93CE-EF950BA6A282DD2C9CE3-4895-46CA-9307-386BF3391CC1" && (route == "BuildSimulation" || route == "UpdateSimulation"))
 			{
 				switch (route)
 				{
@@ -446,8 +459,39 @@ namespace DailyForecaster.Controllers
 						return BuildSimulation(json.GetRawText(), collectionsId);
 					case "UpdateSimulation":
 						return UpdateSimulation(json.GetRawText());
+					case "AccountChange":
+						return await AccountChange(json);
 				}
 			}
+			return Ok();
+		}
+		private ActionResult GetInclude(string collectionsId)
+		{
+			return Ok(new IncludeYodlee(collectionsId));
+		}
+		private async Task<ActionResult> UpdateInclude(string misc, string collectionsId, string uid)
+		{
+			bool ans = Convert.ToBoolean(misc);
+			IncludeYodlee includeYodlee = new IncludeYodlee(collectionsId);
+			return Ok(await includeYodlee.Update(ans, uid));
+		}
+		private ActionResult GetBudget(string budgetId)
+		{
+			return Ok(new BudgetVM(budgetId));
+		}
+		private ActionResult GetSim(string id)
+		{
+			return Ok(new SimulationVM(id));
+		}
+		private ActionResult GetNewSimulationAssumptions(string uid)
+		{
+			return Ok(new SimulationAssumptionView(uid));
+		}
+		private ActionResult CreateInclusion(JsonElement json, string collectionsId)
+		{
+			bool result = JsonConvert.DeserializeObject<SelectionModel>(json.GetRawText()).Selection;
+			IncludeYodlee include = new IncludeYodlee();
+			include.Create(collectionsId, result);
 			return Ok();
 		}
 		private ActionResult CheckYodleeInclusion(string uid)
@@ -458,7 +502,7 @@ namespace DailyForecaster.Controllers
 		private async Task<ActionResult> GetYodleeAccounts(string id, string collectionsId)
 		{
 			Account account = new Account();
-			return Ok(await account.GetYodleeAccounts(id,collectionsId));
+			return Ok(await account.GetYodleeAccounts(id, collectionsId));
 		}
 		private ActionResult CollectionCount(string uid)
 		{
@@ -511,13 +555,17 @@ namespace DailyForecaster.Controllers
 		private ActionResult UpdateUser(JsonElement json, string uid)
 		{
 			ProfileModel model = System.Text.Json.JsonSerializer.Deserialize<ProfileModel>(json.GetRawText());
+			if(model.FirebaseUser == null)
+			{
+				model = JsonConvert.DeserializeObject<ProfileModel>(json.GetRawText());
+			}
 			return Ok(model.Update());
 		}
 		private ActionResult GetUser(string uid)
 		{
 			return Ok(new ProfileModel(uid));
 		}
-		private async Task<ActionResult> GetYodleeToken(string collectionsId,string uid)
+		private async Task<ActionResult> GetYodleeToken(string collectionsId, string uid)
 		{
 			YodleeModel yodleeModel = new YodleeModel();
 			string token = await yodleeModel.getToken(collectionsId, uid);
@@ -525,13 +573,13 @@ namespace DailyForecaster.Controllers
 		}
 		private ActionResult ManualCashFlows(JsonElement json, string email)
 		{
-			return Ok(new ManualCashFlow(System.Text.Json.JsonSerializer.Deserialize<ManualCashFlow>(json.GetRawText()),email));
+			return Ok(new ManualCashFlow(System.Text.Json.JsonSerializer.Deserialize<ManualCashFlow>(json.GetRawText()), email));
 		}
 		private ActionResult ManualCashFlows(string email, string collectionsId)
 		{
 			return Ok(new ManualCashFlowsVM(collectionsId, email));
 		}
-		private ActionResult LinkShare(JsonElement json,string userId)
+		private ActionResult LinkShare(JsonElement json, string userId)
 		{
 			CollectionSharing sharing = new CollectionSharing();
 			NewCollectionsObj obj = System.Text.Json.JsonSerializer.Deserialize<NewCollectionsObj>(json.GetRawText());
@@ -548,11 +596,15 @@ namespace DailyForecaster.Controllers
 		/// <param name="json">the JSON version of the object</param>
 		/// <param name="userId">The firebase userId</param>
 		/// <returns>Updated version of the object</returns>
-		private ActionResult SaveTransaction(JsonElement json,string userId)
+		private ActionResult SaveTransaction(JsonElement json, string userId)
 		{
 			try
 			{
 				ReportedTransaction transaction = System.Text.Json.JsonSerializer.Deserialize<ReportedTransaction>(json.GetRawText());
+				if (transaction.Id == null)
+				{
+					transaction = JsonConvert.DeserializeObject<ReportedTransaction>(json.GetRawText());
+				}
 				if (transaction.AutomatedCashFlow != null)
 				{
 					AutomatedCashFlow flow = transaction.AutomatedCashFlow;
@@ -565,6 +617,10 @@ namespace DailyForecaster.Controllers
 				else
 				{
 					AutomatedCashFlow automated = System.Text.Json.JsonSerializer.Deserialize<AutomatedCashFlow>(json.GetRawText());
+					if (automated.ID == null)
+					{
+						automated = JsonConvert.DeserializeObject<AutomatedCashFlow>(json.GetRawText());
+					}
 					automated.Save(automated);
 					return Ok();
 				}
@@ -578,7 +634,7 @@ namespace DailyForecaster.Controllers
 		{
 			NewCollectionsObj obj = System.Text.Json.JsonSerializer.Deserialize<NewCollectionsObj>(json.GetRawText());
 			Collections collections = new Collections();
-			return Ok(collections.CreateCollection(obj,userId,email));
+			return Ok(collections.CreateCollection(obj, userId, email));
 		}
 		/// <summary>
 		/// Login in Email notification
@@ -603,7 +659,7 @@ namespace DailyForecaster.Controllers
 		{
 			List<SplitTransactions> splits = System.Text.Json.JsonSerializer.Deserialize<List<SplitTransactions>>(json.GetRawText());
 			List<SplitTransactions> newList = new List<SplitTransactions>();
-			foreach(SplitTransactions item in splits)
+			foreach (SplitTransactions item in splits)
 			{
 				newList.Add(item.UpdateSplit());
 			}
@@ -617,6 +673,10 @@ namespace DailyForecaster.Controllers
 		private ActionResult BudgetTransactionDelete(JsonElement json)
 		{
 			BudgetTransaction transaction = System.Text.Json.JsonSerializer.Deserialize<BudgetTransaction>(json.GetRawText());
+			if(transaction.BudgetId == null)
+			{
+				transaction = JsonConvert.DeserializeObject<BudgetTransaction>(json.GetRawText());
+			}
 			transaction.Delete();
 			return Ok();
 		}
@@ -631,6 +691,10 @@ namespace DailyForecaster.Controllers
 			try
 			{
 				BudgetTransaction transaction = System.Text.Json.JsonSerializer.Deserialize<BudgetTransaction>(json.GetRawText());
+				if(transaction.BudgetId == null || transaction.CFTypeId == null)
+				{
+					transaction = JsonConvert.DeserializeObject<BudgetTransaction>(json.GetRawText());
+				}
 				transaction.Budget = null;
 				transaction.Save(userId);
 				return Ok(transaction);
@@ -638,11 +702,7 @@ namespace DailyForecaster.Controllers
 			catch (Exception e)
 			{
 				ExceptionCatcher catcher = new ExceptionCatcher();
-				catcher.Catch(e.Message);
-				if(e.InnerException != null)
-				{
-					catcher.Catch(e.InnerException.Message);
-				}
+				catcher.Catch(e);
 				return Ok();
 			}
 		}
@@ -660,12 +720,12 @@ namespace DailyForecaster.Controllers
 				return Ok(vm);
 			}
 			catch (Exception e)
-			{
+			{																																		   
 				ExceptionCatcher catcher = new ExceptionCatcher();
 				catcher.Catch(e.Message);
 				return Ok();
 			}
-			
+
 		}
 		private ActionResult EditBudget(JsonElement json)
 		{
@@ -699,10 +759,23 @@ namespace DailyForecaster.Controllers
 				List<MenuData> subMenu = new List<MenuData>();
 				List<MenuData> resources = new List<MenuData>();
 				List<MenuData> Calculators = new List<MenuData>();
+				List<MenuData> Simulations = new List<MenuData>();
 				menu.Add(new MenuData()
 				{
 					Category = true,
 					Title = "Dashboards"
+				});
+				Simulations.Add(new MenuData()
+				{
+					Title = "Homepage",
+					Key = "Homepage",
+					Url = "/simulations/homepage"
+				});
+				Simulations.Add(new MenuData()
+				{
+					Title = "New Simulation",
+					Key = "New Simulation",
+					Url = "/simulations/NewSimulation"
 				});
 				subMenu.Add(new MenuData()
 				{
@@ -750,7 +823,7 @@ namespace DailyForecaster.Controllers
 				{
 					subMenu.Add(new MenuData()
 					{
-						Title = "Automated Link",
+						Title = "Automated Account",
 						Key = "AutomatedLink",
 						Url = "/dashboard/AutomatedLink"
 					});
@@ -767,7 +840,7 @@ namespace DailyForecaster.Controllers
 					Title = "Simulation Dashboard",
 					Key = "Simulations",
 					Icon = "fe fe-cpu",
-					Children = null
+					Children = Simulations
 				});
 				menu.Add(new MenuData()
 				{
@@ -836,10 +909,10 @@ namespace DailyForecaster.Controllers
 		{
 			try
 			{
-				Account account = System.Text.Json.JsonSerializer.Deserialize<Account>(json.GetRawText());
-				Account account1 = JsonConvert.DeserializeObject<Account>(json.GetRawText());
+				Account account = System.Text.Json.JsonSerializer.Deserialize<AccountObj>(json.GetRawText()).Account;
+				Account account1 = JsonConvert.DeserializeObject<AccountObj>(json.GetRawText()).Account;
 				string id = "";
-				if (account.InstitutionId != null)
+				if (account != null)
 				{
 					account.AddAccount();
 					id = account.CollectionsId;
@@ -850,8 +923,9 @@ namespace DailyForecaster.Controllers
 					id = account1.CollectionsId;
 				}
 				Collections collections = new Collections(id);
-				collections.Accounts = account.GetAccounts(id);
-				return Ok(await account.UpdateAccounts(id, collections.Accounts.ToList()));
+				Account acc = new Account();
+				collections.Accounts = acc.GetAccounts(id);
+				return Ok(await acc.UpdateAccounts(id, collections.Accounts.ToList()));
 			}
 			catch (Exception e)
 			{
@@ -880,7 +954,7 @@ namespace DailyForecaster.Controllers
 			int month = Convert.ToInt32(dateParts[0]);
 			int day = Convert.ToInt32(dateParts[1]);
 			int year = Convert.ToInt32(dateParts[2]);
-			return new DateTime(year,month,day);
+			return new DateTime(year, month, day);
 		}
 		/// <summary>
 		/// Get for the reported transactions for a specified account
@@ -889,10 +963,10 @@ namespace DailyForecaster.Controllers
 		/// <param name="startDate">The start date for which to request the transactions</param>
 		/// <param name="endDate">The end date for which to request the transactions</param>
 		/// <returns>A List of the Reported Transactions that is associated on that account between the specified dates</returns>
-		private ActionResult GetReportedTransactions(string accountId,DateTime startDate,DateTime endDate)
+		private ActionResult GetReportedTransactions(string accountId, DateTime startDate, DateTime endDate)
 		{
 			ReportedTransaction transaction = new ReportedTransaction();
-			return Ok(transaction.GetTransactions(accountId,startDate,endDate));
+			return Ok(transaction.GetTransactions(accountId, startDate, endDate));
 		}
 		/// <summary>
 		/// Returns a List of accounts in the collection VM associated with a collection and a user email
@@ -902,7 +976,7 @@ namespace DailyForecaster.Controllers
 		/// <returns>Reutrns a collectiuon VM for the user</returns>
 		private ActionResult GetAccounts(string collectionsId, string email)
 		{
-			return Ok(new CollectionVM(collectionsId,email));
+			return Ok(new CollectionVM(collectionsId, email));
 		}
 		private ActionResult UpdateSimulation(string json)
 		{
@@ -910,13 +984,26 @@ namespace DailyForecaster.Controllers
 			simulation.Edit();
 			return Ok(simulation);
 		}
-		private ActionResult BuildSimulation(string json,string collectionsId)
+		private ActionResult BuildSimulation(string json, string collectionsId)
 		{
-			SimulationAssumptions assumptions = System.Text.Json.JsonSerializer.Deserialize<SimulationAssumptions>(json);
-			Simulation simulation = new Simulation(assumptions, collectionsId);
-			simulation.BuildSimulation(assumptions);
-			simulation.Scenario();
-			return Ok(simulation);
+			try
+			{
+				SimulationAssumptions assumptions = System.Text.Json.JsonSerializer.Deserialize<SimulationAssumptions>(json);
+				if (assumptions.NumberOfMonths == 0)
+				{
+					assumptions = JsonConvert.DeserializeObject<SimulationAssumptions>(json);
+				}
+				Simulation simulation = new Simulation(assumptions, collectionsId);
+				simulation.BuildSimulation(assumptions);
+				simulation.Scenario();
+				return Ok(simulation);
+			}
+			catch (Exception e)
+			{
+				ExceptionCatcher catcher = new ExceptionCatcher();
+				catcher.Catch(e);
+				return Ok();
+			}
 		}
 		private async Task<string> Verify(string token)
 		{
@@ -942,7 +1029,7 @@ namespace DailyForecaster.Controllers
 			if (auth.ExpirationTimeSeconds > DateTimeOffset.Now.ToUnixTimeSeconds())
 			{
 				string result = await Verify(token);
-				if(result != null)
+				if (result != null)
 				{
 					return auth;
 				}
@@ -966,5 +1053,13 @@ namespace DailyForecaster.Controllers
 	class Newcftype
 	{
 		public string NewCFType { get; set; }
+	}
+	public class SelectionModel
+	{
+		public bool Selection { get; set; }
+	}
+	public class AccountObj
+	{
+		public Account Account { get; set; }
 	}
 }

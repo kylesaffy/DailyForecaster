@@ -11,6 +11,7 @@ namespace DailyForecaster.Models
 		public List<Account> Accounts { get; set; }
 		public List<Institution> Institutions { get; set; }
 		public List<AccountType> AccountTypes { get; set; }
+		public IncludeYodlee IncludeYodlee { get; set; }
 		public string Name { get; set; }
 		public string Id { get; set; }
 		public CollectionVM () { }
@@ -33,6 +34,7 @@ namespace DailyForecaster.Models
 				Accounts = account.GetAccounts(collectionsId, false, email);
 				Id = collection.CollectionsId;
 				Name = collection.Name;
+				IncludeYodlee = new IncludeYodlee(collection.CollectionsId);
 			}
 			else
 			{
@@ -45,6 +47,7 @@ namespace DailyForecaster.Models
 					collection = collection.GetCollections(collectionsId);
 					Id = collection.CollectionsId;
 					Name = collection.Name;
+					IncludeYodlee = new IncludeYodlee(collection.CollectionsId);
 				}
 			}
 			Institution institution = new Institution();

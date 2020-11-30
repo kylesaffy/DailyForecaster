@@ -24,7 +24,7 @@ namespace DailyForecaster.Models
 		/// <summary>
 		/// Returns an exisiting user object
 		/// </summary>
-		/// <param name="userId">MM side userId</param>
+		/// <param name="userId">MM side or Firebase side userId</param>
 		public FirebaseUser(string userId)
 		{
 			FirebaseUser user = new FirebaseUser();
@@ -157,7 +157,7 @@ namespace DailyForecaster.Models
 		/// <summary>
 		/// Data Layer Application for the retrieval of users by email or Id
 		/// </summary>
-		/// <param name="email">Email address of the user</param>
+		/// <param name="email">Email address or the Firebase Uid of the user</param>
 		/// <returns>Returns a single instance of a user</returns>
 		private FirebaseUser Get(string email)
 		{

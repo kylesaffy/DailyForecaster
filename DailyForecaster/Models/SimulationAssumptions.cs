@@ -63,4 +63,22 @@ namespace DailyForecaster.Models
 			}
 		}
 	}
+	public class SimulationAssumptionView
+	{
+		public SimulationAssumptions SimulationAssumptions { get; set; }
+		public List<Collections> Collections { get; set; }
+		public SimulationAssumptionView() { }
+		public SimulationAssumptionView(string uid)
+		{
+			Collections collections = new Collections();
+			FirebaseUser user = new FirebaseUser(uid);
+			Collections = collections.GetCollections(user.Email, "Simulations");
+			Account account = new Account();
+			foreach (Collections item in Collections)
+			{
+				item.Accounts = account.GetAccounts(item.CollectionsId);
+			}
+			SimulationAssumptions = new SimulationAssumptions();
+		}
+	}
 }

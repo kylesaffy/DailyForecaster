@@ -23,6 +23,18 @@ namespace DailyForecaster.Models
 			};
 			return text;
 		}
+		public string NewToAccounts()
+		{
+			string text = "";
+			var webRequest = WebRequest.Create(@"https://storageaccountmoney9367.blob.core.windows.net/cloud-store/NewToAccounts.html");
+			using (var response = webRequest.GetResponse())
+			using (var content = response.GetResponseStream())
+			using (var reader = new StreamReader(content))
+			{
+				text = reader.ReadToEnd();
+			};
+			return text;
+		}
 		public SmartHelper(string uid)
 		{
 			UserCollectionMapping mapping = new UserCollectionMapping();

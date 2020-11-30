@@ -209,7 +209,7 @@ namespace DailyForecaster.Models
 					}
 					return collections;
 				}
-				else if(type == "CollectionsVM" || type == "BudgetVM" || type == "SafeToSpendVM" || type == "ManualCashFlowsVM")
+				else if(type == "CollectionsVM" || type == "BudgetVM" || type == "SafeToSpendVM" || type == "ManualCashFlowsVM" || type == "Simulations")
 				{
 					using (FinPlannerContext _context = new FinPlannerContext())
 					{
@@ -221,6 +221,11 @@ namespace DailyForecaster.Models
 							.Collections
 							.Where(col => collectionIds.Contains(col.CollectionsId))
 							.ToList();
+					}
+					Account account = new Account();
+					foreach (Collections item in collections)
+					{
+						item.Accounts = account.GetAccounts(item.CollectionsId);
 					}
 					return collections;
 				}
@@ -383,6 +388,8 @@ namespace DailyForecaster.Models
 			}
 			catch (Exception e)
 			{
+				ExceptionCatcher catcher = new ExceptionCatcher();
+				catcher.Catch(e);
 				returnModel.result = false;
 				return returnModel;
 			}
@@ -437,7 +444,7 @@ namespace DailyForecaster.Models
 		{
 			try
 			{
-				Budget budget = collection.Budgets.Where(x => x.Simulation == false).OrderByDescending(x => x.EndDate).First();
+				Budget budget = collection.Budgets.Where(x => x.SimulationBool == false).OrderByDescending(x => x.EndDate).First();
 				double fees = 0;
 				foreach (Account acc in collection.Accounts.Where(x => x.AccountType.Transactional == true))
 				{
