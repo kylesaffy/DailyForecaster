@@ -4,14 +4,16 @@ using DailyForecaster.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DailyForecaster.Migrations
 {
     [DbContext(typeof(FinPlannerContext))]
-    partial class FinPlannerContextModelSnapshot : ModelSnapshot
+    [Migration("20201210075808_newSimulationsStructures")]
+    partial class newSimulationsStructures
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1075,24 +1077,6 @@ namespace DailyForecaster.Migrations
                     b.ToTable("Notes");
                 });
 
-            modelBuilder.Entity("DailyForecaster.Models.PaymentLink", b =>
-                {
-                    b.Property<string>("PaymentLinkId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("AccountId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("LineId")
-                        .HasColumnType("int");
-
-                    b.HasKey("PaymentLinkId");
-
-                    b.HasIndex("AccountId");
-
-                    b.ToTable("PaymentLink");
-                });
-
             modelBuilder.Entity("DailyForecaster.Models.PaymentModel", b =>
                 {
                     b.Property<string>("PaymentModelId")
@@ -1802,13 +1786,6 @@ namespace DailyForecaster.Migrations
                         .HasForeignKey("BudgetTransactionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("DailyForecaster.Models.PaymentLink", b =>
-                {
-                    b.HasOne("DailyForecaster.Models.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId");
                 });
 
             modelBuilder.Entity("DailyForecaster.Models.PaymentModel", b =>

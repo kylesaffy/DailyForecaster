@@ -8,6 +8,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Threading;
 using System.Linq;
+using Azure.AI.FormRecognizer.Training;
+using Azure.AI.FormRecognizer;
+using Azure.AI.FormRecognizer.Models;
 
 namespace DailyForecaster.Models
 {
@@ -16,6 +19,43 @@ namespace DailyForecaster.Models
 	{
 		
 		
+	}
+	public class FormRecogniser
+	{
+		//public async Task<List<string>> Recognise(string url, string name)
+		//{
+		//	var client = new FormRecognizerClient(new Uri(endpoint), new Azure.AzureKeyCredential(subscriptionKey));
+		//	var options = new RecognizeInvoicesOptions() { Locale = "en-US" };
+		//	RecognizedFormCollection invoices = await client.StartRecognizeInvoicesFromUriAsync(invoiceUri, options).WaitForCompletionAsync();
+		//}
+		public async Task<List<string>> Trainer(string url)
+		{
+			FormTrainingClient client = new FormTrainingClient(new Uri("https://mmformrec.cognitiveservices.azure.com/"), new Azure.AzureKeyCredential("4e195bbacf354117a40856c2d4f8bfb7"));
+			CustomFormModel model = await client.StartTrainingAsync(new Uri(url), useTrainingLabels: false).WaitForCompletionAsync();
+			List<string> outPut = new List<string>();
+			outPut.Add($"Custom Model Info:");
+			outPut.Add($"    Model Id: {model.ModelId}");
+			//outPut.Add($"    Model name: {model.ModelName}");
+			outPut.Add($"    Model Status: {model.Status}");
+			//outPut.Add($"    Is composed model: {model.Properties.IsComposedModel}");
+			outPut.Add($"    Training model started on: {model.TrainingStartedOn}");
+			outPut.Add($"    Training model completed on: {model.TrainingCompletedOn}");
+
+			foreach (CustomFormSubmodel submodel in model.Submodels)
+			{
+				outPut.Add($"Submodel Form Type: {submodel.FormType}");
+				foreach (CustomFormModelField field in submodel.Fields.Values)
+				{
+					Console.Write($"    FieldName: {field.Name}");
+					if (field.Label != null)
+					{
+						Console.Write($", FieldLabel: {field.Label}");
+					}
+					outPut.Add("");
+				}
+			}
+			return outPut;
+		}
 	}
 	public class RunReader
 	{
@@ -131,5 +171,6 @@ namespace DailyForecaster.Models
 				return null;
 			}
 		}
+		
 	}
 }

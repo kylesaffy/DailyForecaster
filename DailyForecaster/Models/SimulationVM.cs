@@ -26,10 +26,13 @@ namespace DailyForecaster.Models
 			List<CFClassification> classifications = classification.GetList();
 			string income = classifications.Where(x => x.Sign == 1).FirstOrDefault().Id;
 			string expense = classifications.Where(x => x.Sign == -1).FirstOrDefault().Id;
+			AccountState state = new AccountState();
+			List<AccountState> states = new List<AccountState>();
 			// List<BudgetTransaction> transactions = new List<BudgetTransaction>();
 			foreach (Budget item in Simulation.Budgets)
 			{
-				SimulationAssessments.Add(new SimulationAssessment(item, income, expense));
+				states = state.Get(item.BudgetId);
+				SimulationAssessments.Add(new SimulationAssessment(item, income, expense,states));
 			}
 		}
 	}
@@ -42,7 +45,7 @@ namespace DailyForecaster.Models
 		public string NetBudget { get; set; }
 		public string NetWorth { get; set; }
 		public SimulationAssessment() { }
-		public SimulationAssessment(Budget budget, string income, string expense)
+		public SimulationAssessment(Budget budget, string income, string expense,List<AccountState> states)
 		{
 			double exp = budget.BudgetTransactions.Where(x => x.CFClassificationId == expense).Sum(x => x.Amount);
 			double inc = budget.BudgetTransactions.Where(x => x.CFClassificationId == income).Sum(x => x.Amount);
@@ -52,6 +55,7 @@ namespace DailyForecaster.Models
 			BudgetIncome = "R " + inc.ToString("N2");
 			BudgetExpense = "R " + exp.ToString("N2");
 			NetBudget = "R " + net.ToString("N2");
+			NetWorth = "R " + states.Sum(x => x.Amount).ToString("N2");
 		}
 	}
 

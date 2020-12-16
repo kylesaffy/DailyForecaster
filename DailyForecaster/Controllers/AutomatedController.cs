@@ -169,10 +169,18 @@ namespace DailyForecaster.Controllers
 		}
 		[Route("DeleteYodlee")]
 		[HttpGet]
-		public async Task<ActionResult> DeleteYodlee(string id)
+		public async Task<ActionResult> DeleteYodlee(string id, bool ans, string collectionsId)
 		{
-			YodleeAccountModel model = new YodleeAccountModel();
-			return Ok(await model.DeleteAllAccounts(id));
+			IncludeYodlee includeYodlee = new IncludeYodlee(collectionsId);
+			return Ok(await includeYodlee.Update(ans, id));
+		}
+		[Route("RunYodlee")]
+		[HttpGet]
+		public async Task<ActionResult> RunYodlee(string id)
+		{
+			Account model = new Account();
+			List<Account> accounts = model.GetAccounts(id);
+			return Ok(await model.UpdateAccounts(id,accounts));
 		}
 		[Route("Reader")]
 		[HttpGet]
@@ -181,6 +189,29 @@ namespace DailyForecaster.Controllers
 			RunReader reader = new RunReader();
 			reader = await reader.GetRunReader(url);
 			return Ok(reader);
+		}
+		[Route("ManualLogout")]
+		[HttpGet]
+		public async Task<ActionResult> ManualLogout(string id)
+		{
+			LogoffModel model = new LogoffModel();
+			DateTime result = await model.RevokeToken(id);										
+			return Ok(result);
+		}
+		[Route("Test")]
+		[HttpGet]
+		public async Task<ActionResult> Test(string id)
+		{
+			YodleeTokenGenerator generator = new YodleeTokenGenerator();
+			string key = await generator.CreateToken(id);
+			return Ok(key);
+		}
+		[Route("Trainer")]
+		[HttpGet]
+		public async Task<ActionResult> Trainer(string url)
+		{
+			FormRecogniser recogniser = new FormRecogniser();
+			return Ok(await recogniser.Trainer(url));
 		}
 	}
 	public class RegisterModel

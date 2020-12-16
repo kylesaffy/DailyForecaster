@@ -41,6 +41,25 @@ namespace DailyForecaster.Models
 				}
 			}
 		}
+		public List<ScheduledTransactions> GetScheduledTransactionsList(string collectionsId)
+		{
+			Account account = new Account();
+			List<Account> accounts = account.GetAccounts(collectionsId);
+			List<ScheduledTransactions> transactions = new List<ScheduledTransactions>();
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				foreach (Account item in accounts)
+				{
+					List<ScheduledTransactions> t = _context.ScheduledTransactions.Where(x => x.AccountId == item.Id).ToList();
+					foreach(ScheduledTransactions trans in t)
+					{
+						trans.Account = item;
+					}
+					transactions.AddRange(t);
+				}
+			}
+			return transactions;
+		}
 		private List<ScheduledTransactions> GetScheduledTransactionsList(int day)
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())
@@ -72,6 +91,15 @@ namespace DailyForecaster.Models
 				else
 				{
 					_context.Entry(this).State = EntityState.Modified;
+				}
+				try
+				{
+					_context.SaveChanges();
+				}
+				catch (Exception e)
+				{
+					ExceptionCatcher catcher = new ExceptionCatcher();
+					catcher.Catch(e);
 				}
 			}
 			return this;

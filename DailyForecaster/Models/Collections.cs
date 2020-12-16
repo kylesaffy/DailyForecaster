@@ -446,7 +446,7 @@ namespace DailyForecaster.Models
 			{
 				Budget budget = collection.Budgets.Where(x => x.SimulationBool == false).OrderByDescending(x => x.EndDate).First();
 				double fees = 0;
-				foreach (Account acc in collection.Accounts.Where(x => x.AccountType.Transactional == true))
+				foreach (Account acc in collection.Accounts.Where(x => x.AccountType.Bank))
 				{
 					fees = fees + acc.MonthlyFee;
 					double debt = acc.AccountLimit - acc.Available;

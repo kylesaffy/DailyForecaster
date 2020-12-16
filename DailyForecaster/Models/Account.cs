@@ -285,6 +285,13 @@ namespace DailyForecaster.Models
 			institution = institution.GetInstitution(Convert.ToInt64(yodleeAccount.providerId));
 			YodleeAccountType type = new YodleeAccountType();
 			type = type.Get(yodleeAccount.accountType, yodleeAccount.CONTAINER);
+			if(type == null)
+			{
+				type = new YodleeAccountType()
+				{
+					AccountTypeId = "eYGGKtr5Xk6io9jj8tiTZA=="
+				};
+			}
 			string InstId = "";
 			if(institution != null)
 			{
@@ -359,17 +366,31 @@ namespace DailyForecaster.Models
 									}
 									else
 									{
-										if (accountLevel.availableBalance != null)
+										if (accountLevel.rewardBalance != null)
 										{
-											item.Available = -accountLevel.availableBalance.amount;
-										}
-										else if (accountLevel.availableCredit != null)
-										{
-											item.Available = -accountLevel.availableCredit.amount;
+											if (accountLevel.rewardBalance.Where(x => x.uints == "ZAR").Any())
+											{
+												item.Available = accountLevel.rewardBalance.Where(x => x.uints == "ZAR").FirstOrDefault().balance;
+											}
+											else
+											{
+												item.Available = accountLevel.rewardBalance.FirstOrDefault().balance;
+											}
 										}
 										else
 										{
-											item.Available = -accountLevel.balance.amount;
+											if (accountLevel.availableBalance != null && accountLevel.availableBalance.amount != 0)
+											{
+												item.Available = -accountLevel.availableBalance.amount;
+											}
+											else if (accountLevel.availableCredit != null)
+											{
+												item.Available = -accountLevel.availableCredit.amount;
+											}
+											else
+											{
+												item.Available = -accountLevel.balance.amount;
+											}
 										}
 									}
 								}
@@ -551,7 +572,7 @@ namespace DailyForecaster.Models
 					model.result = false;
 					model.returnStr = e.Message;
 					ExceptionCatcher catcher = new ExceptionCatcher();
-					catcher.Catch(e.Message);
+					catcher.Catch(e);
 				}
 			}
 			return this;

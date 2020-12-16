@@ -62,7 +62,7 @@ namespace DailyForecaster.Models
 		/// </summary>
 		/// <param name="userId">The Firebase Id of the user</param>
 		/// <returns>DateTime that ther revocation of the token occured</returns>
-		private async Task<DateTime> RevokeToken(string userId)
+		public async Task<DateTime> RevokeToken(string userId)
 		{
 			await FirebaseAuth.DefaultInstance.RevokeRefreshTokensAsync(userId);
 			var user = await FirebaseAuth.DefaultInstance.GetUserAsync(userId);

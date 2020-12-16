@@ -251,7 +251,7 @@ namespace DailyForecaster.Controllers
 								new FirebaseUser(auth.Claims["email"].ToString(), auth.Uid);
 								return Ok();
 							case "BuildSimulation":
-								return BuildSimulation(json.GetRawText(), collectionsId);
+								return BuildSimulation(json.GetRawText(), collectionsId, auth.Uid);
 							case "AccountChange":
 								return await AccountChange(json);
 							case "EditBudget":
@@ -285,6 +285,8 @@ namespace DailyForecaster.Controllers
 								return TwilioToken(auth.Uid);
 							case "CreateInclusion":
 								return CreateInclusion(json, collectionsId);
+							case "ManualTransfer":
+								return ManualTransfer(json);
 						}
 					}
 				}
@@ -423,6 +425,20 @@ namespace DailyForecaster.Controllers
 			}
 
 		}
+		[Route("CheckUser")]
+		[HttpGet]
+		public async Task<ActionResult> CheckUser(string token)
+		{
+			try
+			{
+				FirebaseToken auth = await validate(token);
+				return Ok(true);
+			}
+			catch
+			{
+				return Ok(false);
+			}
+		}
 		[Route("GetTest")]
 		[HttpGet]
 		public ActionResult GetTest()
@@ -455,8 +471,6 @@ namespace DailyForecaster.Controllers
 			{
 				switch (route)
 				{
-					case "BuildSimulation":
-						return BuildSimulation(json.GetRawText(), collectionsId);
 					case "UpdateSimulation":
 						return UpdateSimulation(json.GetRawText());
 					case "AccountChange":
@@ -464,6 +478,12 @@ namespace DailyForecaster.Controllers
 				}
 			}
 			return Ok();
+		}
+		private ActionResult ManualTransfer(JsonElement json)
+		{
+			ManualCashFlow manual = new ManualCashFlow();
+			TransferObject transfer = JsonConvert.DeserializeObject<TransferObject>(json.GetRawText());
+			return Ok(manual.AddTransfer(transfer));
 		}
 		private ActionResult GetInclude(string collectionsId)
 		{
@@ -535,7 +555,7 @@ namespace DailyForecaster.Controllers
 		private ActionResult AddScheduledTransaction(JsonElement json)
 		{
 
-			ScheduledTransactions transactions = System.Text.Json.JsonSerializer.Deserialize<ScheduledTransactions>(json.GetRawText());
+			ScheduledTransactions transactions = System.Text.Json.JsonSerializer.Deserialize<tempScheduledTransaction>(json.GetRawText()).t;
 			return Ok(transactions.Create());
 		}
 		public ActionResult GetUnseenTransactions(string email)
@@ -591,7 +611,7 @@ namespace DailyForecaster.Controllers
 			return Ok(new CollectionSharing(collectionId));
 		}
 		/// <summary>
-		/// Caves changes either to automated cash flows or to budgeted transactions
+		/// Saves changes either to automated cash flows or to budgeted transactions
 		/// </summary>
 		/// <param name="json">the JSON version of the object</param>
 		/// <param name="userId">The firebase userId</param>
@@ -690,6 +710,8 @@ namespace DailyForecaster.Controllers
 		{
 			try
 			{
+				FirebaseUser user = new FirebaseUser();
+				userId = user.GetUserId(userId);
 				BudgetTransaction transaction = System.Text.Json.JsonSerializer.Deserialize<BudgetTransaction>(json.GetRawText());
 				if(transaction.BudgetId == null || transaction.CFTypeId == null)
 				{
@@ -911,6 +933,10 @@ namespace DailyForecaster.Controllers
 			{
 				Account account = System.Text.Json.JsonSerializer.Deserialize<AccountObj>(json.GetRawText()).Account;
 				Account account1 = JsonConvert.DeserializeObject<AccountObj>(json.GetRawText()).Account;
+				if(account1 == null)
+				{
+					account1 = JsonConvert.DeserializeObject<Account>(json.GetRawText());
+				}
 				string id = "";
 				if (account != null)
 				{
@@ -976,7 +1002,8 @@ namespace DailyForecaster.Controllers
 		/// <returns>Reutrns a collectiuon VM for the user</returns>
 		private ActionResult GetAccounts(string collectionsId, string email)
 		{
-			return Ok(new CollectionVM(collectionsId, email));
+			CollectionVM VM = new CollectionVM(collectionsId, email);
+			return Ok(VM);
 		}
 		private ActionResult UpdateSimulation(string json)
 		{
@@ -984,17 +1011,19 @@ namespace DailyForecaster.Controllers
 			simulation.Edit();
 			return Ok(simulation);
 		}
-		private ActionResult BuildSimulation(string json, string collectionsId)
+		private ActionResult BuildSimulation(string json, string collectionsId, string userId)
 		{
 			try
 			{
-				SimulationAssumptions assumptions = System.Text.Json.JsonSerializer.Deserialize<SimulationAssumptions>(json);
-				if (assumptions.NumberOfMonths == 0)
+				FirebaseUser user = new FirebaseUser();
+				userId = user.GetUserId(userId);
+				SimulationAssumptionsModel assumptions = JsonConvert.DeserializeObject<SimulationAssumptionsModel>(json);
+				foreach(BudgetTransaction item in assumptions.BudgetTransactions)
 				{
-					assumptions = JsonConvert.DeserializeObject<SimulationAssumptions>(json);
+					item.Save(userId);
 				}
-				Simulation simulation = new Simulation(assumptions, collectionsId);
-				simulation.BuildSimulation(assumptions);
+				Simulation simulation = new Simulation(assumptions.SimulationAssumptions, collectionsId);
+				simulation.BuildSimulation(assumptions.SimulationAssumptions, userId);
 				simulation.Scenario();
 				return Ok(simulation);
 			}
@@ -1061,5 +1090,9 @@ namespace DailyForecaster.Controllers
 	public class AccountObj
 	{
 		public Account Account { get; set; }
+	}
+	public class tempScheduledTransaction
+	{
+		public ScheduledTransactions t { get; set; }
 	}
 }

@@ -139,8 +139,15 @@ namespace DailyForecaster.Models
 		public YodleeBalance runningBalance { get; set; }
 		public YodleeBalance availableCredit { get; set; }
 		public YodleeBalance availableBalance { get; set; }
-		public List<YodleeDataSet> dataset { get; set; }
-		
+		public List<RewardBalance> rewardBalance { get; set; }
+		public List<YodleeDataSet> dataset { get; set; }		  		
+	}
+	public class RewardBalance
+	{
+		public string description { get; set; }
+		public double balance { get; set; }
+		public string uints { get; set; }
+		public string balanceType { get; set; }
 	}
 	public class YodleeBalance
 	{

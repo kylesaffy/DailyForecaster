@@ -36,6 +36,10 @@ namespace DailyForecaster.Models
 		public CFClassification CFClassification { get; set; }
 		public ICollection<Notes> Notes {get;set;}
 		public bool Automated { get; set; }
+		public string AccountId { get; set; }
+		[ForeignKey("AccountId")]
+		public Account Account { get; set; }
+		public int LineId { get; set; }
 		public void Delete(string BudgetId)
 		{
 			List<BudgetTransaction> budgets = new List<BudgetTransaction>();
@@ -64,7 +68,6 @@ namespace DailyForecaster.Models
 				}
 			}
 		}
-		// public bool Deleted { get; set; }
 		public BudgetTransaction() { }
 		public bool UpdateBudget(List<BudgetTransaction> transactions)
 		{
@@ -133,6 +136,7 @@ namespace DailyForecaster.Models
 					this.BudgetTransactionId = Guid.NewGuid().ToString();
 					this.Automated = false;
 					this.FirebaseUserId = userId;
+					this.LineId = GetMax(this.BudgetId) + 1;
 					_context.Add(this);
 				}
 				else
@@ -141,6 +145,8 @@ namespace DailyForecaster.Models
 					transaction.Amount = this.Amount;
 					transaction.CFTypeId = this.CFTypeId;
 					transaction.Name = this.Name;
+					transaction.LineId = this.LineId;
+					transaction.AccountId = this.AccountId;
 					_context.Entry(transaction).State = EntityState.Modified;
 				}
 				_context.SaveChanges();
@@ -163,6 +169,14 @@ namespace DailyForecaster.Models
 			BudgetId = budgetId;
 			Amount = b.Amount;
 			Name = b.Name;
+			if (b.LineId != 0)
+			{
+				LineId = b.LineId;
+			}
+			else
+			{
+				LineId = GetMax(budgetId);
+			}
 			CFType type = new CFType();
 			List<CFType> list = type.GetCFList(collectionsId);
 			if (list.Any(x=>x.Id == b.CFTypeId))
@@ -211,6 +225,20 @@ namespace DailyForecaster.Models
 				item.Budget = null;
 			}
 			return transactions;
+		}
+		public int GetMax(string budgetId)
+		{
+			try
+			{
+				using (FinPlannerContext _context = new FinPlannerContext())
+				{
+					return _context.BudgetTransactions.Where(x => x.BudgetId == budgetId).Select(x => x.LineId).Max();
+				}
+			}
+			catch
+			{
+				return 0;
+			}
 		}
 	}
 }

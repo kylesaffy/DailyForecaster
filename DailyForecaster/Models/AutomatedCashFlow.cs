@@ -351,22 +351,32 @@ namespace DailyForecaster.Models
 									{
 										if (!account.AutomatedCashFlows.Where(x => x.YodleeId == transaction.id).Any())
 										{
-											ManualCashFlow manualCashFlow = manualFlows
-												.Where(x => x.AutomatedCashFlowId == null)
-												.Where(x => x.Amount == transaction.amount.amount && x.CFClassification.Name.ToLower() == transaction.categoryType.ToLower() && x.DateBooked > transaction.transactionDate.AddDays(-2) && x.DateBooked < transaction.transactionDate.AddDays(5))
-												.FirstOrDefault();
-											try
+											if(checker(account.AutomatedCashFlows.ToList(),transaction, transactions))
 											{
-												returnList.automateReturns.Add(AddTransaction(transaction, account.Id, yodleeTypes, manualCashFlow, classifications, tempAccount));
+												ManualCashFlow manualCashFlow = manualFlows
+													.Where(x => x.AutomatedCashFlowId == null)
+													.Where(x => x.Amount == transaction.amount.amount && x.CFClassification.Name.ToLower() == transaction.categoryType.ToLower() && x.DateBooked > transaction.transactionDate.AddDays(-2) && x.DateBooked < transaction.transactionDate.AddDays(5))
+													.FirstOrDefault();
+												try
+												{
+													returnList.automateReturns.Add(AddTransaction(transaction, account.Id, yodleeTypes, manualCashFlow, classifications, tempAccount));
+												}
+												catch (Exception e)
+												{
+													ExceptionCatcher catcher = new ExceptionCatcher();
+													catcher.Catch(e);
+												}
+												if (manualCashFlow != null)
+												{
+													manualFlows.Remove(manualCashFlow);
+												}
 											}
-											catch (Exception e)
+											else
 											{
-												ExceptionCatcher catcher = new ExceptionCatcher();
-												catcher.Catch(e.Message + ";" + JsonConvert.SerializeObject(transaction) + ";" + JsonConvert.SerializeObject(manualCashFlow) + "");
-											}
-											if (manualCashFlow != null)
-											{
-												manualFlows.Remove(manualCashFlow);
+												AutomatedCashFlow flow = new AutomatedCashFlow();
+												flow = flow.getTransaction(GetNewId(account.AutomatedCashFlows.ToList(), transaction, transactions));
+												flow.YodleeId = transaction.id;
+												flow.Update();
 											}
 										}
 									}
@@ -416,6 +426,64 @@ namespace DailyForecaster.Models
 				}
 			}		   
 			return true;
+		}
+		private void Update()
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				_context.Entry(this).State = EntityState.Modified;
+				_context.SaveChanges();
+			}
+		}
+		private bool checker(List<AutomatedCashFlow> flows, YodleeTransactionLevel transaction, List<YodleeTransactionLevel> yodleeTransactions)
+		{
+			bool ans = true;
+			string source = null;
+			if(transaction.description.simple == null)
+			{
+				source = transaction.description.original;
+			}
+			else
+			{
+				source = transaction.description.simple;
+			}
+			if(flows.Where(x=>x.SourceOfExpense == source && x.Amount == transaction.amount.amount && x.DateCaptured > transaction.createdDate.AddDays(-25)).Any())
+			{
+				foreach(AutomatedCashFlow item in flows.Where(x => x.SourceOfExpense == source && x.Amount == transaction.amount.amount && x.DateCaptured > transaction.createdDate.AddDays(-25)))
+				{
+					if(!yodleeTransactions.Where(x=>x.id == item.YodleeId).Any())
+					{
+						ans = false;
+						break;
+					}
+				}
+			}
+			return ans;
+		}
+		private string GetNewId(List<AutomatedCashFlow> flows, YodleeTransactionLevel transaction, List<YodleeTransactionLevel> yodleeTransactions)
+		{
+			string ans = "";
+			string source = null;
+			if (transaction.description.simple == null)
+			{
+				source = transaction.description.original;
+			}
+			else
+			{
+				source = transaction.description.simple;
+			}
+			if (flows.Where(x => x.SourceOfExpense == source && x.Amount == transaction.amount.amount && x.DateCaptured > transaction.createdDate.AddDays(-25)).Any())
+			{
+				foreach (AutomatedCashFlow item in flows.Where(x => x.SourceOfExpense == source && x.Amount == transaction.amount.amount && x.DateCaptured > transaction.createdDate.AddDays(-25)))
+				{
+					if (!yodleeTransactions.Where(x => x.id == item.YodleeId).Any())
+					{
+						ans = item.ID;
+						break;
+					}
+				}
+			}
+			return ans;
 		}
 		public AutomateReturn AddTransaction(YodleeTransactionLevel transaction,string accId,List<CFType> types,ManualCashFlow manual,List<CFClassification> classifications, Account account)
 		{

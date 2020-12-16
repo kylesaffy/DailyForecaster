@@ -69,11 +69,27 @@ namespace DailyForecaster.Models
 				{
 					foreach (Collections item in collections)
 					{
-						if (budget.BudgetCheck(item.CollectionsId))
+						if (!budget.BudgetCheck(item.CollectionsId))
 						{
 							Html = "<div><h4>We are so glad to see that you are so committed to this journey!</h4><p>We recognize that everyone has their own plan for their money as is their right! You worked hard for your money and therefore have the right to spend it the way you want to!</p><p><b>However</b>, Benjamin Franklin said it well when he said \"<i>If you fail to plan, you are planning to fail</i>.\"</p><p>We at MoneyMinders have found this to true in our own lives, and in fact was our motivation for building this!</p><p>So lets head over to the Budget page and put together a budget in order to benchmark your spending of that hard earned cash versus what you expected to spend it on.</p><p>Let's create a budget for your <b>" + item.Name + "</b> collection. Click <a href='#/dashboard/budget'><u>here</u></a> for quick acsess</p></div>";
 							check = true;
 							break;
+						}
+						else
+						{
+							IncludeYodlee model = new IncludeYodlee(item.CollectionsId);
+							if(!model.Included)
+							{
+								Html = "<div><h4>Lets create some transactions!</h4><p>Because you opted to use our manual solution you need to create manual transactions. Let's track your spending and make sure that you keep it in line with the beautiful budget that you created! Click <a href='#/dashboard/ManualTransactions'><u>here</u></a> for quick acsess</p></div>";
+								check = true;
+								break;
+							}
+							else
+							{
+								Html = "<div><h4>Lets check your transactions!</h4><p>Because you opted to use our automated solution your transactions will appear in our 'Unseen Transactions' page, keep track of these <a href='#/dashboard/UnseenTransactions'><u>here</u></a>, just to double check that we categorised them correctly! You can get to this menu by clicking on the dropdown on the top right of our webpage.</p><p> Finally, let's make sure that you keep it in line with the beautiful budget that you created! This is done through our comparison tool 'Safe to Spend', here we compare your budget versus your actual spend. Click <a href='#/dashboard/SafeToSpend'><u>here</u></a> for quick acsess</p></div>";
+								check = true;
+								break;
+							}
 						}
 						//if (accounts.Where(x=>x.YodleeId == 0).Any())
 						//{

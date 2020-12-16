@@ -17,6 +17,31 @@ namespace DailyForecaster.Models
 		public Account Account { get; set; }
 		public double Amount { get; set; }
 		public AccountState() { }
+		/// <summary>
+		/// Gets a list of accountState objects associated to a budget
+		/// </summary>
+		/// <param name="budgetId">Id of the budget that the accountstates are linked to</param>
+		/// <returns>List of accountStates for a particular budget</returns>
+		public List<AccountState> Get(string budgetId)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.AccountState.Where(x => x.BudgetId == budgetId).ToList();
+			}
+		}
+		/// <summary>
+		/// Get AccountState object using budgetId and AccountId
+		/// </summary>
+		/// <param name="accountId">Id of the Associated Account</param>
+		/// <param name="budgetId">Id of the Associated Budget</param>
+		/// <returns>A Single AccountState object according to the account and budget</returns>
+		public AccountState Get(string accountId, string budgetId)
+		{
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.AccountState.Where(x => x.BudgetId == budgetId && x.AccountId == accountId).FirstOrDefault();
+			}
+		}
 		public void Delete(string AccountId)
 		{
 			List<AccountState> accounts = new List<AccountState>();
@@ -53,25 +78,32 @@ namespace DailyForecaster.Models
 		/// <param name="budgetId">Budget Id and therefore location of the state</param>
 		public AccountState(Account account, string budgetId)
 		{
-			AccountStateId = Guid.NewGuid().ToString();
 			BudgetId = budgetId;
 			AccountId = account.Id;
 			Account = account;
-			if (account.Available > account.AccountLimit)
+			if (account.Available > account.AccountLimit && account.AccountType.Transactional && account.AccountType.Bank)
 			{
 				Amount = account.Available - account.AccountLimit;
 			}
 			else
 			{
-				if (account.AccountType.Transactional)
+				if (account.AccountType.Transactional && account.AccountType.Bank)
 				{
-					Amount = (account.AccountLimit - account.Available) * -1;
+					Amount = Math.Abs(account.AccountLimit - account.Available) * -1;
 				}
 				else
 				{
-					Amount = account.Available * -1;
+					if (account.AccountLimit != 0)
+					{
+						Amount = Math.Abs(account.Available) * -1;
+					}
+					else
+					{
+						Amount = account.Available;
+					}
 				}
 			}
+			Save();
 		}
 		/// <summary>
 		/// Instantiates an account state object as of a secondary instance of a simulation build
@@ -81,7 +113,6 @@ namespace DailyForecaster.Models
 		/// <param name="state">The previous state of the account</param>
 		public AccountState(Account account, string budgetId, AccountState state)
 		{
-			AccountStateId = Guid.NewGuid().ToString();
 			BudgetId = budgetId;
 			AccountId = account.Id;
 			Account = account;
@@ -94,6 +125,7 @@ namespace DailyForecaster.Models
 			{
 				Amount = state.Amount + account.MonthlyPayment - account.MonthlyFee + (state.Amount * (account.CreditRate/12/100));
 			}
+			Save();
 		}
 		/// <summary>
 		/// Increases or deceases the specified account by an inputed amount
@@ -101,7 +133,27 @@ namespace DailyForecaster.Models
 		/// <param name="amount">Amount that the account needs to be incremented or decremented by</param>
 		public void Update(double amount)
 		{
-			Amount = this.Amount + amount;
+			Amount = Math.Round(this.Amount + amount,2);
+			Save();
+		}
+		private void Save()
+		{
+			this.Account = null;
+			this.Budget = null;
+			this.Amount = Math.Round(this.Amount, 2);
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				if(this.AccountStateId == null)
+				{
+					this.AccountStateId = Guid.NewGuid().ToString();
+					_context.Add(this);
+				}
+				else
+				{
+					_context.Entry(this).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+				}
+				_context.SaveChanges();
+			}
 		}
 	}
 }

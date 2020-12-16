@@ -13,6 +13,8 @@ namespace DailyForecaster.Models
 		public string CFTypeId { get; set; }
 		[ForeignKey("CFTypeId")]
 		public CFType CFType { get; set; }
+		public string CFClassificationId { get; set; }
+		[ForeignKey("CFClassificationId")]
 		[Required]
 		public CFClassification CFClassification { get; set; }
 		[Required]
@@ -184,6 +186,8 @@ namespace DailyForecaster.Models
 			DateBooked = auto.DateBooked;
 			Validated = auto.Validated;
 			AutomatedCashFlow = auto;
+			CFClassificationId = auto.CFClassificationId;
+			CFTypeId = auto.CFTypeId;
 		}
 		public ReportedTransaction(AutomatedCashFlow auto)
 		{
@@ -195,6 +199,8 @@ namespace DailyForecaster.Models
 			DateBooked = auto.DateBooked;
 			Validated = auto.Validated;
 			AutomatedCashFlow = auto;
+			CFClassificationId = auto.CFClassificationId;
+			CFTypeId = auto.CFTypeId;
 		}
 		private ReportedTransaction(AutomatedCashFlow auto,List<CFType> types,List<CFClassification> classifications)
 		{
@@ -207,6 +213,8 @@ namespace DailyForecaster.Models
 			DateBooked = auto.DateBooked;
 			Validated = auto.Validated;
 			AutomatedCashFlow = auto;
+			CFClassificationId = auto.CFClassificationId;
+			CFTypeId = auto.CFTypeId;
 		}
 		private ReportedTransaction(ManualCashFlow manual, List<CFType> types, List<CFClassification> classifications)
 		{
@@ -219,6 +227,8 @@ namespace DailyForecaster.Models
 			DateBooked = manual.DateBooked;
 			Validated = true;
 			ManualCashFlow = manual;
+			CFClassificationId = manual.CFClassificationId;
+			CFTypeId = manual.CFTypeId;
 		}
 		private ReportedTransaction(ManualCashFlow manual, Account account)
 		{
@@ -231,6 +241,8 @@ namespace DailyForecaster.Models
 			Account.ManualCashFlows = null;
 			Account.AutomatedCashFlows = null;
 			DateBooked = manual.DateBooked;
+			CFClassificationId = manual.CFClassificationId;
+			CFTypeId = manual.CFTypeId;
 			Validated = true;
 		}
 		private ReportedTransaction(ManualCashFlow manual)
@@ -266,6 +278,8 @@ namespace DailyForecaster.Models
 			DateBooked = reportedTransaction.DateBooked;
 			DateCaptured = reportedTransaction.DateCaptured;
 			SourceOfExpense = reportedTransaction.SourceOfExpense;
+			CFClassificationId = reportedTransaction.CFClassificationId;
+			CFTypeId = reportedTransaction.CFTypeId;
 			if (reportedTransaction.AutomatedCashFlow != null)
 			{
 				AutomatedCashFlow = reportedTransaction.AutomatedCashFlow;

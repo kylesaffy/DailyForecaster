@@ -11,6 +11,7 @@ namespace DailyForecaster.Models
 		public List<CFType> CFTypes { get; set; }
 		public List<CFClassification> CFClassifications {get;set;}
 		public List<Account> Accounts { get; set; }
+		public List<ScheduledTransactions> ScheduledTransactions { get; set; }
 		public ManualCashFlowsVM(string collectionsId, string email)
 		{
 			Collections collections = new Collections();
@@ -30,6 +31,8 @@ namespace DailyForecaster.Models
 			CFTypes = type.GetCFList(collectionsId);
 			CFClassification classification = new CFClassification();
 			CFClassifications = classification.GetList();
+			ScheduledTransactions transaction = new ScheduledTransactions();
+			ScheduledTransactions = transaction.GetScheduledTransactionsList(collectionsId);
 		}
 	}
 }

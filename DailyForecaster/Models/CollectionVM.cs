@@ -12,6 +12,7 @@ namespace DailyForecaster.Models
 		public List<Institution> Institutions { get; set; }
 		public List<AccountType> AccountTypes { get; set; }
 		public IncludeYodlee IncludeYodlee { get; set; }
+		public PredictionModel PredictionModel { get; set; }
 		public string Name { get; set; }
 		public string Id { get; set; }
 		public CollectionVM () { }
@@ -35,6 +36,7 @@ namespace DailyForecaster.Models
 				Id = collection.CollectionsId;
 				Name = collection.Name;
 				IncludeYodlee = new IncludeYodlee(collection.CollectionsId);
+				PredictionModel = new PredictionModel(collection.CollectionsId);
 			}
 			else
 			{
@@ -48,6 +50,7 @@ namespace DailyForecaster.Models
 					Id = collection.CollectionsId;
 					Name = collection.Name;
 					IncludeYodlee = new IncludeYodlee(collection.CollectionsId);
+					PredictionModel = new PredictionModel(collection.CollectionsId);
 				}
 			}
 			Institution institution = new Institution();

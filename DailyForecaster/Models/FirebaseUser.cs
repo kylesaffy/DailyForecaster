@@ -110,7 +110,7 @@ namespace DailyForecaster.Models
 		/// <summary>
 		///  Get function for a single user
 		/// </summary>
-		/// <param name="email">the email address of the user interacting with the system</param>
+		/// <param name="email">Email address or the Firebase Uid of the user interacting with the system</param>
 		/// <returns>Returns the Id of the user</returns>
 		public string GetUserId(string email)
 		{

@@ -103,7 +103,7 @@ namespace DailyForecaster.Models
 			}
 			
 		}
-		private async Task<string> getKey(string key)
+		public async Task<string> getKey(string key)
 		{
 			YodleeSessionGenerator sessionGenerator = new YodleeSessionGenerator();
 			string session = await sessionGenerator.GetSession();
