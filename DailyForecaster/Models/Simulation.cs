@@ -120,14 +120,19 @@ namespace DailyForecaster.Models
 		/// Builds the simulation using the connected references from the db pick-up
 		/// </summary>
 		/// <returns>Returns the initial build of the simulation</returns>
-		public Simulation BuildSimulation(SimulationAssumptions assumptions, string userId)
+		public Simulation BuildSimulation(SimulationAssumptions assumptions, string userId, string collectionsId)
 		{
 			this.SimulationAssumptions = assumptions;
+			this.Collections = new Collections(collectionsId);
 			this.BuildSim(userId);
 			this.Collections.Accounts = null;
 			this.SimulationAssumptions.Simulation = null;
 			return this;
 		}
+		/// <summary>
+		/// Builds a Simulation from a basic set of Simualtion Assumptions
+		/// </summary>
+		/// <param name="userId">Id of the user that is requesting the build</param>
 		private void BuildSim(string userId)
 		{
 			string budgetId = BuildBudgets();
@@ -142,6 +147,61 @@ namespace DailyForecaster.Models
 				item.AccountStates = states;
 				budgetId = item.BudgetId;
 				count++;
+			}
+		}
+		public void Recreate(string uid)
+		{
+			Budget budget = new Budget();
+			this.Budgets = budget.GetBudgetsBySim(this.SimulationId);
+			this.CollectionsId = this.Budgets.First().CollectionId;
+			this.SimulationAssumptions = new SimulationAssumptions(this.SimulationAssumptionsId);
+			FirebaseUser user = new FirebaseUser();
+			string userId = user.GetUserId(uid);
+			this.Edit(userId);
+		}
+		/// <summary>
+		/// Recomputes the simulation
+		/// </summary>
+		private void Edit(string userId)
+		{
+			List<Account> accounts = GetAccounts();
+			AccountState state = new AccountState();
+			List<AccountState> oldStates = new List<AccountState>();
+			BudgetTransaction transaction = new BudgetTransaction();
+			CFType type = new CFType();
+			List<CFType> types = type.GetCFList(this.CollectionsId);
+			foreach(Budget item in this.Budgets)
+			{
+				List<AccountState> states = state.Get(item.BudgetId);
+				if(oldStates.Count > 0)
+				{
+					foreach (AccountState s in states)
+					{
+						s.Amount = oldStates.Where(x => x.AccountId == s.AccountId).FirstOrDefault().Amount;
+						s.Update(0);
+					}
+				}
+				else
+				{
+					foreach(AccountState s in states)
+					{
+						s.Amount = state.GetAmount(accounts.Where(x=>x.Id == s.AccountId).FirstOrDefault());
+						s.Update(0);
+					}
+				}
+				item.BudgetTransactions = transaction.GetBudgetTransactions(item.BudgetId);
+				int counter = 0;
+				foreach(BudgetTransaction t in item.BudgetTransactions)
+				{
+					double amount = 0;
+					if (t.CFTypeId == "bc86f797-2f81-4467-80c4-a6387099d0b0") amount = Math.Round(BuildTransaction(t, item.StartDate.Month, counter, states, types, item.BudgetId,userId ,accounts, t.LineId),2);
+					else amount = Math.Round(BuildTransaction(t, 0, counter, states, types, item.BudgetId, userId, accounts, t.LineId), 2);
+					t.Amount = amount;
+					t.Save(userId);
+					counter++;
+				}
+				states = UpdateStates(states, accounts, item.BudgetTransactions.ToList());
+				item.AccountStates = states;
 			}
 		}
 		/// <summary>
@@ -239,12 +299,23 @@ namespace DailyForecaster.Models
 			List<Account> accounts = GetAccounts();
 			CFType type = new CFType();
 			List<CFType> types = type.GetCFList(this.CollectionsId);
-			int count = 0;
 			foreach(BudgetTransaction t in transactions.Where(x=>x.CFTypeId != "593ad400-f06a-4580-ab67-6ad287a89be9"))
 			{
-				newTransactions.Add(BuildTransaction(t, month, counter, states, types, newBudgetId, userId,accounts));
-				newTransactions[count].Save(userId);
-				count++;
+				double amount = BuildTransaction(t, month, counter, states, types, newBudgetId, userId, accounts, t.LineId);
+				BudgetTransaction newT = (new BudgetTransaction()
+				{
+					Amount = Math.Round(amount, 2),
+					CFTypeId = t.CFTypeId,
+					CFClassificationId = t.CFClassificationId,
+					AccountId = t.AccountId,
+					Automated = t.Automated,
+					BudgetId = newBudgetId,
+					FirebaseUserId = userId,
+					LineId = t.LineId,
+					Name = t.Name,
+				});
+				newT.Save(userId);
+				newTransactions.Add(newT);
 			}
 			newTransactions.Add(BankCharges(accounts, newBudgetId, states, userId));
 			return newTransactions;
@@ -284,8 +355,15 @@ namespace DailyForecaster.Models
 			transaction.Save(userId);
 			return transaction;
 		}
+		private void NonBankFees(List<AccountState> states, List<Account> accounts)
+		{
+			foreach(AccountState state in states)
+			{
+
+			}
+		}
 		/// <summary>
-		/// Builds the individual BudgetTransaction objects
+		/// Builds the individual BudgetTransaction amount
 		/// </summary>
 		/// <param name="t">Previous BudgetTransaction object</param>
 		/// <param name="month">month number of the current budget period</param>
@@ -294,14 +372,14 @@ namespace DailyForecaster.Models
 		/// <param name="types">list of CFTypes</param>
 		/// <param name="budgetId">Id of the new budget</param>
 		/// <param name="userId">Id ofthe user that is requesting the simulation build</param>
-		/// <returns>A single budget transaction object</returns>
-		private BudgetTransaction BuildTransaction(BudgetTransaction t, int month, int counter,List<AccountState> states, List<CFType> types, string budgetId, string userId,List<Account> accounts)
+		/// <returns>A single budget transaction amount</returns>
+		private double BuildTransaction(BudgetTransaction t, int month, int counter,List<AccountState> states, List<CFType> types, string budgetId, string userId,List<Account> accounts, int lineId)
 		{
 			double amount = 0;
 			switch (t.CFTypeId)
 			{
 				case "bc86f797-2f81-4467-80c4-a6387099d0b0": //Salary/Bonus
-					amount = BuildSalary(t.Amount, month, counter, t.LineId) + BuildBonus(t.Amount, month, t.LineId);
+					amount = BuildSalary(t.Amount, month, counter, t.LineId) + BuildBonus(t.Amount, month, lineId);
 					break;
 				case "43383c91-51c2-4b14-a88c-96f28f9a01de": //Loan payment
 					if (t.AccountId != null) amount = BuildLoanPayment(t.Amount, states.Where(x => x.AccountId == t.AccountId).FirstOrDefault(),accounts.Where(x=>x.Id == t.AccountId).FirstOrDefault());
@@ -312,7 +390,6 @@ namespace DailyForecaster.Models
 					else amount = t.Amount;					
 					break;
 				case "a310a05f-fa7c-4a89-b8fb-7f6ab917dea4": //Home payment
-					amount = 0;
 					if (t.AccountId != null) amount = BuildLoanPayment(t.Amount, states.Where(x => x.AccountId == t.AccountId).FirstOrDefault(), accounts.Where(x => x.Id == t.AccountId).FirstOrDefault());
 					else amount = t.Amount;
 					break;
@@ -320,18 +397,7 @@ namespace DailyForecaster.Models
 					amount = BuildPayment(t.Amount, month, types.Where(x => x.Id == t.CFTypeId).Select(x => x.Infaltion).FirstOrDefault());					
 					break;
 			}
-			return (new BudgetTransaction()
-			{
-				Amount = Math.Round(amount,2),
-				CFTypeId = t.CFTypeId,
-				CFClassificationId = t.CFClassificationId,
-				AccountId = t.AccountId,
-				Automated = t.Automated,
-				BudgetId = budgetId,
-				FirebaseUserId = userId,
-				LineId = t.LineId,
-				Name = t.Name,
-			});
+			return amount;
 		}
 		/// <summary>
 		/// Ensures that a loan payment being made is not overpaid
@@ -343,24 +409,27 @@ namespace DailyForecaster.Models
 		private double BuildLoanPayment(double Amount, AccountState state, Account account)
 		{
 			double amount = 0;
-			if(Amount > Math.Abs(state.Amount))
+			if (state != null)
 			{
-				amount = state.Amount + 1;
-			}
-			else
-			{
-				if (account == null)
+				if (Amount > Math.Abs(state.Amount))
 				{
-					amount = Amount;
+					amount = state.Amount + 1;
 				}
 				else
 				{
-					double interest = Math.Abs(state.Amount * ((account.CreditRate / 100) / 12));
-					amount = Amount - interest - account.MonthlyFee;
+					if (account == null)
+					{
+						amount = Amount;
+					}
+					else
+					{
+						double interest = Math.Abs(state.Amount * ((account.CreditRate / 100) / 12));
+						amount = Amount - interest - account.MonthlyFee;
+					}
 				}
+				state.Update(amount);
 			}
-			state.Update(amount);
-			return amount;
+			return Amount;
 		}
 		/// <summary>
 		/// Builds the new transaction amount
@@ -433,12 +502,13 @@ namespace DailyForecaster.Models
 					.FirstOrDefault() + 1 == month
 					)
 				{
-					Amount = amount - this
+					double a = this
 						.SimulationAssumptions
 						.BonusModels
 						.Where(x => x.LineId == lineId)
 						.Select(x => x.BonusAmount)
 						.FirstOrDefault();
+					Amount = Amount/(1+a);
 				}
 			}
 			if (this
@@ -479,7 +549,10 @@ namespace DailyForecaster.Models
 		private string BuildBudgets()
 		{
 			Budget budget = new Budget(this.CollectionsId);
-			DateTime initiationDate = setDate(budget.StartDate);
+			int day = 0;
+			if (day != 28) day = this.Collections.ResetDay;
+			else day = new DateTime(budget.StartDate.Year, budget.StartDate.Month + 1, 1).AddDays(-1).Day;
+			DateTime initiationDate = setDate(new DateTime(budget.StartDate.Year, budget.StartDate.Month, day));
 			DateTime endingDate = setDate(budget.EndDate);
 			this.Budgets = new List<Budget>();
 			for(int i = 0; i < this.SimulationAssumptions.NumberOfMonths; i ++)
@@ -501,6 +574,12 @@ namespace DailyForecaster.Models
 			{
 				case "month":
 					date = date.AddMonths(1);
+					if (this.Collections.ResetDay == 28)
+					{
+						if (date.Month != 12) date = new DateTime(date.Year,date.Month + 1, 1).AddDays(-1);
+						else new DateTime(date.Year + 1, 1, 1).AddDays(-1);
+					}
+
 					break;
 				case "week":
 					date = date.AddDays(7);
@@ -694,7 +773,7 @@ namespace DailyForecaster.Models
 		private BudgetTransaction AddAutomated(string budgetId)
 		{
 			double fees = 0;
-			foreach (Account acc in Collections.Accounts.Where(x => x.AccountType.Transactional))
+			foreach (Account acc in Collections.Accounts.Where(x => x.AccountType.Bank))
 			{
 				fees = fees + acc.MonthlyFee;
 				double debt = acc.AccountLimit - acc.Available;
@@ -719,7 +798,7 @@ namespace DailyForecaster.Models
 				Amount = fees,
 			};
 		}
-		public void Edit()
+		public void EditOld()
 		{
 			Account acc = new Account();
 			Collections.Accounts = acc.GetAccountsSim(CollectionsId, SimulationId);

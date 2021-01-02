@@ -77,5 +77,40 @@ namespace DailyForecaster.Models
 			}
 
 		}
+		public string AddUserToCollection(string uid, string sharingId)
+		{
+			// 3 checks
+			// 1 - is count == 0
+			CollectionSharing sharing = ShareCounter(sharingId);
+			// 2 - is the user different from the other users-- already mapped into UserCollectionsMapping
+			UserCollectionMapping mapping = new UserCollectionMapping(sharing.CollectionId, uid);
+			if (sharing.count == 0 && mapping.CheckUser())
+			{
+				// set the counter to +1
+				sharing.CountIncrament();
+
+				try
+				{
+					using (FinPlannerContext _context = new FinPlannerContext())
+					{
+						_context.Entry(sharing).State = EntityState.Modified;
+						_context.UserCollectionMapping.Add(mapping);
+						_context.SaveChanges();
+					}
+					return sharing.CollectionId;
+				}
+				catch (Exception e)
+				{
+					ExceptionCatcher catcher = new ExceptionCatcher();
+					catcher.Catch(e);
+					return null;
+				}
+			}
+			else
+			{
+				return null;
+			}
+
+		}
 	}
 }

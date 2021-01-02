@@ -12,6 +12,7 @@ namespace DailyForecaster.Models
 		public BudgetTransactionComparison BudgetTransactionComparison { get; set; }
 		public List<CFType> CFTypes { get; set; }
 		public string Name { get; set; }
+		public string CollectionsId { get; set; }
 		public SafeToSpendVM() { }
 		/// <summary>
 		/// Safe to Spend VM generation
@@ -35,6 +36,7 @@ namespace DailyForecaster.Models
 			CFType type = new CFType();
 			CFTypes = type.GetCFList(collectionsId);
 			Name = Collections.Where(x => x.CollectionsId == collectionsId).Select(x=>x.Name).FirstOrDefault();
+			CollectionsId = collectionsId;
 		}
 	}
 }

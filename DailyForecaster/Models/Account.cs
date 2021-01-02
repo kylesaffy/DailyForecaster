@@ -51,47 +51,32 @@ namespace DailyForecaster.Models
 		public string SimulationId { get; set; }
 		[ForeignKey("SimulationId")]
 		public Simulation Simulation { get; set; }
+		public bool isDeleted { get; set; }
 		public Account() { }
-		public void Delete(string collectionsId)
-		{
-			List<Account> accounts = new List<Account>();
-			accounts = GetAccounts(collectionsId, true);
-			AccountChange change = new AccountChange();
-			AutomatedCashFlow aFlows = new AutomatedCashFlow();
-			AccountBalance balance = new AccountBalance();
-			AccountState state = new AccountState();
-			ManualCashFlow mFlow = new ManualCashFlow();
-			AccountAmortisation amortisation = new AccountAmortisation();
-			foreach (Account item in accounts)
-			{
-				change.Delete(item.Id);
-				aFlows.Delete(item.Id);
-				balance.Delete(item.Id);
-				state.Delete(item.Id);
-				mFlow.Delete(item.Id);
-				amortisation.Delete(item.Id);
-				item.Delete();
-			}
-		}
 		private List<Account> GetAccounts(string collectionId,bool ans)
 		{
 			if (ans)
 			{
 				using (FinPlannerContext _context = new FinPlannerContext())
 				{
-					return _context.Account.Where(x => x.CollectionsId == collectionId).ToList();
+					return _context.Account
+						.Where(x => x.CollectionsId == collectionId)
+						.Where(x => x.isDeleted == false)
+						.ToList();
 				}
 			}
 			return null;
 		}
-		private void Delete()
+		public void Delete()
 		{
 			using (FinPlannerContext _context = new FinPlannerContext())
 			{
-				_context.Remove(this);
+				this.isDeleted = true;
+				_context.Entry(this).State = EntityState.Modified;
 				_context.SaveChanges();
-
 			}
+			AccountState state = new AccountState();
+			state.Delete(this.Id);
 		}
 		/// <summary>
 		/// Available amount on all acounts within a collection
@@ -106,7 +91,7 @@ namespace DailyForecaster.Models
 				{
 					return _context
 						.Account
-						.Where(x => x.CollectionsId == collecionsId)
+						.Where(x => x.CollectionsId == collecionsId && x.isDeleted == false)
 						.Where(x => x.AccountType.Bank)
 						.Select(x => x.Available)
 						.Sum();
@@ -230,7 +215,7 @@ namespace DailyForecaster.Models
 			{
 				return _context
 					.Account
-					.Where(x=>x.CollectionsId == collectionsIds)
+					.Where(x=>x.CollectionsId == collectionsIds && x.isDeleted == false)
 					.Where(x => x.isDummy == dummy)
 					.ToList();
 			}

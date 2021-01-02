@@ -44,14 +44,14 @@ namespace DailyForecaster.Models
 		}
 		public void Delete(string AccountId)
 		{
-			List<AccountState> accounts = new List<AccountState>();
-			accounts = GetAccounts(AccountId, true);
-			foreach (AccountState item in accounts)
+			List<AccountState> states = new List<AccountState>();
+			states = GetAccountStates(AccountId, true);
+			foreach (AccountState item in states)
 			{
 				item.Delete();
 			}
 		}
-		private List<AccountState> GetAccounts(string accountId, bool ans)
+		private List<AccountState> GetAccountStates(string accountId, bool ans)
 		{
 			if (ans)
 			{
@@ -81,6 +81,12 @@ namespace DailyForecaster.Models
 			BudgetId = budgetId;
 			AccountId = account.Id;
 			Account = account;
+			Amount = GetAmount(account);
+			Save();
+		}
+		public double GetAmount(Account account)
+		{
+			double Amount = 0;
 			if (account.Available > account.AccountLimit && account.AccountType.Transactional && account.AccountType.Bank)
 			{
 				Amount = account.Available - account.AccountLimit;
@@ -103,7 +109,7 @@ namespace DailyForecaster.Models
 					}
 				}
 			}
-			Save();
+			return Amount;
 		}
 		/// <summary>
 		/// Instantiates an account state object as of a secondary instance of a simulation build
@@ -117,14 +123,15 @@ namespace DailyForecaster.Models
 			AccountId = account.Id;
 			Account = account;
 			Account.Institution = null;
-			if (account.AccountType.Transactional || state.Amount > 0)
-			{
-				Amount = state.Amount;
-			}
-			else
-			{
-				Amount = state.Amount + account.MonthlyPayment - account.MonthlyFee + (state.Amount * (account.CreditRate/12/100));
-			}
+			Amount = state.Amount;
+			//if (account.AccountType.Transactional || state.Amount > 0)
+			//{
+			//	Amount = state.Amount;
+			//}
+			//else
+			//{
+			//	Amount = state.Amount + account.MonthlyPayment - account.MonthlyFee + (state.Amount * (account.CreditRate/12/100));
+			//}
 			Save();
 		}
 		/// <summary>

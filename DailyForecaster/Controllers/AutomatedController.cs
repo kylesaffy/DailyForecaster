@@ -213,6 +213,15 @@ namespace DailyForecaster.Controllers
 			FormRecogniser recogniser = new FormRecogniser();
 			return Ok(await recogniser.Trainer(url));
 		}
+		[Route("RecreateSim")]
+		[HttpGet]
+		public ActionResult RecreateSim(string id,string userId)
+		{
+			Simulation sim = new Simulation();
+			sim = sim.Get(id);
+			sim.Recreate(userId);
+			return Ok(new BudgetVM("e146a403-0781-4826-af14-cadcaf245e09"));
+		}
 	}
 	public class RegisterModel
 	{

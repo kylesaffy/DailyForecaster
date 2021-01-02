@@ -118,9 +118,10 @@ namespace DailyForecaster.Models
 					_context.SaveChanges();
 				}
 			}
-			catch
+			catch (Exception e)
 			{
-
+				ExceptionCatcher catcher = new ExceptionCatcher();
+				catcher.Catch(e);
 			}
 		}
 		/// <summary>
@@ -136,7 +137,10 @@ namespace DailyForecaster.Models
 					this.BudgetTransactionId = Guid.NewGuid().ToString();
 					this.Automated = false;
 					this.FirebaseUserId = userId;
-					this.LineId = GetMax(this.BudgetId) + 1;
+					if (this.LineId == 0)
+					{
+						this.LineId = GetMax(this.BudgetId) + 1;
+					}
 					_context.Add(this);
 				}
 				else

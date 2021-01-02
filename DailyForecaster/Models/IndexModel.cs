@@ -11,11 +11,12 @@ namespace DailyForecaster.Models
 	{
 		public bool isShared { get; set; }
 		public double Avaialble { get; set; }
-		public string Used { get; set; }
-		public string Budgeted { get; set; }
+		public double Used { get; set; }
+		public double Budgeted { get; set; }
 		public string Name { get; set; }
 		public string CollectionsId { get; set; }
 		public bool Account { get; set; }
+		public bool breach { get; set; }
 		/// <summary>
 		/// The landing page is made up of a series of object this returns a list of the collection ojects high level details
 		/// </summary>
@@ -51,8 +52,10 @@ namespace DailyForecaster.Models
 					temp.Name = item.Name;
 					temp.CollectionsId = item.CollectionsId;
 					temp.Avaialble = account.GetAvaialable(item.CollectionsId);
-					temp.Budgeted = Math.Round(budget.GetBudgetedAmount(item.CollectionsId), 2).ToString("N2");
-					temp.Used = Math.Round(getSepent(item.CollectionsId), 2).ToString("N2");
+					temp.Budgeted = Convert.ToDouble(Math.Round(budget.GetBudgetedAmount(item.CollectionsId), 2).ToString("N2"));
+					temp.Used = Convert.ToDouble(Math.Round(getSepent(item.CollectionsId), 2).ToString("N2"));
+					if (temp.Budgeted > temp.Used) temp.breach = false;
+					else temp.breach = true;
 					temp.isShared = mapping.IsShared(item.CollectionsId);
 					model.Add(temp);
 				}

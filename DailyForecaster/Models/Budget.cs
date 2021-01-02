@@ -454,6 +454,18 @@ namespace DailyForecaster.Models
 			}
 			return budget;
 		}
+		public List<Budget> GetBudgetsBySim(string simulationId)
+		{
+			List<Budget> budgets = new List<Budget>();
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				budgets = _context
+					.Budget
+					.Where(x => x.SimulationId == simulationId)
+					.ToList();
+			}
+			return budgets;
+		}
 		public List<Budget> GetBudgets(string collectionsId, bool sim = false)
 		{
 			List<Budget> budgets = new List<Budget>();
@@ -546,14 +558,16 @@ namespace DailyForecaster.Models
 					}
 					else
 					{
-						StartDate = new DateTime(StartDate.Year, StartDate.Month - 1, collections.ResetDay);
+						if(StartDate.Month != 12) StartDate = new DateTime(StartDate.Year, StartDate.Month - 1, collections.ResetDay);
+						else StartDate = new DateTime(StartDate.Year, StartDate.Month, day);
 					}
 					if (collections.ResetDay == 28)
 					{
 						StartDate = new DateTime(StartDate.Year, StartDate.Month, 1).AddMonths(1);
 						StartDate = StartDate.AddDays(-1);
 					}
-					endDate = StartDate.AddMonths(1);
+					if (StartDate.Month != 12) endDate = StartDate.AddMonths(1);
+					else endDate = new DateTime(StartDate.AddYears(1).Year, StartDate.AddMonths(1).Month, collections.ResetDay);
 					break;
 			}
 			Budget newBudget = new Budget
@@ -574,7 +588,8 @@ namespace DailyForecaster.Models
 					CFClassificationId = item.CFClassificationId,
 					CFTypeId = item.CFTypeId,
 					Name = item.Name,
-					Notes = item.Notes
+					Notes = item.Notes,
+					LineId = item.LineId
 				});
 			}
 			using (FinPlannerContext _context = new FinPlannerContext())
@@ -593,22 +608,18 @@ namespace DailyForecaster.Models
 			budget.BudgetTransactions = budget1.GetBudgetTransactions(budget.BudgetId);
 			return budget;
 		}
-		public void Delete(string collectionsId)
-		{
-			List<Budget> budgets = new List<Budget>();
-			budgets = GetBudegts(collectionsId);
-			BudgetTransaction transaction = new BudgetTransaction();
-			foreach (Budget item in budgets)
-			{
-				transaction.Delete(item.BudgetId);
-				item.Delete();
-			}
-		}
-		private List<Budget> GetBudegts(string collectionId)
+		public List<Budget> GetBudegts(string id)
 		{
 			using (FinPlannerContext _context = new FinPlannerContext())
 			{
-				return _context.Budget.Where(x => x.CollectionId == collectionId).ToList();
+				try
+				{
+					return _context.Budget.Where(x => x.CollectionId == id).ToList();
+				}
+				catch
+				{
+					return _context.Budget.Where(x => x.SimulationId == id).ToList();
+				}
 			}
 		}
 		private void Delete()

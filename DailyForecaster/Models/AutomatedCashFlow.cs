@@ -90,6 +90,10 @@ namespace DailyForecaster.Models
 		{
 			if(flow.ID != null)
 			{
+				if(flow.ManualCashFlow != null)
+				{
+					flow.ManualCashFlow.updateTransaction(flow.ManualCashFlow.Id,flow.ID); 
+				}
 				flow.Save();
 				return Get(flow.ID);
 			}

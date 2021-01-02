@@ -79,7 +79,7 @@ namespace DailyForecaster.Models
 						if (!response.IsSuccessStatusCode)
 						{
 							result = false;
-							break;
+							//break;
 						}
 					}
 				}
