@@ -12,6 +12,7 @@ namespace DailyForecaster.Models
 		public List<Collections> Collections { get; set; }
 		public List<CFType> CFTypes { get; set; }
 		public List<CFClassification> CFClassifications { get; set; }
+		public List<BudgetTransaction> BudgetTransactions { get; set; }
 		public string BudgetId { get; set; }
 		public BudgetVM() { }
 		/// <summary>
@@ -59,6 +60,22 @@ namespace DailyForecaster.Models
 			Collection = new Collections();
 			Collection.Budgets = new List<Budget>();
 			Collection.Budgets.Add(budget);
+			BudgetTransactions = GetExpenses(budget.BudgetTransactions.ToList());
+		}
+		private List<BudgetTransaction> GetExpenses(List<BudgetTransaction> transactions)
+		{
+			transactions = transactions
+				.Where(x => x.CFClassification.Sign == -1)
+				.ToList();
+			return transactions
+				.GroupBy(l => l.CFTypeId)
+				.Select(cl => new BudgetTransaction
+				{
+					CFTypeId = cl.First().CFTypeId,
+					CFType = cl.First().CFType,
+					CFClassification = cl.First().CFClassification,
+					Amount = cl.Sum(c => c.Amount),
+				}).ToList();
 		}
 	}
 }

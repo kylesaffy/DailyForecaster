@@ -26,6 +26,13 @@ namespace DailyForecaster.Models
 		[ForeignKey("CollectionsId")]
 		public Collections Collection { get; set; }
 		public YodleeModel() { }
+		public List<YodleeModel> Get()
+		{
+			using(FinPlannerContext _context = new FinPlannerContext())
+			{
+				return _context.YodleeModel.ToList();
+			}
+		}
 		public YodleeModel Get(string collectionsId)
 		{
 			using(FinPlannerContext _context = new FinPlannerContext())

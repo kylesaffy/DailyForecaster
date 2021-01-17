@@ -354,7 +354,7 @@ namespace DailyForecaster.Models
 				return returnModel;
 			}
 		}
-		public ReturnModel CreateCollection(NewCollectionsObj obj, string userId, string email)
+		public Collections CreateCollection(NewCollectionsObj obj, string userId, string email)
 		{
 			UserCollectionMapping mapping = new UserCollectionMapping();
 			Collections col = new Collections(obj,userId);
@@ -370,7 +370,7 @@ namespace DailyForecaster.Models
 			if (mapping.FirebaseUserId == "999")
 			{
 				returnModel.result = false;
-				return returnModel;
+				return null;
 			}
 			try
 			{
@@ -384,14 +384,14 @@ namespace DailyForecaster.Models
 				returnModel.returnStr = col.CollectionsId;
 				UserInteraction interaction = new UserInteraction();
 				interaction.CollectionsIncratment(col.CollectionsId, email);
-				return returnModel;
+				return col;
 			}
 			catch (Exception e)
 			{
 				ExceptionCatcher catcher = new ExceptionCatcher();
 				catcher.Catch(e);
 				returnModel.result = false;
-				return returnModel;
+				return null;
 			}
 		}
 		public bool CollectionCycle()

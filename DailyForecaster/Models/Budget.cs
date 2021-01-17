@@ -57,6 +57,25 @@ namespace DailyForecaster.Models
 			}
 			return budgets;
 		}
+		public List<Budget> GetBudgetsBySimId(string simulationId, string budgetId)
+		{
+			Budget budget = GetBudgetById(budgetId);
+			List<Budget> budgets = new List<Budget>();	   			
+			using (FinPlannerContext _context = new FinPlannerContext())
+			{
+				budgets = _context
+					.Budget
+					.Where(x => x.SimulationId == simulationId)
+					.Where(x => x.EndDate >= budget.EndDate)
+					.OrderBy(x => x.EndDate)
+					.ToList();
+			}
+			foreach (Budget item in budgets)
+			{
+				item.GetBudgetTransacions();
+			}
+			return budgets;
+		}
 		public void GetBudgetTransacions()
 		{
 			using (FinPlannerContext _context = new FinPlannerContext())
@@ -457,11 +476,13 @@ namespace DailyForecaster.Models
 		public List<Budget> GetBudgetsBySim(string simulationId)
 		{
 			List<Budget> budgets = new List<Budget>();
+			DateTime date = DateTime.Now.Date;
 			using (FinPlannerContext _context = new FinPlannerContext())
 			{
 				budgets = _context
 					.Budget
 					.Where(x => x.SimulationId == simulationId)
+					.Where(x => x.StartDate > date)
 					.ToList();
 			}
 			return budgets;

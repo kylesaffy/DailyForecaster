@@ -16,7 +16,7 @@ namespace DailyForecaster.Models
 			Simulation = simulation.Get(id);
 			Budget budget = new Budget();
 			BudgetTransaction transaction = new BudgetTransaction();
-			Simulation.Budgets = budget.GetBudgets(Simulation.CollectionsId, true);
+			Simulation.Budgets = budget.GetBudgetsBySim(id);
 			foreach(Budget item in Simulation.Budgets)
 			{
 				item.BudgetTransactions = transaction.GetBudgetTransactions(item.BudgetId);

@@ -20,8 +20,8 @@ namespace DailyForecaster.Models
 		[Required]
 		public string Name { get; set; }
 		[ForeignKey("InstitutionId")]
-		public string InstitutionId { get; set; } 		
 		[Required]
+		public string InstitutionId { get; set; } 		
 		public Institution Institution { get; set; }
 		public double Available { get; set; }
 		public double AccountLimit {get;set;}
@@ -544,8 +544,15 @@ namespace DailyForecaster.Models
 				else
 				{
 					Account account1 = _context.Account.Find(this.Id);
-					account1.Update(this);
-					_context.Entry(account1).State = EntityState.Modified;
+					try
+					{
+						account1.Update(this);
+						_context.Entry(account1).State = EntityState.Modified;
+					}
+					catch
+					{
+						_context.Account.Add(this);
+					}
 				}
 				try
 				{

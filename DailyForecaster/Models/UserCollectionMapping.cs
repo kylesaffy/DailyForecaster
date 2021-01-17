@@ -62,19 +62,10 @@ namespace DailyForecaster.Models
 		public UserCollectionMapping (string collectionsId,string userId)
 		{
 			string userIdNew = null;
-			try
-			{
-				AspNetUsers user = new AspNetUsers();
-				userIdNew = user.getUserId(userId);
-			}
-			catch
-			{
-				FirebaseUser user = new FirebaseUser();
-				userIdNew = user.GetUserId(userId);
-			}
+			FirebaseUser user = new FirebaseUser();
+			userIdNew = user.GetUserId(userId);
 			if(userIdNew == null)
 			{
-				FirebaseUser user = new FirebaseUser();
 				userId = user.GetUserId(userId);
 				FirebaseUserId = userId;
 			}
@@ -85,7 +76,8 @@ namespace DailyForecaster.Models
 			if (CheckUser(collectionsId, userId))
 			{
 				UserCollectionMappingId = Guid.NewGuid().ToString();
-				CollectionsId = collectionsId;		 			
+				CollectionsId = collectionsId;
+				FirebaseUserId = userId;
 			}
 			else
 			{

@@ -10,6 +10,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore;
 using DailyForecaster.Models;
 using DailyForecaster.Data;
+using Microsoft.Azure.Services.AppAuthentication;
+using Microsoft.Azure.KeyVault;
+using Microsoft.Extensions.Configuration.AzureKeyVault;
+using Azure.Identity;
+
 namespace DailyForecaster
 {
 	public class Program
@@ -36,10 +41,12 @@ namespace DailyForecaster
 
 		public static IHostBuilder CreateWebHostBuilder(string[] args) =>
 			Host.CreateDefaultBuilder(args)
-			//.ConfigureAppConfiguration((context, config)=>
+			//.ConfigureAppConfiguration((context, config) =>
 			//{
-			//	var root = config.Build();
-			//	config.AddAzureKeyVault($"https://{root["KeyVault:Vault"]}.vault.azure.net/", root["KeyVault:ClientId"], root["KeyVault:ClientSecret"]);
+			//	var keyVaultEndpoint = new Uri("https://dailyforecastervault.vault.azure.net/");
+			//	config.AddAzureKeyVault(
+			//	keyVaultEndpoint,
+			//	new DefaultAzureCredential());
 			//})
 			.ConfigureWebHostDefaults(webBuilder =>
 			{

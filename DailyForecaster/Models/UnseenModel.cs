@@ -46,6 +46,7 @@ namespace DailyForecaster.Models
 				{
 					item.Account = Accounts.Where(x => x.Id == item.AccountId).FirstOrDefault();
 				}
+				AutomatedCashFlows = AutomatedCashFlows.Where(x => x.Account != null).ToList();
 				ManualCashFlows = manualCash
 					.GetManualCahFlowsUnseen(accountsStr)
 					.Where(x=>x.DateCaptured > DateTime.Now.AddDays(-90))

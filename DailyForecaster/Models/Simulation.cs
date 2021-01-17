@@ -35,16 +35,19 @@ namespace DailyForecaster.Models
 		/// <param name="collectionsId">The collection that the simulation is being conducted under</param>
 		public Simulation(SimulationAssumptions assumptions, string collectionsId)
 		{
-			assumptions.SimulationAssumptionsId = Guid.NewGuid().ToString();
-			foreach(BonusModel model in assumptions.BonusModels)
+			if (assumptions.SimulationAssumptionsId == null)
 			{
-				model.BonusModelId = Guid.NewGuid().ToString();
-				model.SimulationAssumptionsId = assumptions.SimulationAssumptionsId;
-			}
-			foreach (IncreaseModel model in assumptions.IncreaseModels)
-			{
-				model.IncreaseModelId = Guid.NewGuid().ToString();
-				model.SimulationAssumptionsId = assumptions.SimulationAssumptionsId;
+				assumptions.SimulationAssumptionsId = Guid.NewGuid().ToString();
+				foreach (BonusModel model in assumptions.BonusModels)
+				{
+					model.BonusModelId = Guid.NewGuid().ToString();
+					model.SimulationAssumptionsId = assumptions.SimulationAssumptionsId;
+				}
+				foreach (IncreaseModel model in assumptions.IncreaseModels)
+				{
+					model.IncreaseModelId = Guid.NewGuid().ToString();
+					model.SimulationAssumptionsId = assumptions.SimulationAssumptionsId;
+				}
 			}
 			SimulationAssumptions = assumptions;
 			SimulationName = assumptions.SimualtionName;
@@ -60,9 +63,16 @@ namespace DailyForecaster.Models
 		public List<Simulation>	GetSimulations(string uid)
 		{
 			FirebaseUser user = new FirebaseUser(uid);
-			Collections collection = new Collections();
-			List<string> collections = collection.GetCollections(user.Email, "").Select(x => x.CollectionsId).ToList(); ;
-			return GetSimulations(collections);
+			//if (user != null)
+			//{
+				Collections collection = new Collections();
+				List<string> collections = collection.GetCollections(user.Email, "").Select(x => x.CollectionsId).ToList(); ;
+				return GetSimulations(collections);
+			//}
+			//else
+			//{
+
+			//}
 		}
 		private List<Simulation> GetSimulations(List<string> collectionIds)
 		{
@@ -100,7 +110,7 @@ namespace DailyForecaster.Models
 		/// </summary>
 		private string Save()
 		{
-			using(FinPlannerContext _context = new FinPlannerContext())
+			using (FinPlannerContext _context = new FinPlannerContext())
 			{
 				if (this.SimulationId == "temp")	 
 				{
@@ -214,7 +224,7 @@ namespace DailyForecaster.Models
 		private List<AccountState> UpdateStates(List<AccountState> states, List<Account> accounts, List<BudgetTransaction> transactions)
 		{
 			var costs = new List<Tuple<string, double>>();
-			foreach(Account item in accounts.Where(x=>x.AccountType.Bank).Where(x=>x.CreditRate > 0))
+			foreach(Account item in accounts.Where(x=>x.AccountType.Bank))
 			{
 				double cost = AccountCost(item.CreditRate, item.AccountLimit, states.Where(x => x.AccountId == item.Id).Select(x => x.Amount).FirstOrDefault());
 				costs.Add(Tuple.Create(item.Id, cost));

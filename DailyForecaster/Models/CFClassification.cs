@@ -62,9 +62,9 @@ namespace DailyForecaster.Models
 					}
 					catch
 					{
-						Id = "";
-						Name = "";
-						Sign = 0;
+						//Id = "";
+						//Name = "";
+						//Sign = 0;
 					}
 					
 				}

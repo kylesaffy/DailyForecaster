@@ -57,15 +57,12 @@ namespace DailyForecaster.Models
 		{
 			Collections collection = new Collections();
 			YodleeModel yodlee = new YodleeModel();
-			List<Collections> collections = collection.GetCollections("", "");
+			List<string> collectionIds = yodlee.Get().Select(x=>x.CollectionsId).ToList();
+			List<Collections> collections = collection.GetEagerList(collectionIds);
 			bool result = true;
-			foreach(string id in collections.Where(x=>x.Accounts.Count()>0).Select(x=>x.CollectionsId))
+			foreach(string id in collections.Select(x=>x.CollectionsId))
 			//foreach(string id in collections.Where(x=>x.CollectionsId == "f687f366-d162-4a04-89c7-8e0ad123f9cf").Select(x=>x.CollectionsId))
 			{
-				if(!result)
-				{
-					return result;
-				}
 				string token = await yodlee.getToken(id, "");
 				if (token != null)
 				{

@@ -15,7 +15,9 @@
       "environmentVariables": {
         "TWILIO_AUTH_TOKEN": "2cc7dcdf6a0354630b339eac86fde393",
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "TWILIO_ACCOUNT_SID": "ACde0510ce9f65ea7d4b4a05f7d567e577"
+        "TWILIO_ACCOUNT_SID": "ACde0510ce9f65ea7d4b4a05f7d567e577",
+        "VaultUri": "https://dailyforecastervault.vault.azure.net/",
+        "AZURE_USERNAME": "kylesaffy@moneyminders.co.za"
       }
     },
     "DailyForecaster": {
@@ -23,7 +25,9 @@
       "launchBrowser": true,
       "launchUrl": "weatherforecast",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "VaultUri": "https://dailyforecastervault.vault.azure.net/",
+        "AZURE_USERNAME": "kylesaffy@moneyminders.co.za"
       },
       "applicationUrl": "https://localhost:5001;http://localhost:5000"
     }

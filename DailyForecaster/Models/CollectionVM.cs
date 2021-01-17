@@ -21,41 +21,51 @@ namespace DailyForecaster.Models
 		/// </summary>
 		/// <param name="collectionsId">Collection Id, can be, null, "", "undefined"</param>
 		/// <param name="email">Email address of the user</param>
-		public CollectionVM(string collectionsId,string email)
+		public CollectionVM(string collectionsId, string email)
 		{
-			Account account = new Account();
-			Collections collections = new Collections();
-			Collections = collections.GetCollections(email,"CollectionsVM");
-			if ((collectionsId == null || collectionsId == "" || collectionsId == "undefined") && email != "")
-			{
-				UserInteraction userInteraction = new UserInteraction();
-				Collections collection = new Collections();
-				string collectionId = userInteraction.GetCollectionId(email);
-				collection = collection.GetCollections(collectionId);
-				Accounts = account.GetAccounts(collectionsId, false, email);
-				Id = collection.CollectionsId;
-				Name = collection.Name;
-				IncludeYodlee = new IncludeYodlee(collection.CollectionsId);
-				PredictionModel = new PredictionModel(collection.CollectionsId);
-			}
-			else
-			{
-				if (email != "")
+			try {
+				Account account = new Account();
+				Collections collections = new Collections();
+				Collections = collections.GetCollections(email, "CollectionsVM");
+				if ((collectionsId == null || collectionsId == "" || collectionsId == "undefined") && email != "")
 				{
-					Accounts = account.GetAccounts(collectionsId, false, email);
-					Collections collection = new Collections();
 					UserInteraction userInteraction = new UserInteraction();
-					userInteraction.CollectionsIncratment(collectionsId, email);
-					collection = collection.GetCollections(collectionsId);
-					Id = collection.CollectionsId;
-					Name = collection.Name;
-					IncludeYodlee = new IncludeYodlee(collection.CollectionsId);
-					PredictionModel = new PredictionModel(collection.CollectionsId);
+					Collections collection = new Collections();
+					string collectionId = userInteraction.GetCollectionId(email);
+					collection = collection.GetCollections(collectionId);
+					Accounts = account.GetAccounts(collectionsId, false, email);
+					if (collection != null)
+					{
+						Id = collection.CollectionsId;
+						Name = collection.Name;
+						IncludeYodlee = new IncludeYodlee(collection.CollectionsId);
+						PredictionModel = new PredictionModel(collection.CollectionsId);
+					}
 				}
+				else
+				{
+					if (email != "")
+					{
+						Accounts = account.GetAccounts(collectionsId, false, email);
+						Collections collection = new Collections();
+						UserInteraction userInteraction = new UserInteraction();
+						userInteraction.CollectionsIncratment(collectionsId, email);
+						collection = collection.GetCollections(collectionsId);
+						Id = collection.CollectionsId;
+						Name = collection.Name;
+						IncludeYodlee = new IncludeYodlee(collection.CollectionsId);
+						PredictionModel = new PredictionModel(collection.CollectionsId);
+					}
+				}
+				Institution institution = new Institution();
+				Institutions = institution.GetInstitutions();
+				AccountTypes = AccountType.GetAccountTypes();
 			}
-			Institution institution = new Institution();
-			Institutions = institution.GetInstitutions();
-			AccountTypes = AccountType.GetAccountTypes();
-		}
+			catch (Exception e)
+			{
+				ExceptionCatcher catcher = new ExceptionCatcher();
+				catcher.Catch(e);
+			}
+			} 
 	}
 }

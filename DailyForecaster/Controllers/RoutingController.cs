@@ -262,7 +262,7 @@ namespace DailyForecaster.Controllers
 							case "EditBudget":
 								return EditBudget(json);
 							case "BudgetChange":
-								return BudgetChange(json, auth.Uid, misc);
+								return BudgetChange(json, collectionsId, auth.Uid, misc);
 							case "BudgetTransactionDelete":
 								return BudgetTransactionDelete(json,misc,auth.Uid);
 							case "UpdateSplits":
@@ -270,7 +270,7 @@ namespace DailyForecaster.Controllers
 							case "LoginEmail":
 								return LoginEmail(auth.Claims["email"].ToString());
 							case "SaveTransaction":
-								return SaveTransaction(json, auth.Uid,misc);
+								return SaveTransaction(json,collectionsId, auth.Uid,misc);
 							case "CreateCollection":
 								return CreateCollection(json, auth.Uid, auth.Claims["email"].ToString());
 							//return Ok();
@@ -552,6 +552,10 @@ namespace DailyForecaster.Controllers
 			var token = _tokenGenerator.Generate(identity);
 			return Ok(new { identity, token });
 		}
+		//private ActionResult GetSimulationManagement(string uid)
+		//{
+
+		//}
 		private ActionResult GetSimulations(string uid)
 		{
 			Simulation simulation = new Simulation();
@@ -629,7 +633,7 @@ namespace DailyForecaster.Controllers
 		/// <param name="json">the JSON version of the object</param>
 		/// <param name="userId">The firebase userId</param>
 		/// <returns>Updated version of the object</returns>
-		private ActionResult SaveTransaction(JsonElement json, string userId, string misc)
+		private ActionResult SaveTransaction(JsonElement json, string userId, string simulationsId, string misc)
 		{
 			try
 			{
@@ -660,14 +664,16 @@ namespace DailyForecaster.Controllers
 			}
 			catch
 			{
-				return BudgetChange(json, userId,misc);
+				return BudgetChange(json, simulationsId, userId, misc);
 			}
 		}
 		private ActionResult CreateCollection(JsonElement json, string userId, string email)
 		{
 			NewCollectionsObj obj = System.Text.Json.JsonSerializer.Deserialize<NewCollectionsObj>(json.GetRawText());
 			Collections collections = new Collections();
-			return Ok(collections.CreateCollection(obj, userId, email));
+			collections = collections.CreateCollection(obj, userId, email);
+			collections.UserCollectionMappings = null;
+			return Ok(collections);
 		}
 		/// <summary>
 		/// Login in Email notification
@@ -726,7 +732,7 @@ namespace DailyForecaster.Controllers
 		/// <param name="json">the JSON version of the object</param>
 		/// <param name="userId">The firebase userId</param>
 		/// <returns></returns>
-		private ActionResult BudgetChange(JsonElement json, string userId, string misc)
+		private ActionResult BudgetChange(JsonElement json, string simulationId, string userId, string misc)
 		{
 			try
 			{
@@ -736,17 +742,53 @@ namespace DailyForecaster.Controllers
 				if(transaction.BudgetId == null || transaction.CFTypeId == null)
 				{
 					transaction = JsonConvert.DeserializeObject<BudgetTransaction>(json.GetRawText());
-				}
-				transaction.Budget = null;
-				transaction.Save(newUserId);
+				}						  				
 				if (misc == "")
 				{
+					transaction.Budget = null;
+					transaction.Save(newUserId);
 					return Ok(transaction);
 				}
 				else
 				{
+					Budget budget = new Budget();
+					List<Budget> budgets = budget.GetBudgetsBySimId(simulationId, transaction.BudgetId);
+					int i = 0;
+					int miscCount = Convert.ToInt32(misc);
+					int lineId = 0;
+					while(i < budgets.Count() && i < miscCount)
+					{
+						BudgetTransaction t = budgets[i].BudgetTransactions.Where(x => x.LineId == transaction.LineId).FirstOrDefault();
+						if (t != null)
+						{
+							t.Name = transaction.Name;
+							t.CFTypeId = transaction.CFTypeId;
+							t.Amount = transaction.Amount;
+						}
+						else
+						{
+							t = new BudgetTransaction(transaction);
+							t.BudgetTransactionId = null;
+							t.BudgetId = budgets[i].BudgetId;
+							if(lineId != 0)
+							{
+								t.LineId = lineId;
+							}
+						}
+						try
+						{
+							t.Save(userId);
+						}
+						catch (Exception e)
+						{
+							ExceptionCatcher catcher = new ExceptionCatcher();
+							catcher.Catch(e);
+						}
+						lineId = t.LineId;
+						i++;
+					}
 					Simulation sim = new Simulation();
-					sim = sim.Get(misc);
+					sim = sim.Get(simulationId);
 					sim.Recreate(userId);
 					return Ok(GetBudget(transaction.BudgetId));
 				}
@@ -820,7 +862,7 @@ namespace DailyForecaster.Controllers
 				Simulations.Add(new MenuData()
 				{
 					Title = "Homepage",
-					Key = "Homepage",
+					Key = "Simulation Homepage",
 					Url = "/simulations/homepage"
 				});
 				Simulations.Add(new MenuData()

@@ -41,9 +41,9 @@ namespace DailyForecaster.Models
 			NumberOfMonths = a.NumberOfMonths;
 			Recurring = a.Recurring;
 			ChangeDate = a.ChangeDate;
-			CFClassification = new CFClassification(a.CFClassificationId);
+			if(a.CFClassificationId != null) CFClassification = new CFClassification(a.CFClassificationId);
 			CFClassificationId = a.CFClassificationId;
-			CFType = new CFType(a.CFTypeId);
+			if(a.CFTypeId != null) CFType = new CFType(a.CFTypeId);
 			CFTypeId = a.CFTypeId;
 			Type = a.Type;
 			SimualtionName = a.SimualtionName;

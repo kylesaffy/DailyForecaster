@@ -40,6 +40,15 @@ namespace DailyForecaster.Models
 		[ForeignKey("AccountId")]
 		public Account Account { get; set; }
 		public int LineId { get; set; }
+		public BudgetTransaction(BudgetTransaction b)
+		{
+			BudgetId = b.BudgetId;
+			Name = b.Name;
+			Amount = b.Amount;
+			CFTypeId = b.CFTypeId;
+			CFClassificationId = b.CFClassificationId;
+			AccountId = b.AccountId;
+		}
 		public void Delete(string BudgetId)
 		{
 			List<BudgetTransaction> budgets = new List<BudgetTransaction>();

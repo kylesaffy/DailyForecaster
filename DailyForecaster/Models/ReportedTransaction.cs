@@ -104,7 +104,11 @@ namespace DailyForecaster.Models
 			List<Account> accounts = account.GetAccounts(budget.CollectionId);
 			foreach (AutomatedCashFlow auto in automatedCashFlows)
 			{
-				reportedTransactions.Add(new ReportedTransaction(auto,accounts.Where(x=>x.Id == auto.AccountId).FirstOrDefault()));
+				account = accounts.Where(x => x.Id == auto.AccountId).FirstOrDefault();
+				if (account != null)
+				{
+					reportedTransactions.Add(new ReportedTransaction(auto, account));
+				}
 			}
 			foreach (ManualCashFlow man in manualCashFlows)
 			{

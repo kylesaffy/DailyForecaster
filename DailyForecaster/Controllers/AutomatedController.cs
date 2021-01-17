@@ -82,7 +82,7 @@ namespace DailyForecaster.Controllers
 		public async Task<ActionResult> UserActivitity()
 		{
 			DateTime start = DateTime.Now;
-			ClickTracker tracker= new ClickTracker();
+			ClickTracker tracker = new ClickTracker();
 			bool result = false;
 			try
 			{
@@ -142,7 +142,7 @@ namespace DailyForecaster.Controllers
 			string userId = "PkPnJIuCxbS14NrcWJ6VQpp2cdn2";
 			string cftypeid = "4f19ee58-9a78-43b5-8cb6-331b75dc8b39";
 			ExpenseModel reader = new ExpenseModel();
-			ReturnModel model = await reader.BuildPartial(url, accountId,userId,cftypeid);
+			ReturnModel model = await reader.BuildPartial(url, accountId, userId, cftypeid);
 			return Ok(model);
 		}
 		[Route("GetYodlee")]
@@ -165,7 +165,7 @@ namespace DailyForecaster.Controllers
 		{
 			YodleeAccountModel model = new YodleeAccountModel();
 			List<YodleeAccountLevel> accounts = await model.GetYodleeAccounts(id);
-			return Ok(accounts.Where(x=>x.providerId == "15376").ToList().Count());
+			return Ok(accounts.Where(x => x.providerId == "15376").ToList().Count());
 		}
 		[Route("DeleteYodlee")]
 		[HttpGet]
@@ -180,7 +180,7 @@ namespace DailyForecaster.Controllers
 		{
 			Account model = new Account();
 			List<Account> accounts = model.GetAccounts(id);
-			return Ok(await model.UpdateAccounts(id,accounts));
+			return Ok(await model.UpdateAccounts(id, accounts));
 		}
 		[Route("Reader")]
 		[HttpGet]
@@ -195,7 +195,7 @@ namespace DailyForecaster.Controllers
 		public async Task<ActionResult> ManualLogout(string id)
 		{
 			LogoffModel model = new LogoffModel();
-			DateTime result = await model.RevokeToken(id);										
+			DateTime result = await model.RevokeToken(id);
 			return Ok(result);
 		}
 		[Route("Test")]
@@ -215,12 +215,37 @@ namespace DailyForecaster.Controllers
 		}
 		[Route("RecreateSim")]
 		[HttpGet]
-		public ActionResult RecreateSim(string id,string userId)
+		public ActionResult RecreateSim(string id, string userId)
 		{
 			Simulation sim = new Simulation();
 			sim = sim.Get(id);
 			sim.Recreate(userId);
 			return Ok(new BudgetVM("e146a403-0781-4826-af14-cadcaf245e09"));
+		}
+		[Route("ReBuildSim")]
+		[HttpGet]
+		public ActionResult ReBuildSim(string id, string userId, string collectionsId)
+		{
+			SimulationAssumptions assumptions = new SimulationAssumptions(id);
+			Simulation sim = new Simulation(assumptions, collectionsId);
+			sim = sim.BuildSimulation(assumptions, userId, collectionsId);
+			return Ok(sim);
+		}
+		[Route("CreateSim")]
+		[HttpGet]
+		public ActionResult CreateSim(string id, string userId)
+		{
+			Simulation sim = new Simulation();
+			sim = sim.Get(id);
+			sim.SimulationAssumptions = new SimulationAssumptions(sim.SimulationAssumptionsId);
+			sim = sim.BuildSimulation(sim.SimulationAssumptions, userId, sim.CollectionsId);
+			return Ok(sim);
+		}
+		[Route("General")]
+		[HttpGet]
+		public ActionResult General(string email)
+		{
+			return Ok(new UnseenModel(email));
 		}
 	}
 	public class RegisterModel
