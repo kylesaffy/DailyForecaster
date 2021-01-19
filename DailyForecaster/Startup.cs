@@ -32,16 +32,13 @@ namespace DailyForecaster
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services)
 		{
+			var conn = Configuration.GetConnectionString("DefaultConnection");
 			services.AddDbContext<FinPlannerContext>(opt =>
-			opt.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-			services.AddControllers();//.AddNewtonsoftJson(x => {
-				//x.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
-				//x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
-				//});
+			opt.UseSqlServer(conn));
+			services.AddControllers();
 			services.AddCors(options =>
 			{
 				options.AddPolicy("AllowOrigin",
-						 // builder => builder.WithOrigins("https://localhost:44307", "https://12dceb811896.ngrok.io")
 						 builder=>builder.AllowAnyOrigin()
 						 .AllowAnyHeader()
 						 .AllowAnyMethod());
@@ -60,7 +57,7 @@ namespace DailyForecaster
 					Credential = GoogleCredential.FromFile(pathKey)
 				});
 			//}
-			//*services.AddApplicationInsightsTelemetry(Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
+			//services.AddApplicationInsightsTelemetry(Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -70,11 +67,6 @@ namespace DailyForecaster
 			{
 				app.UseDeveloperExceptionPage();
 			}
-			app.Run(async context =>
-			{
-				context.Response.ContentType = "text/plain";
-				await context.Response.WriteAsync($@"SecretName (Name in Key Vault: 'SecretName'){Environment.NewLine}Obtained from Configuration with Configuration[""SecretName""]{Environment.NewLine}Value: {Configuration["SecretName"]}{Environment.NewLine}{Environment.NewLine}Section:SecretName (Name in Key Vault: 'Section--SecretName'){Environment.NewLine}Obtained from Configuration with Configuration[""Section:SecretName""]{Environment.NewLine}Value: {Configuration["Section:SecretName"]}{Environment.NewLine}{Environment.NewLine}Section:SecretName (Name in Key Vault: 'Section--SecretName'){Environment.NewLine}Obtained from Configuration with Configuration.GetSection(""Section"")[""SecretName""]{Environment.NewLine}Value: {Configuration.GetSection("Section")["SecretName"]}");
-			});
 			app.UseHttpsRedirection();
 
 			app.UseRouting();

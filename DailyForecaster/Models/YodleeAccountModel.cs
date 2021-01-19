@@ -76,6 +76,10 @@ namespace DailyForecaster.Models
 						if (!response.IsSuccessStatusCode)
 						{
 							result = false;
+							string str = await response.Content.ReadAsStringAsync();
+							YodleeErrorManager manager = new YodleeErrorManager();
+							manager = JsonConvert.DeserializeObject<YodleeErrorManager>(str);
+							manager.Save(id, "YodleeAccountModel.UpdateYodlee", "/ providerAccounts ? providerAccountIds = " + provider);
 							//break;
 						}
 					}

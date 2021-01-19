@@ -64,6 +64,7 @@ namespace DailyForecaster.Models
         public DbSet<BonusModel> BonusModel { get; set; }
         public DbSet<IncreaseModel> IncreaseModel { get; set; }
         public DbSet<PaymentLink> PaymentLink { get; set; }
+        public DbSet<YodleeErrorManager> YodleeErrorManager { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()

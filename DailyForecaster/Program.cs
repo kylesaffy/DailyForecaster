@@ -14,6 +14,7 @@ using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Extensions.Configuration.AzureKeyVault;
 using Azure.Identity;
+using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 
 namespace DailyForecaster
 {
