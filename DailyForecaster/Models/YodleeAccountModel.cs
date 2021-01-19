@@ -30,6 +30,13 @@ namespace DailyForecaster.Models
 					string str = await response.Content.ReadAsStringAsync();
 					accounts = JsonConvert.DeserializeObject<YodleeAccountModel>(str);
 				}
+				else
+				{
+					string str = await response.Content.ReadAsStringAsync();
+					YodleeErrorManager manager = new YodleeErrorManager();
+					manager = JsonConvert.DeserializeObject<YodleeErrorManager>(str);
+					manager.Save(collectionsId, "YodleeAccountModel.GetYodleeAccounts", "/accounts");
+				}
 			}
 			return accounts.account;
 		}

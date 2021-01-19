@@ -52,6 +52,8 @@ namespace DailyForecaster.Models
 		[ForeignKey("SimulationId")]
 		public Simulation Simulation { get; set; }
 		public bool isDeleted { get; set; }
+		public DateTime LastUpdate { get; set; }
+		public DateTime YodleeUpdate { get; set; }
 		public Account() { }
 		private List<Account> GetAccounts(string collectionId,bool ans)
 		{
@@ -330,6 +332,7 @@ namespace DailyForecaster.Models
 								}
 								if (accountLevel != null)
 								{
+									item.YodleeUpdate = accountLevel.lastUpdated;
 									if (item.AccountType.Bank)
 									{
 										if (accountLevel.availableBalance != null)
@@ -379,6 +382,7 @@ namespace DailyForecaster.Models
 										}
 									}
 								}
+								item.LastUpdate = DateTime.Now;
 							}
 							_context.Entry(item).State = EntityState.Modified;
 							AccountBalance balance = new AccountBalance()
